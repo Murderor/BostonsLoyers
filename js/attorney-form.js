@@ -156,8 +156,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Подготавливаем данные для Discord
             const discordData = {
-                username: 'Адвокатское Бюро',
-                avatar_url: 'https://cdn.discordapp.com/embed/avatars/0.png',
+                username: 'Секретарь Авокатуры',
+                avatar_url: 'https://i.pinimg.com/originals/7a/af/81/7aaf811aa403514a33e1d468e7405f9a.png',
                 thread_name: `Повышение: ${formData.fullName} → Адвокат`,
                 embeds: [mainEmbed],
                 content: `📢 **Новая заявка на повышение!** <@${formData.specialCommId}> подает заявку на повышение до Адвоката.\n\n**Проверьте ссылки на вызовы в embed сообщении ниже:**`

@@ -285,7 +285,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Подготавливаем данные для Discord
             const discordData = {
                 username: 'Секретарь Авокатуры',
-                avatar_url: 'https://cdn.discordapp.com/embed/avatars/0.png',
+                avatar_url: 'https://i.pinimg.com/originals/7a/af/81/7aaf811aa403514a33e1d468e7405f9a.png',
                 thread_name: `Аккредитация: ${formData.fullName} (Младший адвокат)`,
                 embeds: [
                     {
