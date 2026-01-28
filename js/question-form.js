@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Подготавливаем данные для Discord
             const discordData = {
-                //username: 'Секретарь Авокатуры',
+                username: 'Секретарь Авокатуры',
                 avatar_url: 'https://i.pinimg.com/originals/7a/af/81/7aaf811aa403514a33e1d468e7405f9a.png',
                 thread_name: `Вопрос от ${formData.fullName}`,
                 embeds: embeds,
