@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Минимальная форма адвоката загружена');
     
     // ===== НАСТРОЙКИ DISCORD =====
-    const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1465718072823513274/7G5O9bao4TWMYzwcggviBuax6t8i-sMavDqT3s9Sbfq7MohsOn_m_PaCdh5BcQOpajht';
+    const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1466132348943990886/uhgl4fKd8meIi5nTIiwT4Ig-JEyHil-vCdakZW5yaaPOBKHQ5n3R4uqjfGK_jrUyWrAl';
     
     // ===== ВАЛИДАЦИЯ ССЫЛОК =====
     window.validateLink = function(input) {
@@ -108,7 +108,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Создаем основной embed
             const mainEmbed = {
                 title: '📈 Заявка на повышение до Адвоката',
-                description: `**Заявитель:** ${formData.fullName}\n**Повышение с должности:** Младший адвокат → Адвокат`,
+                description: `**Заявитель:** ${formData.fullName}\n**Повышение с должности:** Младший адвокат → Адвокат\n\n<@&1321503127987421316>, <@&1321503135302291516>, <@&1371785937180426270>`,
                 color: 0x3498db, // Синий цвет
                 fields: [
                     {
