@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 ],
                 footer: {
-                    text: 'Адвокатское бюро Majestic RP | Форма вопросов',
+                    text: 'Коллегия адвокатов Majestic RP | Форма вопросов',
                     icon_url: 'https://cdn.discordapp.com/embed/avatars/0.png'
                 },
                 timestamp: new Date().toISOString()
