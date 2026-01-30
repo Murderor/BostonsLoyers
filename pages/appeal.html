@@ -6,6 +6,151 @@
     <title>Обращение | Коллегия государственных адвокатов | Majestic RP | Boston</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="icon" type="image/x-icon" href="../favicon.ico">
+
+
+
+
+
+    <!--Уведомление о нерабочем функционале-->
+    <style>
+        .webhook-alert {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(90deg, #ff6b6b, #ff8e53);
+            color: white;
+            padding: 15px 20px;
+            z-index: 9999;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            animation: slideDown 0.5s ease-out;
+        }
+
+        .alert-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .alert-icon {
+            font-size: 24px;
+            animation: pulse 2s infinite;
+        }
+
+        .alert-text {
+            flex: 1;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .alert-text strong {
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .alert-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .alert-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .alert-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .alert-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0 10px;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+
+        .alert-close:hover {
+            opacity: 1;
+        }
+
+        body {
+            padding-top: 80px; /* Компенсация высоты баннера */
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        @media (max-width: 768px) {
+            .alert-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .alert-actions {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            body {
+                padding-top: 120px;
+            }
+        }
+    </style>
+    <!--Уведомление о нерабочем функционале-->
+
+
+
+
+
+
+
+
+
+    
+
+
+    
 </head>
 <body>
     <!-- Прелоадер -->
@@ -14,6 +159,23 @@
         <div class="loader-text">ПОДГОТОВКА ФОРМЫ</div>
     </div>
 
+
+
+
+    <!-- Баннер с уведомлением -->
+    <div class="webhook-alert" id="webhookAlert">
+        <div class="alert-content">
+            <div class="alert-icon">⚠️</div>
+            <div class="alert-text">
+                <strong>Внимание:</strong> Функционал WEB хуков отключен администрацией Majestic. 
+                Обращения могут не работать.
+            </div>
+            <button class="alert-close" onclick="hideAlert()">×</button>
+        </div>
+    </div>
+
+    
+    
     <!-- Шапка -->
     <header class="header">
         <div class="container header-container">
@@ -197,4 +359,5 @@
     <script src="../js/transitions.js"></script>
     <script src="../js/appeal.js"></script>
 </body>
+
 </html>
