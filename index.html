@@ -6,13 +6,94 @@
     <title>Коллегия государственных адвокатов | Majestic RP | Boston</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <style>
+        /* Дополнительные стили для страницы временной неработоспособности */
+        .maintenance-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+            text-align: center;
+            background: linear-gradient(135deg, var(--color-darker), var(--color-dark));
+        }
+        
+        .maintenance-icon {
+            font-size: 4rem;
+            margin-bottom: 30px;
+            animation: pulse 2s infinite;
+        }
+        
+        .maintenance-title {
+            font-size: 2.5rem;
+            color: var(--color-accent);
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+        
+        .maintenance-message {
+            font-size: 1.2rem;
+            color: var(--color-light);
+            max-width: 600px;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .maintenance-details {
+            background-color: rgba(42, 49, 66, 0.5);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            margin-top: 30px;
+            border-left: 4px solid var(--color-accent);
+            max-width: 600px;
+        }
+        
+        .maintenance-details p {
+            color: #a0a8c0;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+        
+        .contact-info {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .contact-info a {
+            color: var(--color-accent);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+        
+        .contact-info a:hover {
+            text-decoration: underline;
+            color: var(--color-accent-dark);
+        }
+        
+        @media (max-width: 768px) {
+            .maintenance-title {
+                font-size: 2rem;
+            }
+            
+            .maintenance-message {
+                font-size: 1rem;
+            }
+            
+            .maintenance-icon {
+                font-size: 3rem;
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- Прелоадер для плавного перехода -->
-<div class="page-transition" id="pageTransition">
-    <div class="loader"></div>
-    <div class="loader-text">ЗАГРУЗКА</div>
-</div>
+    <div class="page-transition" id="pageTransition">
+        <div class="loader"></div>
+        <div class="loader-text">ЗАГРУЗКА</div>
+    </div>
+    
     <!-- Шапка -->
     <header class="header">
         <div class="container header-container">
@@ -28,7 +109,7 @@
                 </div>
             </div>
 
-            <!-- Навигация - только кнопки -->
+            <!-- Навигация - только кнопки 
             <nav class="main-nav">
                 <ul class="nav-list">
                     <li><a href="index.html" class="nav-button active">Главная</a></li>
@@ -37,6 +118,7 @@
                     <li><a href="pages/law.html" class="nav-button">Законы</a></li>
                 </ul>
             </nav>
+            -->
 
             <!-- Мобильное меню -->
             <button class="mobile-menu-btn" id="mobileMenuBtn">
@@ -57,71 +139,27 @@
         </ul>
     </nav>
 
-    <!-- Основной контент - только самое важное -->
-    <main class="main">
+    <!-- Основной контент - сообщение о временной неработоспособности -->
+    <main class="main maintenance-container">
         <div class="container">
-            <!-- Главный экран с большим логотипом -->
-            <section class="hero">
-                <!-- Большой логотип -->
-                <div class="hero-logo">
-                    <img src="assets/logo.png" alt="Логотип адвокатского бюро" class="hero-logo-image" id="hero-logo">
-                    <div class="hero-logo-placeholder" id="hero-logo-placeholder">AB</div>
-                </div>
-                
-                <div class="hero-content">
-                    <h2 class="hero-title">Коллегия государственных адвокатов</h2>
-                    <p class="hero-subtitle">Majestic RP | Boston</p>
-                    <p class="hero-text">Ваша надежная защита в виртуальном мире<br>Профессиональные адвокатские услуги для граждан и организаций</p>
-                    
-                    <!-- Основные кнопки действий -->
-                    <div class="hero-actions">
-                        <a href="pages/appeal.html" class="button button-primary">
-                            <span class="button-icon">⚖️</span>
-                            Срочная помощь
-                        </a>
-                        <a href="pages/about.html" class="button button-secondary">
-                            <span class="button-icon">👥</span>
-                            Наша команда
-                        </a>
-                        <a href="pages/law.html" class="button button-secondary">
-                            <span class="button-icon">📚</span>
-                            Законы
-                        </a>
-                    </div>
-                </div>
-                
-                <!-- Стрелка вниз для скролла -->
-                <div class="scroll-down">
-                    <div class="scroll-icon"></div>
-                </div>
-            </section>
-    
-            <!-- Краткая информация в 4 пунктах -->
-            <section class="quick-info" id="services">
-                <h3 class="section-title">Наши преимущества</h3>
-                <div class="info-grid">
-                    <div class="info-item">
-                        <div class="info-icon">⚖️</div>
-                        <h3>Правовая защита</h3>
-                        <p>Полное сопровождение по уголовным и гражданским делам. Защита ваших интересов в суде.</p>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-icon">🔒</div>
-                        <h3>Конфиденциальность</h3>
-                        <p>Абсолютная секретность и адвокатская тайна. Ваши данные под надёжной защитой.</p>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-icon">🕐</div>
-                        <h3>24/7 Доступность</h3>
-                        <p>Круглосуточная готовность к экстренным ситуациям. Всегда на связи.</p>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-icon">📈</div>
-                        <h3>Высокий процент успеха</h3>
-                        <p>Более 85% выигранных дел благодаря профессионализму нашей команды.</p>
-                    </div>
-                </div>
-            </section>
+            <div class="maintenance-icon">🚧</div>
+            <h2 class="maintenance-title">Сайт временно не работает</h2>
+            <p class="maintenance-message">
+                В настоящее время сайт Коллегии государственных адвокатов находится на техническом обслуживании. 
+                Мы проводим обновление систем для улучшения качества предоставляемых услуг.
+            </p>
+            
+            <div class="maintenance-details">
+                <p>🕐 <strong>Приблизительное время восстановления:</strong> 24-48 часов</p>
+                <p>⚙️ <strong>Причина отключения:</strong> Отключение поддержки WEB-хуков</p> 
+            </div>
+            
+            <div style="margin-top: 40px;">
+                <p style="color: #a0a8c0; font-style: italic;">
+                    Благодарим за понимание!<br>
+                    Коллегия государственных адвокатов заботится о вашей безопасности и конфиденциальности.
+                </p>
+            </div>
         </div>
     </main>
 
@@ -129,10 +167,19 @@
     <footer class="footer">
         <div class="container">
             <p>© Коллегия государственных адвокатов, Majestic RP | Boston</p>
-            <p>Экстренная связь через форму обращения</p>
+            <p>Техническое обслуживание • Восстановление работы ожидается в ближайшее время</p>
         </div>
     </footer>
 
     <script src="js/script.js"></script>
+    <script>
+        // Добавляем небольшую анимацию для иконки
+        document.addEventListener('DOMContentLoaded', function() {
+            const icon = document.querySelector('.maintenance-icon');
+            setInterval(() => {
+                icon.style.transform = icon.style.transform === 'scale(1.1)' ? 'scale(1)' : 'scale(1.1)';
+            }, 2000);
+        });
+    </script>
 </body>
 </html>
