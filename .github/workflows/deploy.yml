@@ -19,9 +19,9 @@ jobs:
       - name: 🔍 Проверка секрета
         run: |
           if [ -z "${{ secrets.DISCORD_WEBHOOK_URL }}" ]; then
-            echo "❌ DISCORD_WEBHOOK не настроен!"
+            echo "❌ DISCORD_WEBHOOK_URL не настроен!"
             echo "👉 Перейдите в Settings → Secrets → Actions"
-            echo "👉 Добавьте новый секрет DISCORD_WEBHOOK"
+            echo "👉 Добавьте новый секрет DISCORD_WEBHOOK_URL"
             echo "👉 Вставьте ваш Discord webhook URL"
             exit 1
           fi
@@ -36,9 +36,9 @@ jobs:
           // ⚠️ Не добавляйте его в git!
           // ⚠️ Реальный вебхук находится только здесь
           
-          const DISCORD_WEBHOOK_URL = "${{ secrets.DISCORD_WEBHOOK }}";
+          const DISCORD_WEBHOOK_URL_URL = "${{ secrets.DISCORD_WEBHOOK_URL }}";
           const DISCORD_CONFIG = {
-              webhook: "${{ secrets.DISCORD_WEBHOOK }}",
+              webhook: "${{ secrets.DISCORD_WEBHOOK_URL }}",
               version: "1.0",
               buildDate: "$(date '+%Y-%m-%d %H:%M:%S')",
               buildId: "${{ github.run_id }}",
@@ -60,7 +60,7 @@ jobs:
           
           if (typeof window !== 'undefined') {
               window.DISCORD_CONFIG = DISCORD_CONFIG;
-              window.DISCORD_WEBHOOK_URL = DISCORD_WEBHOOK_URL;
+              window.DISCORD_WEBHOOK_URL_URL = DISCORD_WEBHOOK_URL_URL;
           }
           EOF
           
