@@ -2,19 +2,6 @@
 document.addEventListener('DOMContentLoaded', function() {
 
 
-    console.log('=== ДИАГНОСТИКА ФОРМЫ АДВОКАТА ===');
-    
-    // Проверяем ВСЕ источники вебхука
-    console.log('1. DISCORD_WEBHOOK_URL (глобальная):', 
-                typeof DISCORD_WEBHOOK_URL !== 'undefined' ? 'Есть' : 'Нет',
-                DISCORD_WEBHOOK_URL?.substring(0, 30) + '...');
-    
-    console.log('2. window.DISCORD_WEBHOOK_URL:', 
-                window.DISCORD_WEBHOOK_URL?.substring(0, 30) + '...');
-    
-    console.log('3. window.DISCORD_CONFIG.webhook:', 
-                window.DISCORD_CONFIG?.webhook?.substring(0, 30) + '...');
-    
     // Проверяем, одинаковые ли вебхуки
     const webhook1 = DISCORD_WEBHOOK_URL;
     const webhook2 = window.DISCORD_WEBHOOK_URL;
@@ -800,4 +787,5 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
 
