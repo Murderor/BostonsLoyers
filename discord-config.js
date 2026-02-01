@@ -7,7 +7,7 @@ const DISCORD_CONFIG = {
     webhook: "https://discord.com/api/webhooks/1465718072823513274/7G5O9bao4TWMYzwcggviBuax6t8i-sMavDqT3s9Sbfq7MohsOn_m_PaCdh5BcQOpajht",
     version: "1.0",
     buildDate: "$(date '+%Y-%m-%d %H:%M:%S')",
-    buildId: "21560447402",
+    buildId: "21560455046",
     roles: {
         main: "<@&1321503127987421316>",
         secondary: "<@&1321503135302291516>",
