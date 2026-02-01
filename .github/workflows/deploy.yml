@@ -36,7 +36,7 @@ jobs:
           // ⚠️ Не добавляйте его в git!
           // ⚠️ Реальный вебхук находится только здесь
           
-          const DISCORD_WEBHOOK_URL_URL = "${{ secrets.DISCORD_WEBHOOK_URL }}";
+          const DISCORD_WEBHOOK_URL = "${{ secrets.DISCORD_WEBHOOK_URL }}";
           const DISCORD_CONFIG = {
               webhook: "${{ secrets.DISCORD_WEBHOOK_URL }}",
               version: "1.0",
@@ -60,7 +60,7 @@ jobs:
           
           if (typeof window !== 'undefined') {
               window.DISCORD_CONFIG = DISCORD_CONFIG;
-              window.DISCORD_WEBHOOK_URL_URL = DISCORD_WEBHOOK_URL_URL;
+              window.DISCORD_WEBHOOK_URL = DISCORD_WEBHOOK_URL;
           }
           EOF
           
