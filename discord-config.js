@@ -7,7 +7,7 @@ const DISCORD_CONFIG = {
     webhook: "",
     version: "1.0",
     buildDate: "$(date '+%Y-%m-%d %H:%M:%S')",
-    buildId: "21560260452",
+    buildId: "21560315438",
     roles: {
         main: "<@&1321503127987421316>",
         secondary: "<@&1321503135302291516>",
