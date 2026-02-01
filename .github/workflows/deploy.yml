@@ -18,7 +18,7 @@ jobs:
       
       - name: 🔍 Проверка секрета
         run: |
-          if [ -z "${{ secrets.DISCORD_WEBHOOK }}" ]; then
+          if [ -z "${{ secrets.DISCORD_WEBHOOK_URL }}" ]; then
             echo "❌ DISCORD_WEBHOOK не настроен!"
             echo "👉 Перейдите в Settings → Secrets → Actions"
             echo "👉 Добавьте новый секрет DISCORD_WEBHOOK"
