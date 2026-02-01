@@ -8,9 +8,9 @@ var DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1467445185297387723/
 var DISCORD_CONFIG = {
     webhook: "https://discord.com/api/webhooks/1467445185297387723/TGBXdJ1zQwVn5UKjM0CRvKj0xnTTIeWcAyCDlMsp87AALfcm0NN7XItbblI10FE4bDYW",
     version: "1.1",
-    buildDate: "2026-02-01 12:52:48",
-    buildId: "21563205888",
-    commitHash: "8afbb20c31aa51a3e0858d7f32f1eeb8d3ace3bc",
+    buildDate: "2026-02-01 12:54:52",
+    buildId: "21563232911",
+    commitHash: "52aada9fc6c101d58bad9ad791d5e349f22ea90c",
     roles: {
         main: "<@&1321503127987421316>",
         secondary: "<@&1321503135302291516>",
