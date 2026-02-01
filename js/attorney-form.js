@@ -1,5 +1,41 @@
 // JavaScript для минимальной формы адвоката
 document.addEventListener('DOMContentLoaded', function() {
+
+
+    console.log('=== ДИАГНОСТИКА ФОРМЫ АДВОКАТА ===');
+    
+    // Проверяем ВСЕ источники вебхука
+    console.log('1. DISCORD_WEBHOOK_URL (глобальная):', 
+                typeof DISCORD_WEBHOOK_URL !== 'undefined' ? 'Есть' : 'Нет',
+                DISCORD_WEBHOOK_URL?.substring(0, 30) + '...');
+    
+    console.log('2. window.DISCORD_WEBHOOK_URL:', 
+                window.DISCORD_WEBHOOK_URL?.substring(0, 30) + '...');
+    
+    console.log('3. window.DISCORD_CONFIG.webhook:', 
+                window.DISCORD_CONFIG?.webhook?.substring(0, 30) + '...');
+    
+    // Проверяем, одинаковые ли вебхуки
+    const webhook1 = DISCORD_WEBHOOK_URL;
+    const webhook2 = window.DISCORD_WEBHOOK_URL;
+    const webhook3 = window.DISCORD_CONFIG?.webhook;
+    
+    if (webhook1 && webhook2 && webhook1 !== webhook2) {
+        console.warn('⚠️ ВНИМАНИЕ: Вебхуки не совпадают!');
+        console.warn('DISCORD_WEBHOOK_URL:', webhook1?.substring(30, 60));
+        console.warn('window.DISCORD_WEBHOOK_URL:', webhook2?.substring(30, 60));
+    }
+    
+    // Проверяем, есть ли старый вебхук в коде
+    const oldWebhook = '1466132348943990886/uhgl4fKd8meIi5nTIiwT4Ig-JEyHil-vCdakZW5yaaPOBKHQ5n3R4uqjfGK_jrUyWrAl';
+    if (webhook1?.includes(oldWebhook) || webhook2?.includes(oldWebhook)) {
+        console.error('❌ ОШИБКА: Обнаружен СТАРЫЙ вебхук!');
+        console.error('Нужно обновить GitHub Secrets или пересоздать вебхук в Discord');
+    }
+
+
+    
+    
     console.log('Минимальная форма адвоката загружена');
     
     // ===== ПРОВЕРКА И ЗАГРУЗКА КОНФИГА DISCORD =====
@@ -764,3 +800,4 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
