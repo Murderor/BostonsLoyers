@@ -2177,4 +2177,34 @@ textarea.form-control {
 
 .quick-info .info-item p {
     font-size: 0.95rem;
+
+}
+
+
+
+
+/*контакты гка */
+
+.discord-link {
+    color: #7289da; /* Discord цвет */
+    text-decoration: none;
+    transition: color 0.3s ease;
+    cursor: pointer;
+}
+
+.discord-link:hover {
+    color: #5865f2; /* Более яркий Discord цвет при наведении */
+    text-decoration: underline;
+}
+
+/* Если используете решение 1 - обертку всего элемента */
+.contact-item.discord-link {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background-color: rgba(114, 137, 218, 0.1);
+}
+
+.contact-item.discord-link:hover {
+    background-color: rgba(114, 137, 218, 0.2);
 }
