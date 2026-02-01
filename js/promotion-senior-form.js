@@ -2,18 +2,107 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Форма старшего адвоката загружена');
     
-    // ===== НАСТРОЙКИ DISCORD =====
-    const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1466132348943990886/uhgl4fKd8meIi5nTIiwT4Ig-JEyHil-vCdakZW5yaaPOBKHQ5n3R4uqjfGK_jrUyWrAl';
+    // ===== ПРОВЕРКА И ЗАГРУЗКА КОНФИГА DISCORD =====
+    let discordWebhookUrl = null;
+    let discordConfig = null;
+    
+    // Проверяем, загружен ли конфиг из внешнего файла
+    if (typeof DISCORD_WEBHOOK_URL !== 'undefined' && 
+        DISCORD_WEBHOOK_URL !== "{{DISCORD_WEBHOOK_PLACEHOLDER}}" &&
+        DISCORD_WEBHOOK_URL.includes('discord.com')) {
+        
+        discordWebhookUrl = DISCORD_WEBHOOK_URL;
+        discordConfig = typeof DISCORD_CONFIG !== 'undefined' ? DISCORD_CONFIG : null;
+        
+        console.log('✅ Discord Config загружен для формы старшего адвоката');
+        console.log('📅 Версия конфига:', discordConfig?.version || 'неизвестна');
+        
+    } else if (window.DISCORD_WEBHOOK_URL && 
+               window.DISCORD_WEBHOOK_URL.includes('discord.com')) {
+        
+        discordWebhookUrl = window.DISCORD_WEBHOOK_URL;
+        discordConfig = window.DISCORD_CONFIG || null;
+        
+        console.log('✅ Discord Config загружен из window');
+        
+    } else {
+        // Показываем предупреждение о тестовом режиме
+        console.warn('⚠️ Discord вебхук не настроен для формы старшего адвоката. Тестовый режим.');
+        
+        const warning = document.createElement('div');
+        warning.innerHTML = `
+            <div style="
+                background: linear-gradient(135deg, #ff9800, #f57c00);
+                color: white;
+                padding: 15px;
+                margin: 20px 0;
+                border-radius: 10px;
+                text-align: center;
+                box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+                border-left: 5px solid #ff5722;
+            ">
+                <strong>⚠️ Внимание:</strong> Discord вебхук не настроен.<br>
+                <small>Для работы формы старшего адвоката необходимо:</small><br>
+                1. Добавить секрет DISCORD_WEBHOOK_URL в GitHub Secrets<br>
+                2. Запустить GitHub Actions workflow<br>
+                <small style="opacity: 0.8;">Форма будет сохранять заявки локально до настройки</small>
+            </div>
+        `;
+        
+        const form = document.querySelector('.minimal-section') || document.body;
+        form.prepend(warning);
+    }
+    
+    // ===== ПРОВЕРКА ДОСТУПНОСТИ DISCORD =====
+    async function checkDiscordAvailability() {
+        if (!discordWebhookUrl) return false;
+        
+        try {
+            // Быстрая проверка доступности
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            
+            const response = await fetch(discordWebhookUrl, {
+                method: 'HEAD',
+                headers: { 'Content-Type': 'application/json' },
+                signal: controller.signal
+            });
+            
+            clearTimeout(timeoutId);
+            return response.status !== 404 && response.status !== 401;
+        } catch (error) {
+            console.log('Discord недоступен для формы старшего адвоката:', error.name);
+            return false;
+        }
+    }
     
     // ===== ОТПРАВКА В DISCORD =====
     async function sendToDiscord(formData) {
+        const isDiscordAvailable = discordWebhookUrl ? await checkDiscordAvailability() : false;
+        
+        // Если Discord не настроен или недоступен, сохраняем локально
+        if (!isDiscordAvailable) {
+            console.log('Discord недоступен, сохраняем локально');
+            return {
+                success: true,
+                id: `local-save-${Date.now()}`,
+                message: 'Заявка сохранена локально',
+                local: true
+            };
+        }
+        
         try {
             showNotification('Отправка заявки в Discord...', 'info');
+            
+            // Роли из конфига или дефолтные
+            const discordRoles = discordConfig?.roles ? 
+                `${discordConfig.roles.main}, ${discordConfig.roles.secondary}, ${discordConfig.roles.tertiary}` :
+                '<@&1321503127987421316>, <@&1321503135302291516>, <@&1371785937180426270>';
             
             // Создаем embed сообщение
             const embed = {
                 title: '📈 Заявка на повышение до Старшего адвоката',
-                description: `**Заявитель:** ${formData.fullName}\n**Подтверждены обязанности:** ✅ Да\n<@&1321503127987421316>, <@&1321503135302291516>, <@&1371785937180426270>`,
+                description: `**Заявитель:** ${formData.fullName}\n**Подтверждены обязанности:** ✅ Да\n${discordRoles}`,
                 color: 0xd4af37, // Золотой цвет для старшего адвоката
                 fields: [
                     {
@@ -47,13 +136,18 @@ document.addEventListener('DOMContentLoaded', function() {
                         inline: false
                     },
                     {
+                        name: '📊 Версия конфига',
+                        value: discordConfig?.version || 'тестовая',
+                        inline: true
+                    },
+                    {
                         name: '📝 Статус',
                         value: '⏳ Ожидает собеседования',
                         inline: true
                     }
                 ],
                 footer: {
-                    text: 'Адвокатское бюро Majestic RP | Старший адвокат',
+                    text: `Адвокатское бюро Majestic RP | Старший адвокат | v${discordConfig?.version || '1.0'}`,
                     icon_url: 'https://cdn.discordapp.com/embed/avatars/0.png'
                 },
                 timestamp: new Date().toISOString()
@@ -69,7 +163,7 @@ document.addEventListener('DOMContentLoaded', function() {
             };
             
             // Отправляем запрос к Discord Webhook
-            const response = await fetch(DISCORD_WEBHOOK_URL, {
+            const response = await fetch(discordWebhookUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -91,7 +185,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error(errorMessage);
             }
             
-            // Получаем результат
+            // Пытаемся получить JSON ответ
             let result = null;
             try {
                 const responseText = await response.text();
@@ -101,7 +195,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     result = {
                         success: true,
                         id: `senior-thread-${Date.now()}`,
-                        message: 'Сообщение отправлено'
+                        message: 'Сообщение отправлено',
+                        buildId: discordConfig?.buildId || 'local'
                     };
                 }
             } catch (jsonError) {
@@ -109,7 +204,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 result = {
                     success: true,
                     id: `senior-thread-${Date.now()}`,
-                    message: 'Сообщение отправлено'
+                    message: 'Сообщение отправлено',
+                    buildId: discordConfig?.buildId || 'local'
                 };
             }
             
@@ -119,8 +215,8 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.error('Ошибка отправки в Discord:', error);
             
-            // Если ошибка сети, сохраняем локально
-            if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
+            // Если ошибка сети или Discord недоступен, пробуем сохранить локально
+            if (error.message.includes('Failed to fetch') || error.message.includes('Network') || error.message.includes('aborted')) {
                 console.log('Discord недоступен, сохраняем локально');
                 return {
                     success: true,
@@ -205,7 +301,8 @@ document.addEventListener('DOMContentLoaded', function() {
             position: 'senior_attorney',
             timestamp: new Date().toISOString(),
             applicationId: `SENIOR-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            confirmedDuties: true
+            confirmedDuties: true,
+            configVersion: discordConfig?.version || 'test'
         };
         
         try {
@@ -234,9 +331,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (error.message.includes('429')) {
                 errorMessage += 'Слишком много запросов. Подождите немного.';
             } else if (error.message.includes('401') || error.message.includes('403')) {
-                errorMessage += 'Проблема с доступом к Discord.';
+                errorMessage += 'Проблема с доступом к Discord. Проверьте webhook URL.';
             } else if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
-                errorMessage += 'Проблема с интернет-соединением.';
+                errorMessage += 'Проблема с интернет-соединением. Проверьте подключение.';
             } else {
                 errorMessage += 'Пожалуйста, попробуйте еще раз.';
             }
@@ -300,8 +397,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const icon = isLocal ? '💾' : '✅';
         const title = isLocal ? 'Сохранено локально!' : 'Заявка отправлена!';
         const description = isLocal ? 
-            'Заявка сохранена локально (Discord недоступен)' : 
+            'Discord недоступен, заявка сохранена локально' : 
             'С вами свяжутся для собеседования в течение 3-7 дней';
+        const configInfo = discordConfig ? 
+            ` (v${discordConfig.version}, ${discordConfig.buildDate || 'текущая сборка'})` : '';
         
         message.style.cssText = `
             position: fixed;
@@ -315,13 +414,14 @@ document.addEventListener('DOMContentLoaded', function() {
             z-index: 10000;
             animation: slideIn 0.5s ease;
             max-width: 400px;
+            backdrop-filter: blur(10px);
         `;
         
         message.innerHTML = `
             <div style="display: flex; align-items: center; gap: 15px;">
                 <div style="font-size: 2rem;">${icon}</div>
                 <div>
-                    <h3 style="margin: 0 0 10px 0;">${title}</h3>
+                    <h3 style="margin: 0 0 10px 0;">${title}${configInfo}</h3>
                     <p style="margin: 0; opacity: 0.9;">Номер заявки: ${applicationId}</p>
                     <p style="margin: 5px 0 0 0; font-size: 0.9em; opacity: 0.8;">
                         ${description}
@@ -368,6 +468,7 @@ document.addEventListener('DOMContentLoaded', function() {
             display: flex;
             align-items: center;
             gap: 10px;
+            backdrop-filter: blur(10px);
         `;
         
         notification.innerHTML = `
@@ -384,25 +485,32 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function saveApplicationToStorage(formData, discordResult) {
-        const applications = JSON.parse(localStorage.getItem('applications') || '[]');
-        
-        const application = {
-            id: formData.applicationId,
-            type: 'senior_attorney_promotion',
-            date: new Date().toLocaleString(),
-            status: discordResult?.local ? 'local_saved' : 'pending_interview',
-            fullName: formData.fullName,
-            specialCommId: formData.specialCommId,
-            confirmedDuties: formData.confirmedDuties,
-            discordThreadId: discordResult?.id || null,
-            notes: 'Требуется собеседование, обязанности подтверждены'
-        };
-        
-        applications.push(application);
-        localStorage.setItem('applications', JSON.stringify(applications));
-        localStorage.setItem('lastSeniorApplication', JSON.stringify(application));
-        
-        console.log('Заявка сохранена в хранилище:', application);
+        try {
+            const applications = JSON.parse(localStorage.getItem('applications') || '[]');
+            
+            const application = {
+                id: formData.applicationId,
+                type: 'senior_attorney_promotion',
+                date: new Date().toLocaleString(),
+                status: discordResult?.local ? 'local_saved' : 'pending_interview',
+                fullName: formData.fullName,
+                specialCommId: formData.specialCommId,
+                confirmedDuties: formData.confirmedDuties,
+                discordThreadId: discordResult?.id || null,
+                configVersion: formData.configVersion,
+                buildId: discordResult?.buildId || 'local',
+                notes: 'Требуется собеседование, обязанности подтверждены'
+            };
+            
+            applications.push(application);
+            localStorage.setItem('applications', JSON.stringify(applications));
+            localStorage.setItem('lastSeniorApplication', JSON.stringify(application));
+            
+            console.log('Заявка сохранена в хранилище:', application);
+            
+        } catch (error) {
+            console.error('Ошибка сохранения в хранилище:', error);
+        }
     }
     
     // ===== ИНИЦИАЛИЗАЦИЯ =====
@@ -423,6 +531,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 500);
     
     console.log('Форма старшего адвоката инициализирована');
+    console.log('Режим Discord:', discordWebhookUrl ? '✅ Настроен' : '❌ Не настроен (тестовый)');
+    console.log('Версия конфига:', discordConfig?.version || 'test');
 });
 
 // Добавляем CSS анимации
