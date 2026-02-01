@@ -1608,14 +1608,14 @@ document.addEventListener('DOMContentLoaded', function() {
         let invalidAnswers = [];
         
         textareas.forEach((textarea, index) => {
-            if (textarea.value.length < 50) {
+            if (textarea.value.length < 10) {
                 invalidAnswers.push(index + 1);
                 textarea.style.borderColor = '#ff6b6b';
             }
         });
         
         if (invalidAnswers.length > 0) {
-            errors.push(`• Ответы на вопросы №${invalidAnswers.join(', ')} должны содержать минимум 50 символов`);
+            errors.push(`• Ответы на вопросы №${invalidAnswers.join(', ')} должны содержать минимум 10 символов`);
         }
         
         // Проверка соглашений
@@ -1993,4 +1993,5 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
 
