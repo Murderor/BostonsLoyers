@@ -3,12 +3,12 @@
 // ⚠️ Реальный вебхук находится только здесь
 
 // ВАЖНО: объявляем как глобальную переменную
-var DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1465718072823513274/7G5O9bao4TWMYzwcggviBuax6t8i-sMavDqT3s9Sbfq7MohsOn_m_PaCdh5BcQOpajht";
+var DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1467445185297387723/TGBXdJ1zQwVn5UKjM0CRvKj0xnTTIeWcAyCDlMsp87AALfcm0NN7XItbblI10FE4bDYW";
 
 var DISCORD_CONFIG = {
-    webhook: "https://discord.com/api/webhooks/1465718072823513274/7G5O9bao4TWMYzwcggviBuax6t8i-sMavDqT3s9Sbfq7MohsOn_m_PaCdh5BcQOpajht",
+    webhook: "https://discord.com/api/webhooks/1467445185297387723/TGBXdJ1zQwVn5UKjM0CRvKj0xnTTIeWcAyCDlMsp87AALfcm0NN7XItbblI10FE4bDYW",
     version: "1.1",
-    buildDate: "2026-02-01 11:03:21",
+    buildDate: "2026-02-01 11:20:53",
     buildId: "21561734758",
     commitHash: "d584950e54a165c3c7ff3d38096261b2a5f558e5",
     roles: {
