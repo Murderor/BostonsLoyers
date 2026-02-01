@@ -2208,3 +2208,51 @@ textarea.form-control {
 .contact-item.discord-link:hover {
     background-color: rgba(114, 137, 218, 0.2);
 }
+
+
+
+
+
+
+
+.discord-minimal {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(114, 137, 218, 0.3);
+    border-radius: 8px;
+    color: #7289da;
+    text-decoration: none;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    margin: 5px 0;
+}
+
+.discord-minimal:hover {
+    background: rgba(114, 137, 218, 0.1);
+    border-color: #7289da;
+    transform: translateX(4px);
+}
+
+.discord-minimal-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.discord-minimal-handle {
+    margin-left: auto;
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+/* Обновление контейнера контактов */
+.profile-contacts {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+}
+
