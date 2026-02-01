@@ -1317,7 +1317,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (counter) {
             counter.textContent = length;
             
-            if (length < 50) {
+            if (length < 10) {
                 counter.style.color = '#ff6b6b';
                 textarea.style.borderColor = '#ff6b6b';
             } else {
@@ -1336,7 +1336,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (counter) {
                 counter.textContent = length;
-                if (length < 50) {
+                if (length < 10) {
                     counter.style.color = '#ff6b6b';
                 } else {
                     counter.style.color = '#2ecc71';
@@ -1993,5 +1993,6 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
 
 
