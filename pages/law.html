@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Законодательная база | Коллегия государственных адвокатов | Majestic RP | Boston</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="icon" type="image/x-icon" href="../favicon.ico">
+    <style>
+        /* Стили для страницы законов */
+        .laws-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .laws-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        
+        .laws-title {
+            font-size: 2.5rem;
+            color: var(--color-light);
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+        
+        .laws-subtitle {
+            color: #a0a8c0;
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .laws-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .law-card {
+            background-color: var(--color-gray);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            transition: var(--transition);
+            border: 1px solid transparent;
+            text-align: center;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .law-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--color-accent);
+            box-shadow: var(--shadow);
+        }
+        
+        .law-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            opacity: 0.9;
+        }
+        
+        .law-name {
+            font-size: 1.4rem;
+            color: var(--color-light);
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .law-description {
+            color: #a0a8c0;
+            margin-bottom: 25px;
+            line-height: 1.5;
+            font-size: 0.95rem;
+        }
+        
+        .law-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 25px;
+            background-color: var(--color-primary);
+            color: var(--color-light);
+            text-decoration: none;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            transition: var(--transition);
+            border: 1px solid var(--color-gray-light);
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .law-button:hover {
+            background-color: var(--color-accent);
+            color: var(--color-dark);
+            border-color: var(--color-accent);
+        }
+        
+        .laws-info {
+            background-color: rgba(5, 8, 17, 0.5);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            margin-top: 40px;
+            border-left: 4px solid var(--color-accent);
+        }
+        
+        .laws-info h3 {
+            color: var(--color-light);
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        .laws-info p {
+            color: #a0a8c0;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+        
+        .external-link-icon {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+        
+        /* Анимация появления карточек */
+        .law-card {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.6s ease forwards;
+        }
+        
+        .law-card:nth-child(1) { animation-delay: 0.1s; }
+        .law-card:nth-child(2) { animation-delay: 0.2s; }
+        .law-card:nth-child(3) { animation-delay: 0.3s; }
+        .law-card:nth-child(4) { animation-delay: 0.4s; }
+        .law-card:nth-child(5) { animation-delay: 0.5s; }
+        .law-card:nth-child(6) { animation-delay: 0.6s; }
+        
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .laws-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .laws-title {
+                font-size: 2rem;
+            }
+            
+            .law-card {
+                padding: 25px 20px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .laws-title {
+                font-size: 1.8rem;
+            }
+            
+            .law-icon {
+                font-size: 2.5rem;
+            }
+            
+            .law-name {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Прелоадер -->
+    <div class="page-transition" id="pageTransition">
+        <div class="loader"></div>
+        <div class="loader-text">ЗАКОНОДАТЕЛЬНАЯ БАЗА</div>
+    </div>
+
+    <!-- Шапка -->
+    <header class="header">
+        <div class="container header-container">
+            <div class="logo">
+                <div class="logo-image">
+                    <img src="../assets/logo.png" alt="Логотип адвокатского бюро" id="main-logo">
+                    <div class="logo-placeholder" id="logo-placeholder">AB</div>
+                </div>
+                <div class="logo-text">
+                    <h1 class="logo-title">Коллегия государственных адвокатов</h1>
+                    <p class="logo-subtitle">Majestic RP | Boston</p>
+                </div>
+            </div>
+
+            <nav class="main-nav">
+                <ul class="nav-list">
+                    <li><a href="../index.html" class="nav-button">Главная</a></li>
+                    <li><a href="about.html" class="nav-button">О нас</a></li>
+                    <li><a href="appeal.html" class="nav-button">Обращение</a></li>
+                    <li><a href="law.html" class="nav-button active">Законы</a></li>
+                </ul>
+            </nav>
+
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Мобильное меню -->
+    <nav class="mobile-nav" id="mobileNav">
+        <ul class="mobile-nav-list">
+            <li><a href="../index.html" class="mobile-nav-button">Главная</a></li>
+            <li><a href="about.html" class="mobile-nav-button">О нас</a></li>
+            <li><a href="appeal.html" class="mobile-nav-button">Обращение</a></li>
+            <li><a href="law.html" class="mobile-nav-button active">Законы</a></li>
+        </ul>
+    </nav>
+
+    <!-- Основной контент -->
+    <main class="main">
+        <div class="container">
+            <div class="laws-container">
+                <!-- Заголовок -->
+                <div class="laws-header">
+                    <h2 class="laws-title">Законодательная база</h2>
+                    <p class="laws-subtitle">
+                        Полный перечень законодательных актов штата Сан-Андреас.
+                        Все документы представлены в актуальной редакции.
+                    </p>
+                </div>
+
+                <!-- Карточки законов -->
+                <div class="laws-grid">
+                    <!-- Уголовный кодекс -->
+                    <div class="law-card">
+                        <div class="law-icon">⚖️</div>
+                        <h3 class="law-name">Уголовный кодекс</h3>
+                        <p class="law-description">
+                            Основной законодательный акт, устанавливающий преступления и наказания на территории штата Сан-Андреас.
+                        </p>
+                        <a href="https://forum.majestic-rp.ru/threads/ugolovnyi-kodeks-shtata-san-andreas.2663337/" target="_blank" class="law-button">
+                            Открыть документ 
+                            <span class="external-link-icon">↗</span>
+                        </a>
+                    </div>
+
+                    <!-- Конституция -->
+                    <div class="law-card">
+                        <div class="law-icon">📜</div>
+                        <h3 class="law-name">Конституция</h3>
+                        <p class="law-description">
+                            Основной закон штата, определяющий права и свободы граждан, а также основы государственного устройства.
+                        </p>
+                        <a href="https://forum.majestic-rp.ru/threads/konstitutsiya-shtata-san-andreas.2663355/" target="_blank" class="law-button">
+                            Открыть документ 
+                            <span class="external-link-icon">↗</span>
+                        </a>
+                    </div>
+
+                    <!-- Процессуальный кодекс -->
+                    <div class="law-card">
+                        <div class="law-icon">👮‍♂️</div>
+                        <h3 class="law-name">Процессуальный кодекс</h3>
+                        <p class="law-description">
+                            -
+                        </p>
+                        <a href="https://forum.majestic-rp.ru/threads/protsessual-nyi-kodeks-shtata-san-andreas.2663329/" target="_blank" class="law-button">
+                            Открыть документ 
+                            <span class="external-link-icon">↗</span>
+                        </a>
+                    </div>
+
+                </div>
+
+                <!-- Информационный блок -->
+                <div class="laws-info">
+                    <h3>Важная информация</h3>
+                    <p>Все законодательные акты представлены в актуальной редакции. При использовании документов в судебных процессах рекомендуется проверять наличие обновлений и поправок.</p>
+                    <p>Документы открываются на внешних ресурсах для обеспечения актуальности и полного доступа к текстам законов.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Подвал -->
+    <footer class="footer">
+        <div class="container">
+            <p>© Коллегия государственных адвокатов, Majestic RP | Boston</p>
+            <p>Законодательная база штата Сан-Андреас</p>
+        </div>
+    </footer>
+
+    <!-- Подключаем скрипты -->
+    <script src="../js/script.js"></script>
+    <script src="../js/transitions.js"></script>
+    <script src="../js/law.js"></script>
+</body>
+</html>

@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Форма: Адвокат | Коллегия государственных адвокатов | Majestic RP | Boston</title>
+    <link rel="stylesheet" href="../../css/style.css">
+    <link rel="icon" type="image/x-icon" href="../../favicon.ico">
+    <style>
+        /* Стили для формы адвоката */
+        .call-links-container {
+            margin-bottom: 30px;
+        }
+        
+        .call-link-field {
+            margin-bottom: 20px;
+        }
+        
+        .call-link-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .call-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background-color: var(--color-accent);
+            color: var(--color-dark);
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: 900;
+            font-size: 0.9rem;
+        }
+        
+        .call-title {
+            color: var(--color-light);
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .call-input {
+            width: 100%;
+            padding: 12px 15px;
+            background-color: rgba(5, 8, 17, 0.5);
+            border: 1px solid var(--color-gray-light);
+            border-radius: var(--border-radius);
+            color: var(--color-light);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+        
+        .call-input:focus {
+            outline: none;
+            border-color: var(--color-accent);
+            box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
+        }
+        
+        .call-input::placeholder {
+            color: var(--color-gray-light);
+        }
+        
+        .call-hint {
+            color: var(--color-gray-light);
+            font-size: 0.85rem;
+            margin-top: 5px;
+            font-style: italic;
+        }
+        
+        .form-notification {
+            background-color: rgba(26, 43, 76, 0.5);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid var(--color-gray-light);
+        }
+        
+        .notification-icon {
+            font-size: 1.5rem;
+            margin-right: 10px;
+            color: var(--color-accent);
+        }
+        
+        .link-validation {
+            display: none;
+            margin-top: 5px;
+            font-size: 0.85rem;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+        
+        .link-validation.valid {
+            display: block;
+            color: #2ecc71;
+            background-color: rgba(46, 204, 113, 0.1);
+            border: 1px solid rgba(46, 204, 113, 0.3);
+        }
+        
+        .link-validation.invalid {
+            display: block;
+            color: #e74c3c;
+            background-color: rgba(231, 76, 60, 0.1);
+            border: 1px solid rgba(231, 76, 60, 0.3);
+        }
+        
+        .stats-counter {
+            text-align: center;
+            color: #a0a8c0;
+            margin-top: 15px;
+            padding: 10px;
+            background-color: rgba(42, 49, 66, 0.3);
+            border-radius: var(--border-radius);
+        }
+        
+        .stats-number {
+            color: var(--color-accent);
+            font-weight: 900;
+            font-size: 1.2rem;
+        }
+        
+        .minimal-section {
+            background-color: rgba(5, 8, 17, 0.3);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid var(--color-gray-light);
+        }
+    </style>
+</head>
+<body>
+    <!-- Прелоадер -->
+    <div class="page-transition" id="pageTransition">
+        <div class="loader"></div>
+        <div class="loader-text">ФОРМА АДВОКАТА</div>
+    </div>
+
+    <!-- Шапка -->
+    <header class="header">
+        <div class="container header-container">
+            <div class="logo">
+                <div class="logo-image">
+                    <img src="../../assets/logo.png" alt="Логотип адвокатского бюро" id="main-logo">
+                    <div class="logo-placeholder" id="logo-placeholder">AB</div>
+                </div>
+                <div class="logo-text">
+                    <h1 class="logo-title">Коллегия государственных адвокатов</h1>
+                    <p class="logo-subtitle">Majestic RP | Boston</p>
+                </div>
+            </div>
+
+            <nav class="main-nav">
+                <ul class="nav-list">
+                    <li><a href="../../index.html" class="nav-button">Главная</a></li>
+                    <li><a href="../about.html" class="nav-button">О нас</a></li>
+                    <li><a href="../appeal.html" class="nav-button active">Обращение</a></li>
+                    <li><a href="../law.html" class="nav-button">Законы</a></li>
+                </ul>
+            </nav>
+
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Мобильное меню -->
+    <nav class="mobile-nav" id="mobileNav">
+        <ul class="mobile-nav-list">
+            <li><a href="../../index.html" class="mobile-nav-button">Главная</a></li>
+            <li><a href="../about.html" class="mobile-nav-button">О нас</a></li>
+            <li><a href="../appeal.html" class="mobile-nav-button active">Обращение</a></li>
+            <li><a href="../law.html" class="mobile-nav-button">Законы</a></li>
+        </ul>
+    </nav>
+
+    <!-- Основной контент -->
+    <main class="main">
+        <div class="container">
+            <!-- Хлебные крошки -->
+            <nav class="breadcrumbs">
+                <a href="../appeal.html">Обращение</a> 
+                <span> / </span>
+                <a href="promotion-select.html">Повышение → Выбор должности</a>
+                <span> / </span>
+                <span>Адвокат</span>
+            </nav>
+
+            <!-- Заголовок формы -->
+            <section class="page-header">
+                <h2 class="page-title">Форма повышения: Адвокат</h2>
+                <p class="page-subtitle">Минимальная форма для подачи заявки на повышение</p>
+            </section>
+
+            <!-- Информационное уведомление -->
+            <div class="form-notification">
+                <div style="display: flex; align-items: flex-start;">
+                    <span class="notification-icon">📋</span>
+                    <div>
+                        <h3 style="color: var(--color-light); margin-bottom: 10px;">Только необходимые поля</h3>
+                        <p style="color: #a0a8c0; margin-bottom: 5px;">1. Заполните ваше имя и ID Discord</p>
+                        <p style="color: #a0a8c0; margin-bottom: 5px;">2. Вставьте 5 ссылок на результаты ваших вызовов</p>
+                        <p style="color: #a0a8c0;">3. Подтвердите согласие с правилами</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Форма -->
+            <section class="form-container">
+                <form id="attorneyForm" class="appeal-form">
+                    <!-- Основная информация -->
+                    <div class="minimal-section">
+                        <h3 class="form-section-title">👤 Основная информация</h3>
+                        
+                        <div class="form-group">
+                            <label for="fullName">Ваше полное имя</label>
+                            <input type="text" id="fullName" name="fullName" required 
+                                   placeholder="Введите ваше имя и фамилию (игровой персонаж)"
+                                   class="form-control">
+                            <p class="field-hint">Пример: Иван Иванов</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="specialCommId">
+                                Ваш идентификатор спец. связи
+                                <span class="hint-icon" title="ПКМ по себе в Discord → 'Копировать ID Пользователя'">ℹ️</span>
+                            </label>
+                            <input type="text" id="specialCommId" name="specialCommId" required 
+                                   placeholder="Пример: 123456789012345678"
+                                   pattern="[0-9]{17,20}"
+                                   maxlength="20"
+                                   class="form-control">
+                            <p class="field-hint">ID пользователя Discord (17-20 цифр)</p>
+                        </div>
+                    </div>
+
+                    <!-- Ссылки на результаты вызовов -->
+                    <div class="minimal-section">
+                        <h3 class="form-section-title">🔗 Ссылки на результаты вызовов</h3>
+                        <p style="color: #a0a8c0; margin-bottom: 20px;">
+                            Прикрепите 5 ссылок на результаты ваших последних вызовов как младшего адвоката.
+                        </p>
+                        
+                        <div class="call-links-container">
+                            <!-- Ссылка 1 -->
+                            <div class="call-link-field">
+                                <div class="call-link-header">
+                                    <span class="call-number">1</span>
+                                    <span class="call-title">Ссылка на вызов #1</span>
+                                </div>
+                                <input type="url" 
+                                       name="callLink1" 
+                                       class="call-input" 
+                                       placeholder="https://discord.com/channels/..."
+                                       pattern="https?://.+"
+                                       required
+                                       oninput="validateLink(this)">
+                                <div class="call-hint">Ссылка на Discord сообщение или форумный пост</div>
+                                <div class="link-validation" id="validation1"></div>
+                            </div>
+
+                            <!-- Ссылка 2 -->
+                            <div class="call-link-field">
+                                <div class="call-link-header">
+                                    <span class="call-number">2</span>
+                                    <span class="call-title">Ссылка на вызов #2</span>
+                                </div>
+                                <input type="url" 
+                                       name="callLink2" 
+                                       class="call-input" 
+                                       placeholder="https://discord.com/channels/..."
+                                       pattern="https?://.+"
+                                       required
+                                       oninput="validateLink(this)">
+                                <div class="call-hint">Ссылка на Discord сообщение или форумный пост</div>
+                                <div class="link-validation" id="validation2"></div>
+                            </div>
+
+                            <!-- Ссылка 3 -->
+                            <div class="call-link-field">
+                                <div class="call-link-header">
+                                    <span class="call-number">3</span>
+                                    <span class="call-title">Ссылка на вызов #3</span>
+                                </div>
+                                <input type="url" 
+                                       name="callLink3" 
+                                       class="call-input" 
+                                       placeholder="https://discord.com/channels/..."
+                                       pattern="https?://.+"
+                                       required
+                                       oninput="validateLink(this)">
+                                <div class="call-hint">Ссылка на Discord сообщение или форумный пост</div>
+                                <div class="link-validation" id="validation3"></div>
+                            </div>
+
+                            <!-- Ссылка 4 -->
+                            <div class="call-link-field">
+                                <div class="call-link-header">
+                                    <span class="call-number">4</span>
+                                    <span class="call-title">Ссылка на вызов #4</span>
+                                </div>
+                                <input type="url" 
+                                       name="callLink4" 
+                                       class="call-input" 
+                                       placeholder="https://discord.com/channels/..."
+                                       pattern="https?://.+"
+                                       required
+                                       oninput="validateLink(this)">
+                                <div class="call-hint">Ссылка на Discord сообщение или форумный пост</div>
+                                <div class="link-validation" id="validation4"></div>
+                            </div>
+
+                            <!-- Ссылка 5 -->
+                            <div class="call-link-field">
+                                <div class="call-link-header">
+                                    <span class="call-number">5</span>
+                                    <span class="call-title">Ссылка на вызов #5</span>
+                                </div>
+                                <input type="url" 
+                                       name="callLink5" 
+                                       class="call-input" 
+                                       placeholder="https://discord.com/channels/..."
+                                       pattern="https?://.+"
+                                       required
+                                       oninput="validateLink(this)">
+                                <div class="call-hint">Ссылка на Discord сообщение или форумный пост</div>
+                                <div class="link-validation" id="validation5"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="stats-counter">
+                            Заполнено: <span class="stats-number" id="linksCount">0</span>/5 ссылок
+                        </div>
+                    </div>
+
+                    <!-- Соглашение -->
+                    <div class="minimal-section">
+                        <div class="form-group checkbox-group">
+                            <input type="checkbox" id="confirmation" name="confirmation" required>
+                            <label for="confirmation">
+                                Подтверждаю, что все предоставленные данные достоверны и согласен с правилами рассмотрения заявки
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Кнопки формы -->
+                    <div class="form-actions">
+                        <button type="submit" class="button button-primary" id="submitButton">
+                            📤 Отправить заявку
+                        </button>
+                        
+                        <div style="display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap;">
+                            <button type="button" class="button" id="saveDraftButton">
+                                💾 Сохранить черновик
+                            </button>
+                            <button type="reset" class="button button-secondary">
+                                🗑️ Очистить форму
+                            </button>
+                            <a href="promotion-select.html" class="button">
+                                ↩️ Назад к выбору
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Процесс рассмотрения -->
+            <section class="process-info">
+                <div class="info-card">
+                    <h3>Что будет дальше?</h3>
+                    <div class="process-steps">
+                        <div class="process-step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <h4>Отправка в Discord</h4>
+                                <p>Ваша заявка будет отправлена в Discord для рассмотрения</p>
+                            </div>
+                        </div>
+                        <div class="process-step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <h4>Проверка ссылок</h4>
+                                <p>Комиссия проверит предоставленные ссылки на вызовы</p>
+                            </div>
+                        </div>
+                        <div class="process-step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <h4>Решение</h4>
+                                <p>В течение 3-5 дней вы получите ответ по заявке</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Подвал -->
+    <footer class="footer">
+        <div class="container">
+            <p>© Коллегия государственных адвокатов, Majestic RP | Boston</p>
+            <p>Форма повышения: Адвокат | Минимальная форма</p>
+        </div>
+    </footer>
+
+    <!-- Подключаем скрипты -->
+    <script src="../../js/script.js"></script>
+    <script src="../../js/transitions.js"></script>
+    <script src="../../js/attorney-form.js"></script>
+</body>
+</html>
