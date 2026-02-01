@@ -1,6 +1,5 @@
 // discord-config.js - ШАБЛОН
 // Этот файл будет заменен GitHub Actions на реальный конфиг
-
 const DISCORD_WEBHOOK_URL = "{{DISCORD_WEBHOOK_PLACEHOLDER}}";
 
 const DISCORD_CONFIG = {
