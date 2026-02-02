@@ -1409,6 +1409,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                 name: '📊 Версия конфига',
                                 value: discordConfig?.version || 'тестовая',
                                 inline: true
+                            },
+                            {
+                                name: '⚠️⚠️⚠️ Внимание!',
+                                value: 'После проверки ответов на экзамен, требуется провести короткое устное собеседование!',
+                                inline: false
                             }
                         ],
                         footer: {
@@ -1993,6 +1998,7 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
 
 
 
