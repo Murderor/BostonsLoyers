@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Чёрный список адвокатуры | Majestic RP | Boston</title>
+    <link rel="stylesheet" href="../css/style.css">  <!-- подключи свой стиль -->
+    <link rel="icon" type="image/x-icon" href="../favicon.ico">
+    <style>
+        /* Доп стили только для этой страницы */
+        .blacklist-container {
+    margin: 40px 0;
+    padding: 0 15px;            /* маленькие отступы по бокам */
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+        .blacklist-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--color-gray);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+        .blacklist-table th,
+        .blacklist-table td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--color-gray-light);
+        }
+        .blacklist-table th {
+            background: var(--color-primary);
+            color: var(--color-accent);
+            font-weight: 700;
+        }
+        .blacklist-table tr:hover {
+            background: rgba(212, 175, 55, 0.08);
+        }
+        .status-active {
+            color: #ff4444;
+            font-weight: bold;
+        }
+        .status-expired {
+            color: #44ff44;
+        }
+        .proof-link {
+            color: var(--color-accent);
+            text-decoration: none;
+        }
+        .proof-link:hover {
+            text-decoration: underline;
+        }
+        .loading {
+            text-align: center;
+            font-size: 1.4rem;
+            color: var(--color-accent);
+            padding: 60px 0;
+        }
+        .error {
+            color: #ff6b6b;
+            text-align: center;
+            padding: 40px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Твой хедер как на других страницах -->
+    <header class="header">
+        <div class="container header-container">
+            <!-- Логотип -->
+            <div class="logo">
+                <div class="logo-image">
+                    <img src="../assets/logo.png" alt="Логотип адвокатского бюро" id="main-logo">
+                    <div class="logo-placeholder" id="logo-placeholder">AB</div>
+                </div>
+                <div class="logo-text">
+                    <h1 class="logo-title">Коллегия государственных адвокатов</h1>
+                    <p class="logo-subtitle">Majestic RP | Boston</p>
+                </div>
+            </div>
+
+            <!-- Навигация - только кнопки -->
+            <nav class="main-nav">
+                <ul class="nav-list">
+                    <li><a href="../index.html" class="nav-button active">Главная</a></li>
+                    <li><a href="../pages/about.html" class="nav-button">О нас</a></li>
+                    <li><a href="../pages/appeal.html" class="nav-button">Обращение</a></li>
+                    <li><a href="../pages/law.html" class="nav-button">Законы</a></li>
+                    <li><a href="../pages/blacklist.html" class="nav-button">ЧС адвокатуры</a></li>
+                </ul>
+            </nav>
+
+            <!-- Мобильное меню -->
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div> <!-- ... копипасть из index.html ... -->
+    </header>
+
+    <main class="main">
+        <div class="container blacklist-container">
+            <h2 class="section-title">Чёрный список адвокатуры</h2>
+            <p style="text-align:center; color:#a0a8c0; margin-bottom:40px;">
+                Адвокаты и помощники, лишённые права практики в коллегии.<br>
+            </p>
+
+            <div id="blacklistTableContainer">
+                <div class="loading">Загружаем список... ⚖️💀</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Твой футер -->
+    <footer class="footer">
+        <!-- ... -->
+    </footer>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbw8QL-olXfZjthkjI5UwcP22hCj5PcK7BtxMKCfoNt0k9OMHCSeU1c5p9yDhkSId3rg/exec";  // ← ВСТАВЬ СВОЙ URL СЮДА
+
+        async function loadBlacklist() {
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) throw new Error('Сервер не овтечает');
+                
+                const result = await response.json();
+                if (!result.success) throw new Error('В плохой форме');
+
+                const data = result.data;
+                if (data.length === 0) {
+                    document.getElementById('blacklistTableContainer').innerHTML = 
+                        '<div class="error">Список пуст.</div>';
+                    return;
+                }
+
+                let html = `
+                    <table class="blacklist-table">
+                        <thead>
+                            <tr>
+                                <th>Гражданин:</th>
+                                <th>Кто внёс:</th>
+                                <th>Причина:</th>    
+                                <th>Срок:</th>
+                                <th>Возможность досрочного снятия ограничений:</th>
+                                <th>Дата внесения:</th>
+                                <th>Действие для приостановки наказания</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                data.forEach(row => {
+                    const proof = row["Доказательства (ссылка)"] 
+                        ? `<a href="${row["Доказательства (ссылка)"]}" target="_blank" class="proof-link">Смотреть</a>` 
+                        : "—";
+
+                    const statusClass = row["Статус"]?.toLowerCase().includes("актив") 
+                        ? "status-active" : "status-expired";
+
+                    html += `
+                        <tr>
+                            <td>${row["Имя и статик вносимого гражданина:"] || "—"}</td>
+                            <td>${row["Ваше имя и статик:"] || "—"}</td>
+                            <td>${row["Причина внесения в ЧС:"] || "—"}</td>
+                            <td>${row["Срок:"] || "—"}</td>
+                            <td>${row["Возможность досрочно прекратить наказание:"] || "—"}</td>
+                            <td>${row["Отметка времени"] || "—"}</td>
+                            <td>${row["Действие для остановки наказания"] || "—"}</td>
+                        </tr>
+                    `;
+                });
+
+                html += `</tbody></table>`;
+                document.getElementById('blacklistTableContainer').innerHTML = html;
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('blacklistTableContainer').innerHTML = 
+                    `<div class="error">Ошибка загрузки: ${err.message}<br>Проверь URL или интернет</div>`;
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', loadBlacklist);
+    </script>
+
+    <script src="../js/script.js"></script>  <!-- твой общий скрипт -->
+</body>
+</html>
