@@ -17,9 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
-    // =============================================
-    //   Фото (без изменений)
-    // =============================================
+    // Фото
     const photoFields = {
         idCard: { uploadArea: document.getElementById('idCardUpload'), preview: document.getElementById('idCardPreview'), input: document.getElementById('idCard'), field: document.getElementById('idCardField'), file: null },
         statesRole: { uploadArea: document.getElementById('statesUpload'), preview: document.getElementById('statesPreview'), input: document.getElementById('statesRole'), field: document.getElementById('statesField'), file: null }
@@ -108,9 +106,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // =============================================
-    //   Отправка формы
-    // =============================================
+    // Отправка формы
     const form = document.getElementById('juniorForm');
     const submitButton = document.getElementById('submitButton');
 
@@ -142,10 +138,9 @@ document.addEventListener('DOMContentLoaded', function() {
         submitButton.disabled = true;
         submitButton.textContent = 'Отправка...';
 
-        // Формируем FormData для файлов + JSON
+        // FormData для файлов + JSON
         const formData = new FormData();
 
-        // Основной payload
         const payload = {
             username: "Секретарь Коллегии адвокатов",
             avatar_url: "https://i.pinimg.com/originals/7a/af/81/7aaf811aa403514a33e1d468e7405f9a.png",
@@ -175,7 +170,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         formData.append('payload_json', JSON.stringify(payload));
 
-        // Добавляем фотографии
         if (photoFields.idCard.file) {
             formData.append('files[0]', photoFields.idCard.file, 'udostoverenie.jpg');
         }
@@ -190,28 +184,34 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             if (response.ok) {
-                alert('Заявка успешно отправлена! Ожидайте проверки в Discord.');
+                // Только тихое сообщение об успехе, без лишних слов
+                const successMsg = document.createElement('div');
+                successMsg.innerHTML = '<span style="color:#86efac;">Заявка отправлена</span>';
+                successMsg.style.marginTop = '20px';
+                successMsg.style.textAlign = 'center';
+                form.appendChild(successMsg);
+
+                setTimeout(() => successMsg.remove(), 5000);
+
                 form.reset();
                 clearAllPhotos();
                 updatePhotoCount();
             } else {
                 const errorText = await response.text();
                 console.error('Discord ошибка:', errorText);
-                alert('Ошибка отправки (код ' + response.status + '): ' + errorText);
+                alert('Ошибка отправки (код ' + response.status + ')');
             }
         } catch (err) {
             console.error('Сетевая ошибка:', err);
-            alert('Не удалось отправить заявку. Проверьте интернет-соединение.');
+            alert('Не удалось отправить заявку');
         } finally {
             submitButton.disabled = false;
             submitButton.textContent = '📝 Отправить на аккредитацию';
         }
     });
 
-    // Инициализация
     updatePhotoCount();
 
-    // Анимация
     setTimeout(() => {
         document.querySelectorAll('.form-section').forEach((section, index) => {
             section.style.opacity = '0';
@@ -224,5 +224,5 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }, 500);
 
-    console.log('Форма младшего адвоката полностью готова');
+    console.log('Форма младшего адвоката готова');
 });
