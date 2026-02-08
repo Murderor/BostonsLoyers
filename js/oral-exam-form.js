@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // === ВОТ ЭТОТ PAYLOAD РАБОТАЕТ НА 100% ===
         const payload = {
     username: "Секретарь Адвокатуры",
-    avatar_url: "https://i.imgur.com/7aaf811.png",
+    avatar_url: "https://i.pinimg.com/originals/7a/af/81/7aaf811aa403514a33e1d468e7405f9a.png",
     
     thread_name: `Запись на экзамен — ${nameStatic}`,  // ← ЭТО ОБЯЗАТЕЛЬНО ДЛЯ ФОРУМ-КАНАЛА
     
@@ -123,5 +123,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     console.log('Форма готова, webhook:', discordWebhookUrl ? 'живой' : 'пиздец');
 });
+
 
 
