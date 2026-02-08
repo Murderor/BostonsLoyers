@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             if (response.ok) {
-                resultDiv.innerHTML = '<span style="color:#86efac;">Запись ушла в Discord! Жди ответа.</span>';
+                resultDiv.innerHTML = '<span style="color:#86efac;">Запись отправленв! В ближайшее время с вами свяжутся.</span>';
                 form.reset();
             } else {
                 const errorText = await response.text();
@@ -123,6 +123,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     console.log('Форма готова, webhook:', discordWebhookUrl ? 'живой' : 'пиздец');
 });
+
 
 
 
