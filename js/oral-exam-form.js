@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof DISCORD_WEBHOOK_URL !== 'undefined' &&
         DISCORD_WEBHOOK_URL !== "{{DISCORD_WEBHOOK_PLACEHOLDER}}" &&
         DISCORD_WEBHOOK_URL.includes('discord.com')) {
-
+        
         discordWebhookUrl = DISCORD_WEBHOOK_URL;
         console.log('✅ Discord Webhook загружен');
     } else {
@@ -42,41 +42,64 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Валидация
         if (!nameStatic || !discordId || !examDateTime) {
-            resultDiv.innerHTML = '<span style="color:#f87171;">Заполните все обязательные поля, сука!</span>';
+            resultDiv.innerHTML = '<span style="color:#f87171;">Пожалуйста, заполните все обязательные поля</span>';
             return;
         }
 
         if (!/^\d{17,20}$/.test(discordId)) {
-            resultDiv.innerHTML = '<span style="color:#f87171;">ID Discord — хуйня, 17-20 цифр надо</span>';
+            resultDiv.innerHTML = '<span style="color:#f87171;">ID Discord должен содержать 17–20 цифр</span>';
             return;
         }
 
         submitButton.disabled = true;
-        submitButton.textContent = 'Шлю в Discord...';
-        resultDiv.innerHTML = '<span style="color:#86efac;">Отправляю, жди...</span>';
+        submitButton.textContent = 'Отправка...';
+        resultDiv.innerHTML = '<span style="color:#86efac;">Отправляем заявку в Discord...</span>';
 
-        // === ВОТ ЭТОТ PAYLOAD РАБОТАЕТ НА 100% ===
+        // Красивый embed + упоминание всех ролей
         const payload = {
-    username: "Секретарь Адвокатуры",
-    avatar_url: "https://i.pinimg.com/originals/7a/af/81/7aaf811aa403514a33e1d468e7405f9a.png",
-    
-    thread_name: `Запись на экзамен — ${nameStatic}`,  // ← ЭТО ОБЯЗАТЕЛЬНО ДЛЯ ФОРУМ-КАНАЛА
-    
-    content: `Новая запись от ${nameStatic}`,
-    embeds: [{
-        title: "🗓️ Запись на устный экзамен",
-        description: `**${nameStatic}** хочет пройти экзамен`,
-        color: 9740288,
-        fields: [
-            { name: "Имя и статик", value: nameStatic || "—", inline: true },
-            { name: "Discord", value: `<@${discordId}>`, inline: true },
-            { name: "Время", value: examDateTime || "—", inline: false },
-            { name: "Экзаменатор", value: preferredExaminer || "Не указан", inline: false }
-        ],
-        timestamp: new Date().toISOString(),
-        footer: { text: "Коллегия адвокатов • Majestic RP" }
-    }]
-};
+            username: "Секретарь Коллегии адвокатов",
+            avatar_url: "https://i.pinimg.com/originals/7a/af/81/7aaf811aa403514a33e1d468e7405f9a.png",
+            
+            // Создаём новую ветку с понятным названием
+            thread_name: `Запись на экзамен — ${nameStatic}`,
+            
+            // Упоминаем все три роли
+            content: "<@&1321503127987421316> <@&1371785937180426270> <@&1321503135302291516>\nНовая заявка на устный экзамен",
+            
+            embeds: [{
+                title: "🗓️ Новая запись на устный экзамен",
+                description: `**${nameStatic}** подал заявку на прохождение устного экзамена`,
+                color: 0x60a5fa,          // красивый голубой #60a5fa
+                fields: [
+                    {
+                        name: "👤 Имя и статик",
+                        value: nameStatic || "—",
+                        inline: true
+                    },
+                    {
+                        name: "📱 Discord",
+                        value: `<@${discordId}>`,
+                        inline: true
+                    },
+                    {
+                        name: "🕒 Удобное время",
+                        value: examDateTime || "—",
+                        inline: false
+                    },
+                    {
+                        name: "🎓 Предпочтительный экзаменатор",
+                        value: preferredExaminer,
+                        inline: false
+                    }
+                ],
+                timestamp: new Date().toISOString(),
+                footer: {
+                    text: "Коллегия государственных адвокатов • Majestic RP | Boston",
+                    icon_url: "https://i.pinimg.com/originals/7a/af/81/7aaf811aa403514a33e1d468e7405f9a.png"
+                }
+            }]
+        };
+
         try {
             const response = await fetch(discordWebhookUrl, {
                 method: 'POST',
@@ -87,28 +110,28 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             if (response.ok) {
-                resultDiv.innerHTML = '<span style="color:#86efac;">Запись отправленв! В ближайшее время с вами свяжутся.</span>';
+                resultDiv.innerHTML = '<span style="color:#86efac;">Заявка успешно отправлена! Ожидайте ответа в Discord.</span>';
                 form.reset();
             } else {
                 const errorText = await response.text();
-                console.error('Discord 400:', errorText);
-                resultDiv.innerHTML = `<span style="color:#f87171;">Discord сказал нахуй (400). Проверь роль в content или webhook.</span>`;
+                console.error('Discord ошибка:', errorText);
+                resultDiv.innerHTML = '<span style="color:#f87171;">Ошибка отправки (код ' + response.status + '). Попробуйте позже.</span>';
             }
         } catch (err) {
             console.error('Сетевая ошибка:', err);
-            resultDiv.innerHTML = '<span style="color:#f87171;">Нет интернета или webhook мёртвый.</span>';
+            resultDiv.innerHTML = '<span style="color:#f87171;">Не удалось отправить заявку. Проверьте соединение.</span>';
         } finally {
             submitButton.disabled = false;
             submitButton.textContent = '📅 Записаться на экзамен';
 
-            // Очистка сообщения через 8 сек
+            // Очистка сообщения через 8 секунд
             setTimeout(() => {
                 resultDiv.innerHTML = '';
             }, 8000);
         }
     });
 
-    // Анимация
+    // Анимация появления секций
     setTimeout(() => {
         document.querySelectorAll('.form-section').forEach((s, i) => {
             s.style.opacity = '0';
@@ -121,9 +144,5 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }, 300);
 
-    console.log('Форма готова, webhook:', discordWebhookUrl ? 'живой' : 'пиздец');
+    console.log('Форма готова, webhook:', discordWebhookUrl ? 'живой' : 'не настроен');
 });
-
-
-
-
