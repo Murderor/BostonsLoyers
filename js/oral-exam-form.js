@@ -58,11 +58,15 @@ document.addEventListener('DOMContentLoaded', function() {
         // === ВОТ ЭТОТ PAYLOAD РАБОТАЕТ НА 100% ===
         const payload = {
     username: "Секретарь Адвокатуры",
-    avatar_url: "https://i.imgur.com/7aaf811.png",  // любой валидный URL картинки
+    avatar_url: "https://i.imgur.com/7aaf811.png",
+    
+    thread_name: `Запись на экзамен — ${nameStatic}`,  // ← ЭТО ОБЯЗАТЕЛЬНО ДЛЯ ФОРУМ-КАНАЛА
+    
+    content: `Новая запись от ${nameStatic}`,
     embeds: [{
         title: "🗓️ Запись на устный экзамен",
-        description: `**${nameStatic}** подал заявку на экзамен`,
-        color: 9740288,  // 0x60a5fa в decimal
+        description: `**${nameStatic}** хочет пройти экзамен`,
+        color: 9740288,
         fields: [
             { name: "Имя и статик", value: nameStatic || "—", inline: true },
             { name: "Discord", value: `<@${discordId}>`, inline: true },
@@ -70,11 +74,8 @@ document.addEventListener('DOMContentLoaded', function() {
             { name: "Экзаменатор", value: preferredExaminer || "Не указан", inline: false }
         ],
         timestamp: new Date().toISOString(),
-        footer: {
-            text: "Коллегия адвокатов • Majestic RP"
-        }
+        footer: { text: "Коллегия адвокатов • Majestic RP" }
     }]
-    // content убрали полностью — часто именно из-за него 400
 };
         try {
             const response = await fetch(discordWebhookUrl, {
@@ -122,4 +123,5 @@ document.addEventListener('DOMContentLoaded', function() {
 
     console.log('Форма готова, webhook:', discordWebhookUrl ? 'живой' : 'пиздец');
 });
+
 
