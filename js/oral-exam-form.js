@@ -57,24 +57,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // === ВОТ ЭТОТ PAYLOAD РАБОТАЕТ НА 100% ===
         const payload = {
-            username: "Секретарь Адвокатуры",
-            avatar_url: "https://i.imgur.com/7aaf811.png", // любой аватар, главное валидный URL
-            content: `<@&ВАША_РОЛЬ_ЭКЗАМЕНАТОРОВ> Новая запись на устный экзамен!`, // ← замени на реальный ID роли
-            embeds: [{
-                title: "🗓️ Запись на устный экзамен",
-                description: `**${nameStatic}** хочет пройти экзамен`,
-                color: 0x60a5fa,
-                fields: [
-                    { name: "👤 Имя и статик", value: nameStatic, inline: true },
-                    { name: "📱 Discord", value: `<@${discordId}>`, inline: true },
-                    { name: "🕐 Время", value: examDateTime, inline: false },
-                    { name: "🎓 Экзаменатор", value: preferredExaminer, inline: false }
-                ],
-                timestamp: new Date().toISOString(),
-                footer: { text: "Коллегия адвокатов | Majestic RP" }
-            }]
-        };
-
+    username: "Секретарь Адвокатуры",
+    avatar_url: "https://i.imgur.com/7aaf811.png",  // любой валидный URL картинки
+    embeds: [{
+        title: "🗓️ Запись на устный экзамен",
+        description: `**${nameStatic}** подал заявку на экзамен`,
+        color: 9740288,  // 0x60a5fa в decimal
+        fields: [
+            { name: "Имя и статик", value: nameStatic || "—", inline: true },
+            { name: "Discord", value: `<@${discordId}>`, inline: true },
+            { name: "Время", value: examDateTime || "—", inline: false },
+            { name: "Экзаменатор", value: preferredExaminer || "Не указан", inline: false }
+        ],
+        timestamp: new Date().toISOString(),
+        footer: {
+            text: "Коллегия адвокатов • Majestic RP"
+        }
+    }]
+    // content убрали полностью — часто именно из-за него 400
+};
         try {
             const response = await fetch(discordWebhookUrl, {
                 method: 'POST',
@@ -121,3 +122,4 @@ document.addEventListener('DOMContentLoaded', function() {
 
     console.log('Форма готова, webhook:', discordWebhookUrl ? 'живой' : 'пиздец');
 });
+
