@@ -132,10 +132,10 @@ document.addEventListener('DOMContentLoaded', function() {
             
             categories.forEach(key => {
                 const score = formData[key];
-                scoresText += `**${categoryNames[key]}:** ${score}/10\n`;
+                scoresText += `**${categoryNames[key]}:** ${score}\n`;
             });
             
-            scoresText += `\n**Итоговый балл:** ${formData.totalScore}/50`;
+            scoresText += `\n**Итоговый балл:** ${formData.totalScore}/64`;
             
             const roles = discordConfig?.roles ? 
                 `${discordConfig.roles.main}, ${discordConfig.roles.secondary}, ${discordConfig.roles.tertiary}` :
@@ -627,4 +627,5 @@ style.textContent = `
         to { opacity: 0; transform: translateX(100%); }
     }
 `;
+
 document.head.appendChild(style);
