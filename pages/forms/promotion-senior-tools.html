@@ -6,9 +6,111 @@
     <title>Инструменты старшего состава | Коллегия государственных адвокатов | Majestic RP | Boston</title>
     <link rel="stylesheet" href="../../css/style.css">
     <link rel="icon" type="image/x-icon" href="../../favicon.ico">
+    <style>
+        /* Стили для парольного прелоадера */
+        #passwordPreloader {
+            position: fixed;
+            inset: 0;
+            background: var(--color-darker);
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--color-light);
+            transition: opacity 0.6s ease;
+        }
+
+        #passwordPreloader.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .password-container {
+            background: var(--color-gray);
+            padding: 40px 50px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            text-align: center;
+            max-width: 420px;
+            width: 90%;
+        }
+
+        .password-title {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: var(--color-accent);
+        }
+
+        .password-input {
+            width: 100%;
+            padding: 14px 18px;
+            font-size: 1.1rem;
+            background: rgba(5,8,17,0.6);
+            border: 2px solid var(--color-gray-light);
+            border-radius: var(--border-radius);
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .password-input:focus {
+            border-color: var(--color-accent);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(212,175,55,0.2);
+        }
+
+        .password-btn {
+            padding: 14px 40px;
+            font-size: 1.1rem;
+            background: var(--color-accent);
+            color: var(--color-dark);
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .password-btn:hover {
+            background: var(--color-accent-dark);
+            transform: translateY(-2px);
+        }
+
+        .password-error {
+            color: #ff6b6b;
+            margin-top: 12px;
+            font-size: 0.95rem;
+            min-height: 1.2em;
+        }
+
+        /* Скрываем основной контент до ввода пароля */
+        body:not(.authorized) main,
+        body:not(.authorized) footer,
+        body:not(.authorized) header,
+        body:not(.authorized) .mobile-nav {
+            display: none !important;
+        }
+    </style>
 </head>
 <body>
-    <!-- Прелоадер -->
+
+    <!-- Парольный прелоадер (показывается первым) -->
+    <div id="passwordPreloader">
+        <div class="password-container">
+            <h2 class="password-title">Доступ к панели старшего состава</h2>
+            <p style="margin-bottom: 25px; color: #a0a8c0;">
+                Введите пароль, выданный главой / заместителем коллегии
+            </p>
+            
+            <input type="password" id="accessPassword" class="password-input" 
+                   placeholder="Пароль..." autocomplete="off">
+            
+            <button class="password-btn" id="submitPassword">Войти</button>
+            
+            <div class="password-error" id="passwordError"></div>
+        </div>
+    </div>
+
+    <!-- Обычный прелоадер (появится после ввода пароля) -->
     <div class="page-transition" id="pageTransition">
         <div class="loader"></div>
         <div class="loader-text">ПАНЕЛЬ СТАРШЕГО СОСТАВА</div>
@@ -88,7 +190,7 @@
             <section class="positions-selection">
                 <div class="positions-grid">
 
-                    <!-- Основной инструмент — отчёт по аккредитации / экзамену  featured -->
+                    <!-- Основной инструмент — отчёт по аккредитации / экзамену -->
                     <div class="position-card">
                         <div class="position-header">
                             <div class="position-icon">📋</div>
@@ -114,7 +216,7 @@
                         </div>
                     </div>
 
-                    <!-- Заглушка — проверка вакансий / планирование -->
+                    <!-- Заглушка — в разработке -->
                     <div class="position-card coming-soon">
                         <div class="position-header">
                             <div class="position-icon">📅</div>
@@ -126,7 +228,6 @@
                             Раздел в разработке
                         </p>
                     </div>
-
 
                 </div>
             </section>
@@ -150,5 +251,40 @@
 
     <script src="../../js/script.js"></script>
     <script src="../../js/transitions.js"></script>
+
+    <!-- Скрипт парольного доступа -->
+    <script>
+        const CORRECT_PASSWORD = "593328"; // ← ← ← ИЗМЕНИ НА СВОЙ ПАРОЛЬ
+
+        document.getElementById('submitPassword').addEventListener('click', function() {
+            const input = document.getElementById('accessPassword').value.trim();
+            const errorEl = document.getElementById('passwordError');
+
+            if (input === CORRECT_PASSWORD) {
+                // Успех — скрываем прелоадер пароля и показываем страницу
+                document.getElementById('passwordPreloader').classList.add('hidden');
+                document.body.classList.add('authorized');
+
+                // Запускаем обычный прелоадер страницы (если нужно)
+                setTimeout(() => {
+                    document.getElementById('pageTransition').style.opacity = '0';
+                    document.getElementById('pageTransition').style.visibility = 'hidden';
+                }, 800);
+            } else {
+                errorEl.textContent = 'Неверный пароль';
+                errorEl.style.color = '#ff6b6b';
+            }
+        });
+
+        // Ввод по Enter
+        document.getElementById('accessPassword').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('submitPassword').click();
+            }
+        });
+
+        // Фокус на поле при загрузке
+        document.getElementById('accessPassword').focus();
+    </script>
 </body>
 </html>
