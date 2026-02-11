@@ -2495,3 +2495,20 @@ textarea.form-control {
         font-size: 2rem;
     }
 }
+
+
+
+.coming-soon {
+    opacity: 0.75;
+    filter: grayscale(0.4);
+    pointer-events: none;
+}
+
+.coming-soon .position-button {
+    background: #444 !important;
+    cursor: not-allowed;
+}
+
+.coming-soon:hover {
+    transform: none !important;
+}

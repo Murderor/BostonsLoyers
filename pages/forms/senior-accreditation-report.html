@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Форма: Отчёт по устному экзамену | Старший состав | Коллегия государственных адвокатов | Majestic RP | Boston</title>
+    <link rel="stylesheet" href="../../css/style.css">
+    <link rel="icon" type="image/x-icon" href="../../favicon.ico">
+    <style>
+        /* Стили для формы отчёта по экзамену */
+        .exam-scores-container {
+            margin-bottom: 30px;
+        }
+        
+        .score-field {
+            margin-bottom: 20px;
+        }
+        
+        .score-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .score-icon {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background-color: var(--color-accent);
+            color: var(--color-dark);
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: 900;
+            font-size: 0.9rem;
+        }
+        
+        .score-title {
+            color: var(--color-light);
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .score-input {
+            width: 100%;
+            padding: 12px 15px;
+            background-color: rgba(5, 8, 17, 0.5);
+            border: 1px solid var(--color-gray-light);
+            border-radius: var(--border-radius);
+            color: var(--color-light);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+        
+        .score-input:focus {
+            outline: none;
+            border-color: var(--color-accent);
+            box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
+        }
+        
+        .score-hint {
+            color: var(--color-gray-light);
+            font-size: 0.85rem;
+            margin-top: 5px;
+            font-style: italic;
+        }
+        
+        .form-notification {
+            background-color: rgba(26, 43, 76, 0.5);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid var(--color-gray-light);
+        }
+        
+        .notification-icon {
+            font-size: 1.5rem;
+            margin-right: 10px;
+            color: var(--color-accent);
+        }
+        
+        .total-score {
+            text-align: center;
+            color: #a0a8c0;
+            margin-top: 15px;
+            padding: 10px;
+            background-color: rgba(42, 49, 66, 0.3);
+            border-radius: var(--border-radius);
+        }
+        
+        .total-number {
+            color: var(--color-accent);
+            font-weight: 900;
+            font-size: 1.2rem;
+        }
+        
+        .minimal-section {
+            background-color: rgba(5, 8, 17, 0.3);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid var(--color-gray-light);
+        }
+    </style>
+</head>
+<body>
+    <!-- Прелоадер -->
+    <div class="page-transition" id="pageTransition">
+        <div class="loader"></div>
+        <div class="loader-text">ОТЧЁТ ПО ЭКЗАМЕНУ</div>
+    </div>
+
+    <!-- Шапка -->
+    <header class="header">
+        <div class="container header-container">
+            <div class="logo">
+                <div class="logo-image">
+                    <img src="../../assets/logo.png" alt="Логотип адвокатского бюро" id="main-logo">
+                    <div class="logo-placeholder" id="logo-placeholder">AB</div>
+                </div>
+                <div class="logo-text">
+                    <h1 class="logo-title">Коллегия государственных адвокатов</h1>
+                    <p class="logo-subtitle">Majestic RP | Boston</p>
+                </div>
+            </div>
+
+            <nav class="main-nav">
+                <ul class="nav-list">
+                    <li><a href="../../index.html" class="nav-button active">Главная</a></li>
+                    <li><a href="../../pages/about.html" class="nav-button">О нас</a></li>
+                    <li><a href="../../pages/appeal.html" class="nav-button">Обращение</a></li>
+                    <li><a href="../../pages/law.html" class="nav-button">Законы</a></li>
+                    <li><a href="../../pages/blacklist.html" class="nav-button">ЧС адвокатуры</a></li>
+                </ul>
+            </nav>
+
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Мобильное меню -->
+    <nav class="mobile-nav" id="mobileNav">
+        <ul class="mobile-nav-list">
+            <li><a href="../../index.html" class="mobile-nav-button active">Главная</a></li>
+            <li><a href="../about.html" class="mobile-nav-button">О нас</a></li>
+            <li><a href="../appeal.html" class="mobile-nav-button">Обращение</a></li>
+            <li><a href="../law.html" class="mobile-nav-button">Законы</a></li>
+        </ul>
+    </nav>
+
+    <!-- Основной контент -->
+    <main class="main">
+        <div class="container">
+            <!-- Хлебные крошки -->
+            <nav class="breadcrumbs">
+                <a href="../../appeal.html">Обращение</a> 
+                <span> / </span>
+                <a href="promotion-senior-tools.html">Старший состав → Инструменты</a>
+                <span> / </span>
+                <span>Отчёт по устному экзамену</span>
+            </nav>
+
+            <!-- Заголовок формы -->
+            <section class="page-header">
+                <h2 class="page-title">Форма отчёта: Устный экзамен</h2>
+                <p class="page-subtitle">Заполните отчёт после проведения устного экзамена с кандидатом</p>
+            </section>
+
+            <!-- Информационное уведомление -->
+            <div class="form-notification">
+                <div style="display: flex; align-items: flex-start;">
+                    <span class="notification-icon">📋</span>
+                    <div>
+                        <h3 style="color: var(--color-light); margin-bottom: 10px;">Обязательные поля</h3>
+                        <p style="color: #a0a8c0; margin-bottom: 5px;">1. Имя и ID экзаменатора / кандидата</p>
+                        <p style="color: #a0a8c0; margin-bottom: 5px;">2. Баллы по категориям (0-10)</p>
+                        <p style="color: #a0a8c0;">3. Подтвердите отправку паролем</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Форма -->
+            <section class="form-container">
+                <form id="examReportForm" class="appeal-form">
+                    <!-- Основная информация -->
+                    <div class="minimal-section">
+                        <h3 class="form-section-title">👤 Информация об участниках</h3>
+                        
+                        <div class="form-group">
+                            <label for="examinerName">Имя экзаменатора</label>
+                            <input type="text" id="examinerName" name="examinerName" required 
+                                   placeholder="Пример: Иван Иванов" class="form-control">
+                            <p class="field-hint">Ваше имя или ник (статическое)</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="examinerId">
+                                ID экзаменатора (Discord ID)
+                                <span class="hint-icon" title="ПКМ по себе в Discord → 'Копировать ID Пользователя'">ℹ️</span>
+                            </label>
+                            <input type="text" id="examinerId" name="examinerId" required 
+                                   placeholder="Пример: 123456789012345678"
+                                   pattern="[0-9]{17,20}"
+                                   maxlength="20"
+                                   class="form-control">
+                            <p class="field-hint">ID пользователя Discord (17-20 цифр)</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="candidateName">Имя кандидата</label>
+                            <input type="text" id="candidateName" name="candidateName" required 
+                                   placeholder="Пример: Петр Петров" class="form-control">
+                            <p class="field-hint">Имя или ник кандидата (статическое)</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="candidateId">
+                                ID кандидата (Discord ID)
+                                <span class="hint-icon" title="ПКМ по кандидату в Discord → 'Копировать ID Пользователя'">ℹ️</span>
+                            </label>
+                            <input type="text" id="candidateId" name="candidateId" required 
+                                   placeholder="Пример: 123456789012345678"
+                                   pattern="[0-9]{17,20}"
+                                   maxlength="20"
+                                   class="form-control">
+                            <p class="field-hint">ID пользователя Discord (17-20 цифр)</p>
+                        </div>
+                    </div>
+
+                    <!-- Баллы по категориям -->
+                    <div class="minimal-section">
+                        <h3 class="form-section-title">📊 Баллы по категориям</h3>
+                        <p style="color: #a0a8c0; margin-bottom: 20px;">
+                            Укажите баллы за знания в каждой категории.
+                        </p>
+                        
+                        <div class="exam-scores-container">
+                            <!-- Базовый уровень -->
+                            <div class="score-field">
+                                <div class="score-header">
+                                    <span class="score-icon">1</span>
+                                    <span class="score-title">Базовый уровень</span>
+                                </div>
+                                <input type="number" 
+                                       name="basicLevel" 
+                                       class="score-input" 
+                                       min="0" max="14" step="1"
+                                       required
+                                       oninput="updateTotalScore()">
+                                <div class="score-hint">Оценка от 0 до 14</div>
+                            </div>
+
+                            <!-- Конституция штата San-Andreas -->
+                            <div class="score-field">
+                                <div class="score-header">
+                                    <span class="score-icon">2</span>
+                                    <span class="score-title">Конституция штата San-Andreas</span>
+                                </div>
+                                <input type="number" 
+                                       name="constitution" 
+                                       class="score-input" 
+                                       min="0" max="13" step="1"
+                                       required
+                                       oninput="updateTotalScore()">
+                                <div class="score-hint">Оценка от 0 до 13</div>
+                            </div>
+
+                            <!-- Процессуальный кодекс -->
+                            <div class="score-field">
+                                <div class="score-header">
+                                    <span class="score-icon">3</span>
+                                    <span class="score-title">Процессуальный кодекс</span>
+                                </div>
+                                <input type="number" 
+                                       name="proceduralCode" 
+                                       class="score-input" 
+                                       min="0" max="12" step="1"
+                                       required
+                                       oninput="updateTotalScore()">
+                                <div class="score-hint">Оценка от 0 до 12</div>
+                            </div>
+
+                            <!-- Уголовный кодекс -->
+                            <div class="score-field">
+                                <div class="score-header">
+                                    <span class="score-icon">4</span>
+                                    <span class="score-title">Уголовный кодекс</span>
+                                </div>
+                                <input type="number" 
+                                       name="criminalCode" 
+                                       class="score-input" 
+                                       min="0" max="16" step="1"
+                                       required
+                                       oninput="updateTotalScore()">
+                                <div class="score-hint">Оценка от 0 до 16</div>
+                            </div>
+
+                            <!-- Закон О коллегии адвокатов штата San-Andreas -->
+                            <div class="score-field">
+                                <div class="score-header">
+                                    <span class="score-icon">5</span>
+                                    <span class="score-title">Закон О коллегии адвокатов штата San-Andreas</span>
+                                </div>
+                                <input type="number" 
+                                       name="advocacyLaw" 
+                                       class="score-input" 
+                                       min="0" max="9" step="1"
+                                       required
+                                       oninput="updateTotalScore()">
+                                <div class="score-hint">Оценка от 0 до 9</div>
+                            </div>
+                        </div>
+                        
+                        <div class="total-score">
+                            Итоговый балл: <span class="total-number" id="totalScore">0</span>/64
+                        </div>
+                    </div>
+
+                    <!-- Подтверждение -->
+                    <div class="minimal-section">
+                        <div class="form-group">
+                            <label for="secretPassword">Пароль подтверждения</label>
+                            <input type="password" id="secretPassword" name="secretPassword" required 
+                                   placeholder="Введите пароль для отправки" class="form-control">
+                            <p class="field-hint">Пароль для старшего состава (обратитесь к главе)</p>
+                        </div>
+                        <div class="form-group checkbox-group">
+                            <input type="checkbox" id="confirmation" name="confirmation" required>
+                            <label for="confirmation">
+                                Подтверждаю, что все данные достоверны и согласен с правилами коллегии
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Кнопки формы -->
+                    <div class="form-actions">
+                        <button type="submit" class="button button-primary" id="submitButton">
+                            📤 Отправить отчёт
+                        </button>
+                        
+                        <div style="display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap;">
+                            <button type="button" class="button" id="saveDraftButton">
+                                💾 Сохранить черновик
+                            </button>
+                            <button type="reset" class="button button-secondary">
+                                🗑️ Очистить форму
+                            </button>
+                            <a href="promotion-senior-tools.html" class="button">
+                                ↩️ Назад к инструментам
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Процесс рассмотрения -->
+            <section class="process-info">
+                <div class="info-card">
+                    <h3>Что будет дальше?</h3>
+                    <div class="process-steps">
+                        <div class="process-step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <h4>Отправка в Discord</h4>
+                                <p>Ваш отчёт будет отправлен в Discord для архива и уведомления</p>
+                            </div>
+                        </div>
+                        <div class="process-step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <h4>Архивация</h4>
+                                <p>Отчёт сохранится в базе коллегии</p>
+                            </div>
+                        </div>
+                        <div class="process-step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <h4>Уведомление</h4>
+                                <p>Кандидат получит уведомление о результатах</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Подвал -->
+    <footer class="footer">
+        <div class="container">
+            <p>© Коллегия государственных адвокатов, Majestic RP | Boston</p>
+            <p>Форма отчёта: Устный экзамен | Старший состав</p>
+        </div>
+    </footer>
+
+    <!-- Подключаем скрипты -->
+    <script src="../../js/script.js"></script>
+    <script src="../../js/transitions.js"></script>
+    <script src="../../discord-config.js"></script>
+    <script src="../../js/exam-report.js"></script>
+</body>
+</html>
