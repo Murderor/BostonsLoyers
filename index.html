@@ -1,221 +1,326 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Коллегия государственных адвокатов | Majestic RP | Boston</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Мол, сайт недоступен</title>
+  <!-- Font Awesome 6 (бесплатная версия) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    /* Глобальные переменные и сброс */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+      background: linear-gradient(145deg, #f7f9fc 0%, #e9ecef 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      margin: 0;
+    }
+
+    .wrapper {
+      max-width: 600px;
+      width: 100%;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 48px 48px 32px 32px;
+      padding: 48px 40px;
+      box-shadow: 0 25px 40px -12px rgba(0, 0, 0, 0.15),
+                  inset 0 1px 4px rgba(255, 255, 255, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+
+    /* Анимированная иконка */
+    .icon {
+      font-size: 72px;
+      color: #d63939;
+      margin-bottom: 16px;
+      text-shadow: 0 8px 18px rgba(214, 57, 57, 0.15);
+      animation: subtle-wiggle 3s infinite ease-in-out;
+    }
+
+    @keyframes subtle-wiggle {
+      0%, 100% { transform: rotate(0deg) scale(1); }
+      25% { transform: rotate(6deg) scale(1.06); }
+      75% { transform: rotate(-4deg) scale(1.02); }
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: #1e2a41;
+      margin-bottom: 16px;
+      line-height: 1.2;
+    }
+
+    .message {
+      font-size: 1.2rem;
+      color: #4a5568;
+      margin-bottom: 24px;
+      font-weight: 400;
+      background: rgba(255, 255, 255, 0.6);
+      padding: 12px 20px;
+      border-radius: 100px;
+      display: inline-block;
+      backdrop-filter: blur(4px);
+      box-shadow: inset 0 1px 4px rgba(0,0,0,0.02);
+    }
+
+    .status {
+      background: rgba(30, 42, 65, 0.04);
+      border-radius: 18px;
+      padding: 14px 22px;
+      margin: 24px 0 20px;
+      font-size: 1.05rem;
+      color: #2c3e50;
+      border-left: 4px solid #d63939;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      word-break: break-word;
+    }
+
+    .status i {
+      color: #d63939;
+      font-size: 1.3rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      background: #1e2a41;
+      color: white;
+      font-size: 1.2rem;
+      font-weight: 600;
+      padding: 18px 36px;
+      border: none;
+      border-radius: 60px;
+      cursor: pointer;
+      transition: 0.2s cubic-bezier(0.23, 1, 0.32, 1);
+      box-shadow: 0 12px 24px -8px rgba(30, 42, 65, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      margin-top: 8px;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    .btn i {
+      font-size: 1.2rem;
+      transition: transform 0.3s ease;
+    }
+
+    .btn:hover {
+      background: #2c3e5c;
+      transform: translateY(-3px);
+      box-shadow: 0 20px 28px -10px rgba(30, 42, 65, 0.35);
+    }
+
+    .btn:hover i {
+      transform: rotate(180deg);
+    }
+
+    .btn:active {
+      transform: translateY(2px);
+      box-shadow: 0 8px 16px -6px rgba(30, 42, 65, 0.4);
+    }
+
+    .btn:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: 0 8px 16px -6px rgba(0,0,0,0.2);
+    }
+
+    .last-check {
+      margin-top: 32px;
+      font-size: 0.9rem;
+      color: #5d6b7c;
+      border-top: 1px dashed rgba(93, 107, 124, 0.3);
+      padding-top: 24px;
+      letter-spacing: 0.3px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .last-check i {
+      color: #4f6f8f;
+      font-size: 0.8rem;
+    }
+
+    /* Адаптивность */
+    @media (max-width: 520px) {
+      .card {
+        padding: 36px 24px;
+        border-radius: 36px 36px 24px 24px;
+      }
+      h1 {
+        font-size: 1.9rem;
+      }
+      .icon {
+        font-size: 64px;
+      }
+      .btn {
+        padding: 16px 28px;
+        font-size: 1.1rem;
+        max-width: 100%;
+      }
+      .message {
+        font-size: 1rem;
+      }
+    }
+
+    @media (max-width: 380px) {
+      h1 {
+        font-size: 1.7rem;
+      }
+      .icon {
+        font-size: 56px;
+      }
+    }
+
+    /* Эффект свечения для иконки при ошибке */
+    .fa-exclamation-circle {
+      filter: drop-shadow(0 0 8px rgba(214, 57, 57, 0.4));
+    }
+  </style>
 </head>
 <body>
-    <!-- Прелоадер для плавного перехода -->
-    <div class="page-transition" id="pageTransition">
-        <div class="loader"></div>
-        <div class="loader-text">ЗАГРУЗКА</div>
+  <div class="wrapper">
+    <div class="card">
+      <!-- Иконка с анимацией -->
+      <div class="icon">
+        <i class="fas fa-exclamation-circle"></i>
+      </div>
+
+      <!-- Заголовок "Мол, сайт недоступен" — именно так, как в запросе -->
+      <h1>Мол, сайт недоступен</h1>
+
+      <!-- Подпись с мягким оттенком -->
+      <div class="message">
+        <i class="fas fa-tools" style="margin-right: 8px;"></i> Ведутся технические работы
+      </div>
+
+      <!-- Динамический статус (обновляется через JS) -->
+      <div class="status" id="liveStatus">
+        <i class="fas fa-info-circle"></i>
+        <span id="statusText">Попробуйте обновить страницу позже.</span>
+      </div>
+
+      <!-- Кнопка с иконкой синхронизации -->
+      <button class="btn" id="retryBtn">
+        <i class="fas fa-sync-alt"></i> Повторить попытку
+      </button>
+
+      <!-- Время последней проверки (обновляется через JS) -->
+      <div class="last-check" id="lastCheckContainer">
+        <i class="far fa-clock"></i>
+        <span id="lastCheckTime">Последняя проверка: только что</span>
+      </div>
     </div>
+  </div>
 
-    <!-- Шапка -->
-    <header class="header">
-        <div class="container header-container">
-            <!-- Логотип -->
-            <div class="logo">
-                <div class="logo-image">
-                    <img src="assets/logo.png" alt="Логотип адвокатского бюро" id="main-logo">
-                    <div class="logo-placeholder" id="logo-placeholder">AB</div>
-                </div>
-                <div class="logo-text">
-                    <h1 class="logo-title">Коллегия государственных адвокатов</h1>
-                    <p class="logo-subtitle">Majestic RP | Boston</p>
-                </div>
-            </div>
+  <script>
+    (function() {
+      'use strict';
 
-            <!-- Навигация -->
-            <nav class="main-nav">
-                <ul class="nav-list">
-                    <li><a href="index.html" class="nav-button active">Главная</a></li>
-                    <li><a href="pages/about.html" class="nav-button">О нас</a></li>
-                    <li><a href="pages/appeal.html" class="nav-button">Обращение</a></li>
-                    <li><a href="pages/law.html" class="nav-button">Законы</a></li>
-                    <li><a href="pages/blacklist.html" class="nav-button">ЧС адвокатуры</a></li>
-                </ul>
-            </nav>
+      // ------ Элементы DOM ------
+      const retryBtn = document.getElementById('retryBtn');
+      const statusTextEl = document.getElementById('statusText');
+      const lastCheckTimeEl = document.getElementById('lastCheckTime');
 
-            <!-- Мобильное меню -->
-            <button class="mobile-menu-btn" id="mobileMenuBtn">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
-        </div>
-    </header>
+      // ------ Состояние ------
+      let isChecking = false;
 
-    <!-- Мобильная навигация -->
-    <nav class="mobile-nav" id="mobileNav">
-        <ul class="mobile-nav-list">
-            <li><a href="index.html" class="mobile-nav-button active">Главная</a></li>
-            <li><a href="pages/about.html" class="mobile-nav-button">О нас</a></li>
-            <li><a href="pages/appeal.html" class="mobile-nav-button">Обращение</a></li>
-            <li><a href="pages/law.html" class="mobile-nav-button">Законы</a></li>
-        </ul>
-    </nav>
+      // ------ Форматирование времени ------
+      function getFormattedTime() {
+        const now = new Date();
+        const hours = now.getHours().toString().padStart(2, '0');
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const seconds = now.getSeconds().toString().padStart(2, '0');
+        return `${hours}:${minutes}:${seconds}`;
+      }
 
-    <!-- Основной контент -->
-    <main class="main">
-        <div class="container">
-            <!-- Герой-секция -->
-            <section class="hero">
-                <div class="hero-logo">
-                    <img src="assets/logo.png" alt="Логотип адвокатского бюро" class="hero-logo-image" id="hero-logo">
-                    <div class="hero-logo-placeholder" id="hero-logo-placeholder">AB</div>
-                </div>
-                
-                <div class="hero-content">
-                    <h2 class="hero-title">Коллегия государственных адвокатов</h2>
-                    <p class="hero-subtitle">Majestic RP | Boston</p>
-                    <p class="hero-text">Ваша надежная защита в виртуальном мире<br>Профессиональные адвокатские услуги для граждан и организаций</p>
-                    
-                    <div class="hero-actions">
-                        <a href="pages/appeal.html" class="button button-primary">
-                            <span class="button-icon">⚖️</span>
-                            Срочная помощь
-                        </a>
-                        <a href="pages/about.html" class="button button-secondary">
-                            <span class="button-icon">👥</span>
-                            Наша команда
-                        </a>
-                        <a href="pages/law.html" class="button button-secondary">
-                            <span class="button-icon">📚</span>
-                            Законы
-                        </a>
-                    </div>
-                </div>
-                
-                <div class="scroll-down">
-                    <div class="scroll-icon"></div>
-                </div>
-            </section>
-    
-            <!-- Преимущества -->
-            <section class="quick-info" id="services">
-                <h3 class="section-title">Наши преимущества</h3>
-                <div class="info-grid">
-                    <div class="info-item">
-                        <div class="info-icon">⚖️</div>
-                        <h3>Правовая защита</h3>
-                        <p>Полное сопровождение по уголовным и гражданским делам. Защита ваших интересов в суде.</p>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-icon">🔒</div>
-                        <h3>Конфиденциальность</h3>
-                        <p>Абсолютная секретность и адвокатская тайна. Ваши данные под надёжной защитой.</p>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-icon">🕐</div>
-                        <h3>24/7 Доступность</h3>
-                        <p>Круглосуточная готовность к экстренным ситуациям. Всегда на связи.</p>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-icon">📈</div>
-                        <h3>Высокий процент успеха</h3>
-                        <p>Более 85% выигранных дел благодаря профессионализму нашей команды.</p>
-                    </div>
-                </div>
-            </section>
+      // ------ Обновление времени последней проверки ------
+      function updateLastCheckTime() {
+        const timeString = getFormattedTime();
+        lastCheckTimeEl.textContent = `Последняя проверка: ${timeString}`;
+      }
 
-            <!-- Отзывы -->
-            <section class="reviews-section" id="reviews">
-                <div class="container">
-                    <h3 class="section-title">Отзывы клиентов</h3>
-                    
-                    <div class="reviews-grid" id="reviewsContainer">
-                        <div class="review-skeleton">
-                            <div class="skeleton-avatar"></div>
-                            <div class="skeleton-content">
-                                <div class="skeleton-line"></div>
-                                <div class="skeleton-line short"></div>
-                                <div class="skeleton-stars"></div>
-                            </div>
-                        </div>
-                        <div class="review-skeleton">
-                            <div class="skeleton-avatar"></div>
-                            <div class="skeleton-content">
-                                <div class="skeleton-line"></div>
-                                <div class="skeleton-line short"></div>
-                                <div class="skeleton-stars"></div>
-                            </div>
-                        </div>
-                        <div class="review-skeleton">
-                            <div class="skeleton-avatar"></div>
-                            <div class="skeleton-content">
-                                <div class="skeleton-line"></div>
-                                <div class="skeleton-line short"></div>
-                                <div class="skeleton-stars"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
+      // ------ Функция имитации проверки соединения ------
+      function simulateConnectionCheck() {
+        if (isChecking) return;
 
-            <!-- Кнопка оставить отзыв -->
-            <div class="review-button-container">
-                <button class="button button-primary review-open-btn" id="openReviewModal">
-                    <span class="button-icon">✍️</span> Оставить отзыв
-                </button>
-            </div>
-        </div>
-    </main>
+        isChecking = true;
+        // Блокируем кнопку и меняем текст
+        retryBtn.disabled = true;
+        const originalBtnHTML = retryBtn.innerHTML;
+        retryBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Проверка...';
 
-    <!-- Модальное окно отзыва -->
-    <div class="modal" id="reviewModal">
-        <div class="modal-content">
-            <span class="modal-close" id="closeReviewModal">&times;</span>
-            <h3 class="modal-title">Оставить отзыв</h3>
-            
-            <form id="reviewForm" class="appeal-form">
-                <div class="form-group">
-                    <label for="reviewName">Ваше имя / ник в игре *</label>
-                    <input type="text" id="reviewName" class="form-control" placeholder="Например: Денис_Бостон" required>
-                </div>
+        // Меняем статус на "в процессе"
+        statusTextEl.innerHTML = 'Проверяем доступность сайта... <i class="fas fa-ellipsis-h" style="margin-left: 4px;"></i>';
 
-                <div class="form-group">
-                    <label>Оценка *</label>
-                    <div class="star-rating">
-                        <input type="radio" id="star5" name="rating" value="5" required>
-                        <label for="star5" title="Отлично">★</label>
-                        <input type="radio" id="star4" name="rating" value="4">
-                        <label for="star4" title="Хорошо">★</label>
-                        <input type="radio" id="star3" name="rating" value="3">
-                        <label for="star3" title="Нормально">★</label>
-                        <input type="radio" id="star2" name="rating" value="2">
-                        <label for="star2" title="Плохо">★</label>
-                        <input type="radio" id="star1" name="rating" value="1">
-                        <label for="star1" title="Ужасно">★</label>
-                    </div>
-                </div>
+        // Имитируем задержку ответа от сервера (1.8 сек)
+        setTimeout(() => {
+          // Сбрасываем состояние кнопки
+          retryBtn.disabled = false;
+          retryBtn.innerHTML = originalBtnHTML;
 
-                <div class="form-group">
-                    <label for="reviewText">Ваш отзыв *</label>
-                    <textarea id="reviewText" class="form-control" rows="5" placeholder="Расскажите о вашем опыте..." required></textarea>
-                </div>
+          // Обновляем статус — мол, всё ещё недоступен
+          statusTextEl.innerHTML = 'Сайт временно недоступен. Мол, ведутся технические работы.';
 
-                <div class="form-actions">
-                    <button type="submit" class="button button-primary">Отправить отзыв</button>
-                    <button type="button" class="button button-secondary" id="cancelReview">Отмена</button>
-                </div>
+          // Обновляем время последней попытки
+          updateLastCheckTime();
 
-                <div id="reviewMessage" style="margin-top: 15px; text-align: center;"></div>
-            </form>
-        </div>
-    </div>
+          isChecking = false;
+        }, 1800); // 1.8 секунды
+      }
 
-    <!-- Подвал -->
-    <footer class="footer">
-        <div class="container">
-            <p>© Коллегия государственных адвокатов, Majestic RP | Boston</p>
-            <p>Экстренная связь через форму обращения</p>
-        </div>
-    </footer>
+      // ------ Инициализация при загрузке страницы ------
+      function init() {
+        // Ставим текущее время при старте
+        updateLastCheckTime();
 
-    <script src="js/script.js"></script>
+        // Вешаем обработчик на кнопку
+        retryBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          simulateConnectionCheck();
+        });
+
+        // Небольшая анимация появления карточки (просто для красоты)
+        const card = document.querySelector('.card');
+        if (card) {
+          card.style.opacity = '0';
+          card.style.transform = 'translateY(12px)';
+          card.style.transition = 'opacity 0.5s cubic-bezier(0.23, 1, 0.32, 1), transform 0.5s cubic-bezier(0.23, 1, 0.32, 1)';
+          setTimeout(() => {
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+          }, 50);
+        }
+      }
+
+      // Запуск после полной загрузки DOM
+      window.addEventListener('DOMContentLoaded', init);
+    })();
+  </script>
 </body>
 </html>
