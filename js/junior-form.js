@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Форма младшего адвоката загружена');
+    console.log('Форма юриста загружена');
 
     let discordWebhookUrl = null;
     let discordConfig = null;
@@ -115,12 +115,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const fullName = document.getElementById('fullName')?.value?.trim();
         const specialCommId = document.getElementById('specialCommId')?.value?.trim();
-        const examProofLink = document.getElementById('examProofLink')?.value?.trim();
 
         const errors = [];
         if (!fullName) errors.push('Введите полное имя');
         if (!/^\d{17,20}$/.test(specialCommId)) errors.push('Некорректный Discord ID');
-        if (!examProofLink || !examProofLink.startsWith('https://discord.com/')) errors.push('Укажите корректную ссылку на сообщение об экзамене');
         if (!photoFields.idCard.file) errors.push('Загрузите удостоверение личности');
         if (!photoFields.statesRole.file) errors.push('Загрузите скриншот роли в STATES');
 
@@ -145,18 +143,17 @@ document.addEventListener('DOMContentLoaded', function() {
             username: "Секретарь Коллегии адвокатов",
             avatar_url: "https://i.pinimg.com/originals/7a/af/81/7aaf811aa403514a33e1d468e7405f9a.png",
             
-            thread_name: `Аккредитация младшего адвоката — ${fullName}`,
+            thread_name: `Аккредитация юриста — ${fullName}`,
             
-            content: "<@&1321503127987421316> <@&1371785937180426270> <@&1321503135302291516>\nНовая заявка на аккредитацию младшего адвоката",
+            content: "<@&1321503127987421316> <@&1371785937180426270> <@&1321503135302291516>\nНовая заявка на аккредитацию юриста",
             
             embeds: [{
-                title: "📋 Заявка на аккредитацию: Младший адвокат",
-                description: `**${fullName}** подал заявку на вступление`,
+                title: "📋 Заявка на аккредитацию: Юрист",
+                description: `**${fullName}** подал(а) заявку на должность юриста`,
                 color: 0xd4af37,
                 fields: [
                     { name: "👤 Заявитель", value: fullName, inline: true },
                     { name: "📱 Discord ID", value: `<@${specialCommId}>`, inline: true },
-                    { name: "🔗 Подтверждение устного экзамена", value: examProofLink || "—", inline: false },
                     { name: "🕐 Дата подачи", value: new Date().toLocaleString('ru-RU'), inline: true },
                     { name: "📷 Документы", value: "✅ Удостоверение личности\n✅ Роль в STATES", inline: false }
                 ],
@@ -184,7 +181,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             if (response.ok) {
-                // Только тихое сообщение об успехе, без лишних слов
                 const successMsg = document.createElement('div');
                 successMsg.innerHTML = '<span style="color:#86efac;">Заявка отправлена</span>';
                 successMsg.style.marginTop = '20px';
@@ -224,5 +220,5 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }, 500);
 
-    console.log('Форма младшего адвоката готова');
+    console.log('Форма юриста готова');
 });

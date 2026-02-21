@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Форма: Младший адвокат | Коллегия государственных адвокатов | Majestic RP | Boston</title>
+    <title>Форма: Юрист | Коллегия государственных адвокатов | Majestic RP | Boston</title>
     <link rel="stylesheet" href="../../css/style.css">
     <link rel="icon" type="image/x-icon" href="../../favicon.ico">
     <style>
@@ -158,44 +158,13 @@
             margin-right: 10px;
             color: var(--color-accent);
         }
-
-        /* Дополнительно для нового поля */
-        .exam-link-section {
-            background-color: rgba(5, 8, 17, 0.5);
-            border-radius: var(--border-radius);
-            padding: 25px;
-            margin-bottom: 25px;
-            border-left: 4px solid var(--color-accent);
-        }
-
-        .exam-link-input {
-            width: 100%;
-            padding: 14px 16px;
-            border: 1px solid #475569;
-            border-radius: 8px;
-            background: #0f172a;
-            color: #e2e8f0;
-            font-size: 1.05rem;
-        }
-
-        .exam-link-input:focus {
-            outline: none;
-            border-color: #60a5fa;
-            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
-        }
-
-        .exam-link-hint {
-            color: #94a3b8;
-            font-size: 0.95rem;
-            margin-top: 8px;
-        }
     </style>
 </head>
 <body>
     <!-- Прелоадер -->
     <div class="page-transition" id="pageTransition">
         <div class="loader"></div>
-        <div class="loader-text">ФОРМА МЛАДШЕГО АДВОКАТА</div>
+        <div class="loader-text">ФОРМА ЮРИСТА</div>
     </div>
 
     <!-- Шапка -->
@@ -245,11 +214,11 @@
                 <span> / </span>
                 <a href="promotion-select.html">Повышение → Выбор должности</a>
                 <span> / </span>
-                <span>Младший адвокат</span>
+                <span>Юрист</span>
             </nav>
 
             <section class="page-header">
-                <h2 class="page-title">Форма аккредитации: Младший адвокат</h2>
+                <h2 class="page-title">Форма аккредитации: Юрист</h2>
                 <p class="page-subtitle">Заполните форму для получения аккредитации и разрешения на адвокатскую деятельность</p>
             </section>
 
@@ -260,8 +229,7 @@
                         <h3 style="color: var(--color-light); margin-bottom: 10px;">Инструкция по заполнению</h3>
                         <p style="color: #a0a8c0; margin-bottom: 5px;">1. Все поля обязательны для заполнения</p>
                         <p style="color: #a0a8c0; margin-bottom: 5px;">2. Для вставки фото используйте скриншоты (PrintScreen → Ctrl+V)</p>
-                        <p style="color: #a0a8c0; margin-bottom: 5px;">3. Вставьте ссылку на сообщение в Discord, где указано, что вы успешно прошли устный экзамен</p>
-                        <p style="color: #a0a8c0;">4. Проверьте данные перед отправкой</p>
+                        <p style="color: #a0a8c0; margin-bottom: 5px;">3. Проверьте данные перед отправкой</p>
                     </div>
                 </div>
             </div>
@@ -342,24 +310,6 @@
                         </div>
                     </div>
 
-                    <!-- Ссылка на подтверждение устного экзамена -->
-                    <div class="form-section exam-link-section">
-                        <h3 class="form-section-title">Подтверждение устного экзамена</h3>
-                        <p style="color: #a0a8c0; margin-bottom: 20px;">
-                            Вставьте ссылку на сообщение в Discord, где указано, что вы успешно прошли устный экзамен.
-                        </p>
-
-                        <div class="form-group">
-                            <label for="examProofLink">Ссылка на сообщение в Discord *</label>
-                            <input type="url" id="examProofLink" name="examProofLink" required 
-                                   placeholder="https://discord.com/channels/123456789/987654321/1122334455"
-                                   class="exam-link-input">
-                            <p class="exam-link-hint">
-                                Скопируйте ссылку на сообщение (ПКМ на сообщение → Копировать ссылку на сообщение)
-                            </p>
-                        </div>
-                    </div>
-
                     <!-- Соглашения -->
                     <div class="form-section">
                         <div class="form-group checkbox-group">
@@ -407,7 +357,7 @@
                 </form>
             </section>
 
-            <!-- Процесс рассмотрения (можно оставить или убрать) -->
+            <!-- Процесс рассмотрения -->
             <section class="process-info">
                 <div class="info-card">
                     <h3>Процесс рассмотрения заявки</h3>
@@ -421,13 +371,6 @@
                         </div>
                         <div class="process-step">
                             <div class="step-number">2</div>
-                            <div class="step-content">
-                                <h4>Проверка ссылки на экзамен</h4>
-                                <p>Подтверждение прохождения устного экзамена</p>
-                            </div>
-                        </div>
-                        <div class="process-step">
-                            <div class="step-number">3</div>
                             <div class="step-content">
                                 <h4>Решение комиссии</h4>
                                 <p>Окончательное решение в течение 3-5 рабочих дней</p>
@@ -449,6 +392,6 @@
     <script src="../../js/script.js"></script>
     <script src="../../js/transitions.js"></script>
     <script src="../../discord-config.js"></script>
-    <script src="../../js/junior-form.js"></script> <!-- ← обновлённый js -->
+    <script src="../../js/junior-form.js"></script>
 </body>
 </html>
