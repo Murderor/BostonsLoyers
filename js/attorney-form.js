@@ -107,7 +107,20 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // ===== ОТПРАВКА В DISCORD (С ФАЙЛАМИ) =====
+    // ===== ФОРМАТИРОВАНИЕ ИМЕНИ ДЛЯ ВЕТКИ =====
+    function formatThreadName(fullName) {
+        // Убираем лишние пробелы и ограничиваем длину (Discord ограничение - 100 символов)
+        const cleanName = fullName.trim().replace(/\s+/g, ' ');
+        // Обрезаем если слишком длинное (оставляем место для " | Заявка: Повышение до Адвоката")
+        const maxNameLength = 50;
+        const shortName = cleanName.length > maxNameLength 
+            ? cleanName.substring(0, maxNameLength) + '...' 
+            : cleanName;
+        
+        return `📋 ${shortName} | Заявка: Повышение до Адвоката`;
+    }
+
+    // ===== ОТПРАВКА В DISCORD (С ФАЙЛАМИ И СОЗДАНИЕМ ВЕТКИ) =====
     async function sendToDiscord(formData, files) {
         const isDiscordAvailable = discordWebhookUrl ? await checkDiscordAvailability() : false;
         
@@ -124,6 +137,9 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             showNotification('Отправка заявки в Discord...', 'info');
             
+            // Форматируем название ветки
+            const threadName = formatThreadName(formData.fullName);
+            
             // Подготовка embed
             const discordRoles = discordConfig?.roles ? 
                 `${discordConfig.roles.main}, ${discordConfig.roles.secondary}, ${discordConfig.roles.tertiary}` :
@@ -131,7 +147,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const mainEmbed = {
                 title: '📈 Заявка на повышение до Адвоката',
-                description: `**Заявитель:** ${formData.fullName}\n**Повышение с должности:** Младший адвокат → Адвокат\n\n${discordRoles}`,
+                description: `**Заявитель:** ${formData.fullName}\n**Повышение с должности:** Младший адвокат → Адвокат`,
                 color: 0x3498db,
                 fields: [
                     {
@@ -180,13 +196,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 formDataToSend.append(`files[${i}]`, files[i], `call_${i+1}.png`);
             }
             
-            // Добавляем payload_json с embed
+            // Добавляем payload_json с embed и названием ветки
             const payload = {
-                username: 'Секретарь Авокатуры',
+                username: 'Секретарь Адвокатуры',
                 avatar_url: 'https://i.pinimg.com/originals/7a/af/81/7aaf811aa403514a33e1d468e7405f9a.png',
-                content: `📢 **Новая заявка на повышение!** <@${formData.specialCommId}> подает заявку на повышение до Адвоката.\n\n**Скриншоты вызовов прикреплены к сообщению.**`,
-                embeds: [mainEmbed]
+                thread_name: threadName, // Создаём новую ветку с именем заявителя
+                content: `📢 **Новая заявка на повышение!**\n👤 **Заявитель:** ${formData.fullName}\n🆔 **Discord:** <@${formData.specialCommId}>\n📌 **Должность:** Младший адвокат → Адвокат\n\n**Скриншоты вызовов прикреплены к сообщению.**`,
+                embeds: [mainEmbed],
+                allowed_mentions: {
+                    users: [formData.specialCommId]
+                }
             };
+            
             formDataToSend.append('payload_json', JSON.stringify(payload));
 
             const response = await fetch(discordWebhookUrl, {
@@ -197,8 +218,10 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!response.ok) {
                 let errorMessage = `Ошибка Discord (${response.status})`;
                 try {
-                    const errorText = await response.text();
-                    if (errorText) errorMessage += `: ${errorText}`;
+                    const errorData = await response.json();
+                    if (errorData.message) {
+                        errorMessage += `: ${errorData.message}`;
+                    }
                 } catch (e) {}
                 throw new Error(errorMessage);
             }
@@ -211,11 +234,47 @@ document.addEventListener('DOMContentLoaded', function() {
                 result = { success: true, id: `thread-${Date.now()}` };
             }
 
-            console.log('Заявка успешно отправлена в Discord');
+            console.log('✅ Заявка успешно отправлена в Discord, создана ветка:', threadName);
             return result;
 
         } catch (error) {
-            console.error('Ошибка отправки в Discord:', error);
+            console.error('❌ Ошибка отправки в Discord:', error);
+            
+            // Пытаемся отправить без создания ветки как запасной вариант
+            try {
+                console.log('Пробуем отправить без создания ветки...');
+                
+                const formDataToSend = new FormData();
+                for (let i = 0; i < files.length; i++) {
+                    formDataToSend.append(`files[${i}]`, files[i], `call_${i+1}.png`);
+                }
+                
+                const payload = {
+                    username: 'Секретарь Адвокатуры',
+                    avatar_url: 'https://i.pinimg.com/originals/7a/af/81/7aaf811aa403514a33e1d468e7405f9a.png',
+                    content: `📢 **Новая заявка на повышение!**\n👤 **Заявитель:** ${formData.fullName}\n🆔 **Discord:** <@${formData.specialCommId}>\n📌 **Должность:** Младший адвокат → Адвокат\n\n❌ **Не удалось создать ветку. Заявка отправлена в основной канал.**`,
+                    embeds: [mainEmbed]
+                };
+                
+                formDataToSend.append('payload_json', JSON.stringify(payload));
+                
+                const response = await fetch(discordWebhookUrl, {
+                    method: 'POST',
+                    body: formDataToSend
+                });
+                
+                if (response.ok) {
+                    return {
+                        success: true,
+                        id: `channel-${Date.now()}`,
+                        message: 'Заявка отправлена в основной канал (ветка не создана)',
+                        local: false
+                    };
+                }
+            } catch (fallbackError) {
+                console.error('Запасной вариант тоже не сработал:', fallbackError);
+            }
+            
             if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
                 return {
                     success: true,
@@ -316,7 +375,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 form.reset();
                 // Скрыть все превью
                 for (let i = 1; i <= 3; i++) {
-                    document.getElementById(`preview${i}`).style.display = 'none';
+                    const preview = document.getElementById(`preview${i}`);
+                    if (preview) {
+                        preview.style.display = 'none';
+                        preview.querySelector('img').src = '#';
+                    }
                 }
                 updateImagesCounter();
                 document.getElementById('examFilled').innerHTML = '❌ не заполнено';
@@ -332,6 +395,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     errorMessage += 'Проблема с доступом к Discord. Проверьте webhook URL.';
                 } else if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
                     errorMessage += 'Проблема с интернет-соединением.';
+                } else if (error.message.includes('thread')) {
+                    errorMessage += 'Проблема с созданием ветки. Заявка отправлена в основной канал.';
                 } else {
                     errorMessage += 'Пожалуйста, попробуйте еще раз.';
                 }
@@ -419,9 +484,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const backgroundColor = isLocal ? '#f39c12' : '#2ecc71';
         const icon = isLocal ? '💾' : '✅';
         const title = isLocal ? 'Сохранено локально!' : 'Заявка отправлена!';
+        const threadCreated = !isLocal && discordResult.message ? 'Ветка создана' : '';
         const description = isLocal ? 
             'Discord недоступен, заявка сохранена локально' : 
-            'Ответ в течение 3-5 дней';
+            `Ответ в течение 3-5 дней. ${threadCreated}`;
         const configInfo = discordConfig ? 
             ` (v${discordConfig.version}, ${discordConfig.buildDate || 'текущая сборка'})` : '';
 
@@ -446,6 +512,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div>
                     <h3 style="margin: 0 0 10px 0;">${title}${configInfo}</h3>
                     <p style="margin: 0; opacity: 0.9;">Номер заявки: ${applicationId}</p>
+                    ${discordResult.message ? `<p style="margin: 5px 0 0 0; font-size: 0.9em; opacity: 0.8;">${discordResult.message}</p>` : ''}
                     <p style="margin: 5px 0 0 0; font-size: 0.9em; opacity: 0.8;">${description}</p>
                 </div>
             </div>
@@ -502,7 +569,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 discordThreadId: discordResult?.id || null,
                 examLink: formData.examLink,
                 configVersion: formData.configVersion,
-                buildId: discordResult?.buildId || 'local'
+                buildId: discordResult?.buildId || 'local',
+                threadCreated: !discordResult?.local && !discordResult?.message?.includes('ветка не создана')
             };
             applications.push(application);
             localStorage.setItem('applications', JSON.stringify(applications));
