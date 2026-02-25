@@ -121,6 +121,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
    // ===== ОТПРАВКА В DISCORD (С ФАЙЛАМИ И СОЗДАНИЕМ ВЕТКИ) =====
+// ===== ОТПРАВКА В DISCORD С ИЗОБРАЖЕНИЯМИ И СОЗДАНИЕМ ВЕТКИ =====
 async function sendToDiscord(formData, files) {
     const isDiscordAvailable = discordWebhookUrl ? await checkDiscordAvailability() : false;
     
@@ -137,7 +138,7 @@ async function sendToDiscord(formData, files) {
     try {
         showNotification('Отправка заявки в Discord...', 'info');
         
-        // Форматируем название ветки (транслит для безопасности)
+        // Транслитерация для безопасного названия ветки
         function transliterate(text) {
             const rus = "абвгдеёжзийклмнопрстуфхцчшщъыьэюя";
             const eng = "abvgdeejziyklmnoprstufhzcssyyeiya";
@@ -154,20 +155,21 @@ async function sendToDiscord(formData, files) {
             return result;
         }
 
-        // Создаём безопасное название для ветки (только латиница, цифры и некоторые символы)
+        // Создаём безопасное название для ветки
         const cleanName = formData.fullName.trim().replace(/\s+/g, ' ');
         const latinName = transliterate(cleanName);
         const safeName = latinName.replace(/[^a-zA-Z0-9\s\-_]/g, '').substring(0, 50);
-        const threadName = `📋 ${safeName} | Application for Attorney`.trim();
-        
-        // Подготовка embed
+        const threadName = `📋 ${safeName} | Повышение до Адвоката`.trim();
+
+        // Роли из конфига или дефолтные
         const discordRoles = discordConfig?.roles ? 
             `${discordConfig.roles.main}, ${discordConfig.roles.secondary}, ${discordConfig.roles.tertiary}` :
             '<@&1321503127987421316>, <@&1321503135302291516>, <@&1371785937180426270>';
 
+        // Основной embed
         const mainEmbed = {
             title: '📈 Заявка на повышение до Адвоката',
-            description: `**Заявитель:** ${formData.fullName}\n**Повышение с должности:** Младший адвокат → Адвокат`,
+            description: `**Заявитель:** ${formData.fullName}\n**Повышение с должности:** Младший адвокат → Адвокат\n\n${discordRoles}`,
             color: 0x3498db,
             fields: [
                 {
@@ -208,113 +210,104 @@ async function sendToDiscord(formData, files) {
             timestamp: new Date().toISOString()
         };
 
-        // Сначала пробуем отправить запрос на создание ветки отдельно
-        try {
-            // Создаём ветку через API (альтернативный метод)
-            const webhookUrlParts = discordWebhookUrl.split('/');
-            const webhookId = webhookUrlParts[5];
-            const webhookToken = webhookUrlParts[6];
-            
-            // 1. Сначала создаём ветку
-            const threadResponse = await fetch(`https://discord.com/api/v10/webhooks/${webhookId}/${webhookToken}?wait=true`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    thread_name: threadName,
-                    content: '📌 **Создание ветки для заявки...**'
-                })
-            });
-
-            if (!threadResponse.ok) {
-                throw new Error('Не удалось создать ветку');
-            }
-
-            const threadData = await threadResponse.json();
-            const threadId = threadData.id;
-
-            // 2. Отправляем основное сообщение с файлами в созданную ветку
-            const formDataToSend = new FormData();
-            
-            // Добавляем файлы
-            for (let i = 0; i < files.length; i++) {
-                formDataToSend.append(`files[${i}]`, files[i], `call_${i+1}.png`);
-            }
-            
-            // Добавляем payload_json с embed
-            const payload = {
-                username: 'Секретарь Адвокатуры',
-                avatar_url: 'https://i.pinimg.com/originals/7a/af/81/7aaf811aa403514a33e1d468e7405f9a.png',
-                content: `📢 **Новая заявка на повышение!**\n👤 **Заявитель:** ${formData.fullName}\n🆔 **Discord:** <@${formData.specialCommId}>\n📌 **Должность:** Младший адвокат → Адвокат\n\n**Скриншоты вызовов прикреплены к сообщению.**`,
-                embeds: [mainEmbed],
-                allowed_mentions: {
-                    users: [formData.specialCommId]
-                }
-            };
-            
-            formDataToSend.append('payload_json', JSON.stringify(payload));
-
-            const response = await fetch(`https://discord.com/api/v10/webhooks/${webhookId}/${webhookToken}?thread_id=${threadId}`, {
-                method: 'POST',
-                body: formDataToSend
-            });
-
-            if (!response.ok) {
-                throw new Error('Ошибка при отправке в ветку');
-            }
-
-            console.log('✅ Заявка успешно отправлена в Discord, создана ветка:', threadName);
-            
-            return {
-                success: true,
-                id: threadId,
-                message: `Ветка создана: ${threadName}`,
-                local: false
-            };
-
-        } catch (threadError) {
-            console.error('Ошибка при создании ветки:', threadError);
-            
-            // Запасной вариант - отправляем в основной канал
-            console.log('Пробуем отправить без создания ветки...');
-            
-            const formDataToSend = new FormData();
-            for (let i = 0; i < files.length; i++) {
-                formDataToSend.append(`files[${i}]`, files[i], `call_${i+1}.png`);
-            }
-            
-            const payload = {
-                username: 'Секретарь Адвокатуры',
-                avatar_url: 'https://i.pinimg.com/originals/7a/af/81/7aaf811aa403514a33e1d468e7405f9a.png',
-                content: `📢 **Новая заявка на повышение!**\n👤 **Заявитель:** ${formData.fullName}\n🆔 **Discord:** <@${formData.specialCommId}>\n📌 **Должность:** Младший адвокат → Адвокат\n\n⚠️ **Не удалось создать ветку. Заявка отправлена в основной канал.**\n\n**Скриншоты вызовов прикреплены к сообщению.**`,
-                embeds: [mainEmbed],
-                allowed_mentions: {
-                    users: [formData.specialCommId]
-                }
-            };
-            
-            formDataToSend.append('payload_json', JSON.stringify(payload));
-            
-            const fallbackResponse = await fetch(discordWebhookUrl, {
-                method: 'POST',
-                body: formDataToSend
-            });
-            
-            if (!fallbackResponse.ok) {
-                throw new Error('Не удалось отправить даже в основной канал');
-            }
-            
-            return {
-                success: true,
-                id: `channel-${Date.now()}`,
-                message: 'Заявка отправлена в основной канал (ветка не создана)',
-                local: false
-            };
+        // Создаём FormData для multipart-запроса
+        const formDataToSend = new FormData();
+        
+        // Добавляем файлы
+        for (let i = 0; i < files.length; i++) {
+            formDataToSend.append(`files[${i}]`, files[i], `call_${i+1}.png`);
         }
+        
+        // Добавляем payload_json с embed и названием ветки
+        const payload = {
+            username: 'Секретарь Адвокатуры',
+            avatar_url: 'https://i.pinimg.com/originals/7a/af/81/7aaf811aa403514a33e1d468e7405f9a.png',
+            thread_name: threadName,
+            embeds: [mainEmbed],
+            content: `📢 **Новая заявка на повышение!** <@${formData.specialCommId}> подает заявку на повышение до Адвоката.\n\n**Скриншоты вызовов прикреплены к сообщению.**\n**Ссылка на экзамен:** ${formData.examLink}`,
+            allowed_mentions: {
+                users: [formData.specialCommId]
+            }
+        };
+        
+        formDataToSend.append('payload_json', JSON.stringify(payload));
+
+        const response = await fetch(discordWebhookUrl, {
+            method: 'POST',
+            body: formDataToSend
+        });
+
+        if (!response.ok) {
+            let errorMessage = `Ошибка Discord (${response.status})`;
+            try {
+                const errorText = await response.text();
+                if (errorText) {
+                    try {
+                        const errorJson = JSON.parse(errorText);
+                        errorMessage += `: ${errorJson.message || errorText}`;
+                    } catch {
+                        errorMessage += `: ${errorText}`;
+                    }
+                }
+            } catch (e) {}
+            throw new Error(errorMessage);
+        }
+
+        let result = null;
+        try {
+            const responseText = await response.text();
+            result = responseText ? JSON.parse(responseText) : { success: true, id: `thread-${Date.now()}` };
+        } catch {
+            result = { success: true, id: `thread-${Date.now()}` };
+        }
+
+        console.log('✅ Заявка успешно отправлена в Discord, создана ветка:', threadName);
+        return { ...result, message: `Ветка создана: ${threadName}` };
 
     } catch (error) {
         console.error('❌ Ошибка отправки в Discord:', error);
+        
+        // Пробуем отправить без создания ветки как запасной вариант
+        if (error.message.includes('thread') || error.message.includes('ветк')) {
+            try {
+                console.log('Пробуем отправить без создания ветки...');
+                
+                const formDataToSend = new FormData();
+                for (let i = 0; i < files.length; i++) {
+                    formDataToSend.append(`files[${i}]`, files[i], `call_${i+1}.png`);
+                }
+                
+                const payload = {
+                    username: 'Секретарь Адвокатуры',
+                    avatar_url: 'https://i.pinimg.com/originals/7a/af/81/7aaf811aa403514a33e1d468e7405f9a.png',
+                    embeds: [mainEmbed],
+                    content: `📢 **Новая заявка на повышение!** <@${formData.specialCommId}> подает заявку на повышение до Адвоката.\n\n⚠️ **Не удалось создать ветку. Заявка отправлена в основной канал.**\n\n**Скриншоты вызовов прикреплены к сообщению.**\n**Ссылка на экзамен:** ${formData.examLink}`,
+                    allowed_mentions: {
+                        users: [formData.specialCommId]
+                    }
+                };
+                
+                formDataToSend.append('payload_json', JSON.stringify(payload));
+                
+                const fallbackResponse = await fetch(discordWebhookUrl, {
+                    method: 'POST',
+                    body: formDataToSend
+                });
+                
+                if (!fallbackResponse.ok) {
+                    throw new Error('Не удалось отправить даже в основной канал');
+                }
+                
+                return {
+                    success: true,
+                    id: `channel-${Date.now()}`,
+                    message: 'Заявка отправлена в основной канал (ветка не создана)',
+                    local: false
+                };
+            } catch (fallbackError) {
+                console.error('Запасной вариант тоже не сработал:', fallbackError);
+            }
+        }
         
         if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
             return {
@@ -660,4 +653,5 @@ if (!document.getElementById('dynamicFormStyles')) {
     `;
     document.head.appendChild(style);
 }
+
 
