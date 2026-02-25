@@ -1,104 +1,90 @@
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Минимальная форма адвоката загружена (3 вызова + экзамен)');
+    console.log('Форма адвоката с загрузкой изображений загружена');
 
     // ===== ПРОВЕРКА И ЗАГРУЗКА КОНФИГА DISCORD =====
     let discordWebhookUrl = null;
     let discordConfig = null;
 
-    // Проверяем, загружен ли конфиг из внешнего файла
     if (typeof DISCORD_WEBHOOK_URL !== 'undefined' && 
         DISCORD_WEBHOOK_URL !== "{{DISCORD_WEBHOOK_PLACEHOLDER}}" &&
         DISCORD_WEBHOOK_URL.includes('discord.com')) {
         
         discordWebhookUrl = DISCORD_WEBHOOK_URL;
         discordConfig = typeof DISCORD_CONFIG !== 'undefined' ? DISCORD_CONFIG : null;
-        console.log('✅ Discord Config загружен для формы адвоката');
+        console.log('✅ Discord Config загружен');
     } else if (window.DISCORD_WEBHOOK_URL && window.DISCORD_WEBHOOK_URL.includes('discord.com')) {
         discordWebhookUrl = window.DISCORD_WEBHOOK_URL;
         discordConfig = window.DISCORD_CONFIG || null;
         console.log('✅ Discord Config загружен из window');
     } else {
         console.warn('⚠️ Discord вебхук не настроен. Тестовый режим.');
-        const warning = document.createElement('div');
-        warning.innerHTML = `
-            <div style="background: linear-gradient(135deg, #ff9800, #f57c00); color: white; padding: 15px; margin: 20px 0; border-radius: 10px; text-align: center;">
-                <strong>⚠️ Внимание:</strong> Discord вебхук не настроен. Заявки будут сохраняться локально.
-            </div>
-        `;
-        document.querySelector('.minimal-section')?.prepend(warning);
+        showNotification('⚠️ Discord вебхук не настроен. Заявки будут сохраняться локально.', 'warning');
     }
 
-    // ===== ВАЛИДАЦИЯ ССЫЛОК НА ВЫЗОВЫ =====
-    window.validateLink = function(input) {
-        const index = input.name.replace('callLink', '');
-        const validation = document.getElementById(`validation${index}`);
-        const url = input.value.trim();
+    // ===== ОБРАБОТКА ВЫБОРА ИЗОБРАЖЕНИЯ =====
+    window.handleImageSelect = function(input, index) {
+        const file = input.files[0];
+        const previewDiv = document.getElementById(`preview${index}`);
+        const previewImg = previewDiv.querySelector('img');
         
-        updateLinksCounter(); // обновляем счётчик
-        
-        if (!url) {
-            validation.className = 'link-validation';
-            return;
-        }
-        
-        try {
-            new URL(url);
-            validation.textContent = '✅ Корректная ссылка';
-            validation.className = 'link-validation valid';
-        } catch (e) {
-            validation.textContent = '❌ Некорректная ссылка';
-            validation.className = 'link-validation invalid';
-        }
-    };
-
-    // ===== ВАЛИДАЦИЯ ССЫЛКИ НА ЭКЗАМЕН =====
-    window.validateExamLink = function(input) {
-        const validation = document.getElementById('examValidation');
-        const examStatus = document.getElementById('examFilled');
-        const url = input.value.trim();
-        
-        if (!url) {
-            validation.className = 'link-validation';
-            examStatus.innerHTML = '❌ не заполнено';
-            examStatus.style.color = '#e74c3c';
-            return;
-        }
-        
-        try {
-            new URL(url);
-            validation.textContent = '✅ Корректная ссылка';
-            validation.className = 'link-validation valid';
-            examStatus.innerHTML = '✅ заполнено';
-            examStatus.style.color = '#2ecc71';
-        } catch (e) {
-            validation.textContent = '❌ Некорректная ссылка';
-            validation.className = 'link-validation invalid';
-            examStatus.innerHTML = '❌ ошибка в ссылке';
-            examStatus.style.color = '#e74c3c';
+        if (file) {
+            // Проверка типа файла
+            if (!file.type.startsWith('image/')) {
+                showNotification('Файл должен быть изображением', 'error');
+                input.value = '';
+                previewDiv.style.display = 'none';
+                updateImagesCounter();
+                return;
+            }
+            // Проверка размера (8 МБ)
+            if (file.size > 8 * 1024 * 1024) {
+                showNotification('Размер файла не должен превышать 8 МБ', 'error');
+                input.value = '';
+                previewDiv.style.display = 'none';
+                updateImagesCounter();
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImg.src = e.target.result;
+                previewDiv.style.display = 'flex';
+                updateImagesCounter();
+            };
+            reader.readAsDataURL(file);
+        } else {
+            previewDiv.style.display = 'none';
+            previewImg.src = '#';
+            updateImagesCounter();
         }
     };
 
-    // Обновление счётчика ссылок на вызовы (только для callLink1-3)
-    function updateLinksCounter() {
+    window.removeImage = function(index) {
+        const input = document.getElementById(`callImage${index}`);
+        const previewDiv = document.getElementById(`preview${index}`);
+        if (input) {
+            input.value = '';
+            previewDiv.style.display = 'none';
+            previewDiv.querySelector('img').src = '#';
+            updateImagesCounter();
+        }
+    };
+
+    // ===== ОБНОВЛЕНИЕ СЧЁТЧИКА ИЗОБРАЖЕНИЙ =====
+    function updateImagesCounter() {
         let filledCount = 0;
         for (let i = 1; i <= 3; i++) {
-            const input = document.querySelector(`input[name="callLink${i}"]`);
-            if (input && input.value.trim()) filledCount++;
+            const input = document.getElementById(`callImage${i}`);
+            if (input && input.files.length > 0) filledCount++;
         }
         
-        const counterElement = document.getElementById('linksCount');
+        const counterElement = document.getElementById('imagesCount');
         if (counterElement) counterElement.textContent = filledCount;
         
-        // Подсветка если все заполнены
         const statsCounter = document.querySelector('.stats-counter');
         if (statsCounter) {
-            if (filledCount === 3) {
-                statsCounter.style.border = '1px solid var(--color-accent)';
-                statsCounter.style.backgroundColor = 'rgba(212, 175, 55, 0.1)';
-            } else {
-                statsCounter.style.border = '';
-                statsCounter.style.backgroundColor = '';
-            }
+            statsCounter.style.border = filledCount === 3 ? '1px solid var(--color-accent)' : '';
+            statsCounter.style.backgroundColor = filledCount === 3 ? 'rgba(212, 175, 55, 0.1)' : '';
         }
     }
 
@@ -121,8 +107,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // ===== ОТПРАВКА В DISCORD =====
-    async function sendToDiscord(formData) {
+    // ===== ОТПРАВКА В DISCORD (С ФАЙЛАМИ) =====
+    async function sendToDiscord(formData, files) {
         const isDiscordAvailable = discordWebhookUrl ? await checkDiscordAvailability() : false;
         
         if (!isDiscordAvailable) {
@@ -138,26 +124,11 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             showNotification('Отправка заявки в Discord...', 'info');
             
-            // Формируем список ссылок на вызовы (3 шт.)
-            let callsText = '';
-            for (let i = 1; i <= 3; i++) {
-                const link = formData[`callLink${i}`];
-                if (link) callsText += `**Вызов #${i}:** [Ссылка](${link})\n`;
-            }
-            
-            // Поле для экзамена
-            const examField = {
-                name: '🎓 Подтверждение устного экзамена',
-                value: formData.examLink ? `[Ссылка на результат](${formData.examLink})` : 'Не указано',
-                inline: false
-            };
-
-            // Роли из конфига или дефолтные
+            // Подготовка embed
             const discordRoles = discordConfig?.roles ? 
                 `${discordConfig.roles.main}, ${discordConfig.roles.secondary}, ${discordConfig.roles.tertiary}` :
                 '<@&1321503127987421316>, <@&1321503135302291516>, <@&1371785937180426270>';
 
-            // Основной embed
             const mainEmbed = {
                 title: '📈 Заявка на повышение до Адвоката',
                 description: `**Заявитель:** ${formData.fullName}\n**Повышение с должности:** Младший адвокат → Адвокат\n\n${discordRoles}`,
@@ -184,11 +155,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         inline: true
                     },
                     {
-                        name: '🔗 Количество ссылок на вызовы',
-                        value: '3/3 (с адвокатами рангом выше)',
+                        name: '🖼️ Скриншоты вызовов',
+                        value: 'Прикреплены к сообщению (3 файла)',
                         inline: true
                     },
-                    examField // добавляем поле экзамена
+                    {
+                        name: '🎓 Подтверждение устного экзамена',
+                        value: formData.examLink ? `[Ссылка на результат](${formData.examLink})` : 'Не указано',
+                        inline: false
+                    }
                 ],
                 footer: {
                     text: `Адвокатское бюро Majestic RP | Форма повышения | v${discordConfig?.version || '1.0'}`,
@@ -197,27 +172,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 timestamp: new Date().toISOString()
             };
 
-            // Добавляем ссылки на вызовы отдельным полем, если они не пустые
-            if (callsText.trim()) {
-                mainEmbed.fields.push({
-                    name: '🔗 Ссылки на вызовы',
-                    value: callsText.trim(),
-                    inline: false
-                });
+            // Создаём FormData для multipart-запроса
+            const formDataToSend = new FormData();
+            
+            // Добавляем файлы
+            for (let i = 0; i < files.length; i++) {
+                formDataToSend.append(`files[${i}]`, files[i], `call_${i+1}.png`);
             }
-
-            const discordData = {
+            
+            // Добавляем payload_json с embed
+            const payload = {
                 username: 'Секретарь Авокатуры',
                 avatar_url: 'https://i.pinimg.com/originals/7a/af/81/7aaf811aa403514a33e1d468e7405f9a.png',
-                thread_name: `Повышение: ${formData.fullName} → Адвокат`,
-                embeds: [mainEmbed],
-                content: `📢 **Новая заявка на повышение!** <@${formData.specialCommId}> подает заявку на повышение до Адвоката.\n\n**Проверьте ссылки на вызовы и экзамен в embed сообщении ниже:**`
+                content: `📢 **Новая заявка на повышение!** <@${formData.specialCommId}> подает заявку на повышение до Адвоката.\n\n**Скриншоты вызовов прикреплены к сообщению.**`,
+                embeds: [mainEmbed]
             };
+            formDataToSend.append('payload_json', JSON.stringify(payload));
 
             const response = await fetch(discordWebhookUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(discordData)
+                body: formDataToSend
             });
 
             if (!response.ok) {
@@ -274,26 +248,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 errors.push('• ID спецсвязи должен содержать 17-20 цифр');
             }
 
-            // Проверка ссылок на вызовы (3 шт.)
-            const callLinks = [];
+            // Проверка изображений (3 шт.)
+            const imageFiles = [];
             for (let i = 1; i <= 3; i++) {
-                const input = document.querySelector(`input[name="callLink${i}"]`);
-                if (input) {
-                    const link = input.value.trim();
-                    if (link) {
-                        try {
-                            new URL(link);
-                            callLinks.push(link);
-                        } catch {
-                            errors.push(`• Ссылка на вызов #${i} некорректна`);
-                        }
+                const input = document.getElementById(`callImage${i}`);
+                if (!input || !input.files || input.files.length === 0) {
+                    errors.push(`• Загрузите скриншот для вызова #${i}`);
+                } else {
+                    const file = input.files[0];
+                    if (!file.type.startsWith('image/')) {
+                        errors.push(`• Файл для вызова #${i} должен быть изображением`);
+                    } else if (file.size > 8 * 1024 * 1024) {
+                        errors.push(`• Файл для вызова #${i} превышает 8 МБ`);
                     } else {
-                        errors.push(`• Заполните ссылку на вызов #${i}`);
+                        imageFiles.push(file);
                     }
                 }
-            }
-            if (callLinks.length < 3) {
-                errors.push('• Необходимо заполнить все 3 ссылки на вызовы');
             }
 
             // Проверка ссылки на экзамен
@@ -315,14 +285,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             if (errors.length > 0) {
-                showNotification('Пожалуйста, исправьте ошибки в форме', 'error');
-                const errorHtml = `
-                    <div style="text-align: left;">
-                        <strong>Обнаружены ошибки:</strong>
-                        <ul>${errors.map(e => `<li>${e}</li>`).join('')}</ul>
-                    </div>
-                `;
-                // Просто покажем в уведомлении, но можно и модалку
+                showNotification('Пожалуйста, исправьте ошибки в форме:\n' + errors.join('\n'), 'error');
                 return;
             }
 
@@ -334,9 +297,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const formData = {
                 fullName,
                 specialCommId,
-                callLink1: document.querySelector('input[name="callLink1"]').value.trim(),
-                callLink2: document.querySelector('input[name="callLink2"]').value.trim(),
-                callLink3: document.querySelector('input[name="callLink3"]').value.trim(),
                 examLink,
                 timestamp: new Date().toISOString(),
                 applicationId: `ATT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -344,7 +304,7 @@ document.addEventListener('DOMContentLoaded', function() {
             };
 
             try {
-                const discordResult = await sendToDiscord(formData);
+                const discordResult = await sendToDiscord(formData, imageFiles);
                 
                 if (discordResult.local) {
                     showSuccessMessage(formData.applicationId, discordResult, true);
@@ -354,8 +314,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 saveApplicationToStorage(formData, discordResult);
                 form.reset();
-                updateLinksCounter();
-                // Сбрасываем статус экзамена
+                // Скрыть все превью
+                for (let i = 1; i <= 3; i++) {
+                    document.getElementById(`preview${i}`).style.display = 'none';
+                }
+                updateImagesCounter();
                 document.getElementById('examFilled').innerHTML = '❌ не заполнено';
                 document.getElementById('examFilled').style.color = '#e74c3c';
                 document.getElementById('examValidation').className = 'link-validation';
@@ -392,16 +355,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 examLink: document.getElementById('examLink')?.value || '',
                 timestamp: new Date().toLocaleString()
             };
-            for (let i = 1; i <= 3; i++) {
-                const input = document.querySelector(`input[name="callLink${i}"]`);
-                if (input) draftData[`callLink${i}`] = input.value;
-            }
+            // Файлы не сохраняем в черновике
             const confirmation = document.getElementById('confirmation');
             if (confirmation) draftData.confirmation = confirmation.checked;
             
             localStorage.setItem('attorneyDraft', JSON.stringify(draftData));
             localStorage.setItem('draftSaved', new Date().toLocaleString());
-            showNotification('Черновик сохранён!', 'success');
+            showNotification('Черновик сохранён (без скриншотов)!', 'success');
         });
     }
 
@@ -411,29 +371,16 @@ document.addEventListener('DOMContentLoaded', function() {
         if (draft) {
             try {
                 const draftData = JSON.parse(draft);
-                if (document.getElementById('fullName')) {
-                    document.getElementById('fullName').value = draftData.fullName || '';
-                }
-                if (document.getElementById('specialCommId')) {
-                    document.getElementById('specialCommId').value = draftData.specialCommId || '';
-                }
-                if (document.getElementById('examLink')) {
-                    document.getElementById('examLink').value = draftData.examLink || '';
-                    validateExamLink(document.getElementById('examLink'));
-                }
-                for (let i = 1; i <= 3; i++) {
-                    const link = draftData[`callLink${i}`];
-                    const input = document.querySelector(`input[name="callLink${i}"]`);
-                    if (link && input) {
-                        input.value = link;
-                        validateLink(input);
-                    }
-                }
+                document.getElementById('fullName').value = draftData.fullName || '';
+                document.getElementById('specialCommId').value = draftData.specialCommId || '';
+                document.getElementById('examLink').value = draftData.examLink || '';
+                if (draftData.examLink) validateExamLink(document.getElementById('examLink'));
+                
                 const confirmation = document.getElementById('confirmation');
                 if (confirmation && draftData.confirmation !== undefined) {
                     confirmation.checked = draftData.confirmation;
                 }
-                showNotification('Черновик загружен', 'info');
+                showNotification('Черновик загружен (скриншоты нужно выбрать заново)', 'info');
             } catch (error) {
                 console.error('Ошибка загрузки черновика:', error);
             }
@@ -441,6 +388,32 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
+    window.validateExamLink = function(input) {
+        const validation = document.getElementById('examValidation');
+        const examStatus = document.getElementById('examFilled');
+        const url = input.value.trim();
+        
+        if (!url) {
+            validation.className = 'link-validation';
+            examStatus.innerHTML = '❌ не заполнено';
+            examStatus.style.color = '#e74c3c';
+            return;
+        }
+        
+        try {
+            new URL(url);
+            validation.textContent = '✅ Корректная ссылка';
+            validation.className = 'link-validation valid';
+            examStatus.innerHTML = '✅ заполнено';
+            examStatus.style.color = '#2ecc71';
+        } catch (e) {
+            validation.textContent = '❌ Некорректная ссылка';
+            validation.className = 'link-validation invalid';
+            examStatus.innerHTML = '❌ ошибка в ссылке';
+            examStatus.style.color = '#e74c3c';
+        }
+    };
+
     function showSuccessMessage(applicationId, discordResult, isLocal = false) {
         const message = document.createElement('div');
         const backgroundColor = isLocal ? '#f39c12' : '#2ecc71';
@@ -527,7 +500,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 fullName: formData.fullName,
                 specialCommId: formData.specialCommId,
                 discordThreadId: discordResult?.id || null,
-                callLinks: [formData.callLink1, formData.callLink2, formData.callLink3],
                 examLink: formData.examLink,
                 configVersion: formData.configVersion,
                 buildId: discordResult?.buildId || 'local'
@@ -542,7 +514,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ===== ИНИЦИАЛИЗАЦИЯ =====
-    updateLinksCounter();
+    updateImagesCounter();
     loadDraft();
 
     // Анимация появления формы
@@ -560,19 +532,22 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }, 500);
 
-    console.log('Минимальная форма адвоката инициализирована (3 вызова + экзамен)');
+    console.log('Форма адвоката с изображениями инициализирована');
 });
 
-// Добавляем CSS анимации
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideIn {
-        from { transform: translateX(100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
-    }
-    @keyframes slideOut {
-        from { transform: translateX(0); opacity: 1; }
-        to { transform: translateX(100%); opacity: 0; }
-    }
-`;
-document.head.appendChild(style);
+// CSS анимации (добавьте в head, если ещё нет)
+if (!document.getElementById('dynamicFormStyles')) {
+    const style = document.createElement('style');
+    style.id = 'dynamicFormStyles';
+    style.textContent = `
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+    `;
+    document.head.appendChild(style);
+}

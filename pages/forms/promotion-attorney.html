@@ -135,6 +135,60 @@
             border-top: 1px solid var(--color-gray-light);
             padding-top: 25px;
         }
+
+        /* Новые стили для предпросмотра изображений */
+        .image-preview {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+            background-color: rgba(5, 8, 17, 0.5);
+            padding: 10px;
+            border-radius: var(--border-radius);
+            margin-top: 10px;
+        }
+
+        .remove-image {
+            background-color: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+            border: 1px solid #e74c3c;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+
+        .remove-image:hover {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .call-input[type="file"] {
+            padding: 8px;
+            background-color: rgba(5, 8, 17, 0.5);
+            border: 1px solid var(--color-gray-light);
+            border-radius: var(--border-radius);
+            color: var(--color-light);
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .call-input[type="file"]::file-selector-button {
+            background-color: var(--color-accent);
+            color: var(--color-dark);
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            font-weight: 600;
+            margin-right: 15px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .call-input[type="file"]::file-selector-button:hover {
+            background-color: #c9a23b;
+        }
     </style>
 </head>
 <body>
@@ -212,7 +266,7 @@
                     <div>
                         <h3 style="color: var(--color-light); margin-bottom: 10px;">Необходимые данные</h3>
                         <p style="color: #a0a8c0; margin-bottom: 5px;">1. Заполните ваше имя и ID Discord</p>
-                        <p style="color: #a0a8c0; margin-bottom: 5px;">2. Вставьте 3 ссылки на вызовы с адвокатами рангом выше(yapx/imgur и т.п.)</p>
+                        <p style="color: #a0a8c0; margin-bottom: 5px;">2. Загрузите 3 скриншота вызовов с адвокатами рангом выше (изображения до 8 МБ)</p>
                         <p style="color: #a0a8c0; margin-bottom: 5px;">3. Вставьте ссылку на подтверждение устного экзамена</p>
                         <p style="color: #a0a8c0;">4. Подтвердите согласие с правилами</p>
                     </div>
@@ -248,69 +302,60 @@
                         </div>
                     </div>
 
-                    <!-- Ссылки на вызовы (3 шт.) -->
+                    <!-- Скриншоты вызовов (3 шт.) -->
                     <div class="minimal-section">
-                        <h3 class="form-section-title">🔗 Ссылки на вызовы с адвокатами рангом выше</h3>
+                        <h3 class="form-section-title">🖼️ Скриншоты вызовов с адвокатами рангом выше</h3>
                         <p style="color: #a0a8c0; margin-bottom: 20px;">
-                            Прикрепите 3 ссылки на результаты ваших последних вызовов, 
-                            проведённых в присутствии адвокатов рангом выше.
+                            Загрузите 3 скриншота ваших последних вызовов, проведённых в присутствии адвокатов рангом выше.
+                            (Допустимые форматы: JPG, PNG, GIF – до 8 МБ)
                         </p>
-                        
+
                         <div class="call-links-container">
-                            <!-- Ссылка 1 -->
+                            <!-- Изображение 1 -->
                             <div class="call-link-field">
                                 <div class="call-link-header">
                                     <span class="call-number">1</span>
                                     <span class="call-title">Вызов #1</span>
                                 </div>
-                                <input type="url" 
-                                       name="callLink1" 
-                                       class="call-input" 
-                                       placeholder="https://discord.com/channels/..."
-                                       pattern="https?://.+"
-                                       required
-                                       oninput="validateLink(this)">
-                                <div class="call-hint">Ссылка на Discord сообщение или форумный пост</div>
-                                <div class="link-validation" id="validation1"></div>
+                                <input type="file" name="callImage1" id="callImage1" accept="image/*" class="call-input" required onchange="handleImageSelect(this, 1)">
+                                <div class="image-preview" id="preview1" style="display: none;">
+                                    <img src="#" alt="Предпросмотр" style="max-width: 100%; max-height: 200px; border-radius: 5px; border: 1px solid var(--color-gray-light);">
+                                    <button type="button" class="remove-image" onclick="removeImage(1)">❌ Удалить</button>
+                                </div>
+                                <div class="call-hint">Загрузите скриншот вызова (изображение)</div>
                             </div>
 
-                            <!-- Ссылка 2 -->
+                            <!-- Изображение 2 -->
                             <div class="call-link-field">
                                 <div class="call-link-header">
                                     <span class="call-number">2</span>
                                     <span class="call-title">Вызов #2</span>
                                 </div>
-                                <input type="url" 
-                                       name="callLink2" 
-                                       class="call-input" 
-                                       placeholder="https://discord.com/channels/..."
-                                       pattern="https?://.+"
-                                       required
-                                       oninput="validateLink(this)">
-                                <div class="call-hint">Ссылка на Discord сообщение или форумный пост</div>
-                                <div class="link-validation" id="validation2"></div>
+                                <input type="file" name="callImage2" id="callImage2" accept="image/*" class="call-input" required onchange="handleImageSelect(this, 2)">
+                                <div class="image-preview" id="preview2" style="display: none;">
+                                    <img src="#" alt="Предпросмотр" style="max-width: 100%; max-height: 200px; border-radius: 5px; border: 1px solid var(--color-gray-light);">
+                                    <button type="button" class="remove-image" onclick="removeImage(2)">❌ Удалить</button>
+                                </div>
+                                <div class="call-hint">Загрузите скриншот вызова (изображение)</div>
                             </div>
 
-                            <!-- Ссылка 3 -->
+                            <!-- Изображение 3 -->
                             <div class="call-link-field">
                                 <div class="call-link-header">
                                     <span class="call-number">3</span>
                                     <span class="call-title">Вызов #3</span>
                                 </div>
-                                <input type="url" 
-                                       name="callLink3" 
-                                       class="call-input" 
-                                       placeholder="https://discord.com/channels/..."
-                                       pattern="https?://.+"
-                                       required
-                                       oninput="validateLink(this)">
-                                <div class="call-hint">Ссылка на Discord сообщение или форумный пост</div>
-                                <div class="link-validation" id="validation3"></div>
+                                <input type="file" name="callImage3" id="callImage3" accept="image/*" class="call-input" required onchange="handleImageSelect(this, 3)">
+                                <div class="image-preview" id="preview3" style="display: none;">
+                                    <img src="#" alt="Предпросмотр" style="max-width: 100%; max-height: 200px; border-radius: 5px; border: 1px solid var(--color-gray-light);">
+                                    <button type="button" class="remove-image" onclick="removeImage(3)">❌ Удалить</button>
+                                </div>
+                                <div class="call-hint">Загрузите скриншот вызова (изображение)</div>
                             </div>
                         </div>
                         
                         <div class="stats-counter">
-                            Заполнено ссылок на вызовы: <span class="stats-number" id="linksCount">0</span>/3
+                            Загружено скриншотов: <span class="stats-number" id="imagesCount">0</span>/3
                         </div>
                     </div>
 
@@ -389,8 +434,8 @@
                         <div class="process-step">
                             <div class="step-number">2</div>
                             <div class="step-content">
-                                <h4>Проверка ссылок и экзамена</h4>
-                                <p>Комиссия проверит предоставленные ссылки на вызовы и подтверждение экзамена</p>
+                                <h4>Проверка скриншотов и экзамена</h4>
+                                <p>Комиссия проверит предоставленные скриншоты вызовов и подтверждение экзамена</p>
                             </div>
                         </div>
                         <div class="process-step">
@@ -410,7 +455,7 @@
     <footer class="footer">
         <div class="container">
             <p>© Коллегия государственных адвокатов, Majestic RP | Boston</p>
-            <p>Форма повышения: Адвокат | 3 вызова + устный экзамен</p>
+            <p>Форма повышения: Адвокат | 3 скриншота + устный экзамен</p>
         </div>
     </footer>
 
@@ -420,6 +465,4 @@
     <script src="../../discord-config.js"></script>
     <script src="../../js/attorney-form.js"></script>
 </body>
-
 </html>
-
