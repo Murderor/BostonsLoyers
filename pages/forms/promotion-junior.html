@@ -158,6 +158,89 @@
             margin-right: 10px;
             color: var(--color-accent);
         }
+
+        /* Стили для блока авторизации Discord */
+        .discord-auth-section {
+            background: linear-gradient(135deg, rgba(88, 101, 242, 0.1), rgba(0, 0, 0, 0.2));
+            border: 1px solid rgba(88, 101, 242, 0.3);
+        }
+        
+        .discord-user-info {
+            display: none;
+            background: rgba(88, 101, 242, 0.1);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            width: 100%;
+            border-left: 4px solid #5865F2;
+            margin-bottom: 15px;
+        }
+        
+        .discord-user-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--color-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--color-accent);
+            flex-shrink: 0;
+        }
+        
+        .discord-user-details {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .discord-username {
+            color: var(--color-light);
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        
+        .discord-id {
+            color: #a0a8c0;
+            font-size: 0.85rem;
+            font-family: monospace;
+        }
+        
+        .discord-login-btn {
+            background: #5865F2 !important;
+            border-color: #5865F2 !important;
+            color: white !important;
+            font-size: 1.1rem;
+            padding: 15px 30px !important;
+            transition: all 0.3s ease;
+        }
+        
+        .discord-login-btn:hover {
+            background: #4752c4 !important;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(88, 101, 242, 0.4);
+        }
+        
+        .discord-login-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .discord-status {
+            color: #a0a8c0;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+        
+        .discord-status.success {
+            color: #86efac;
+        }
+        
+        .discord-status.error {
+            color: #f87171;
+        }
     </style>
 </head>
 <body>
@@ -229,7 +312,8 @@
                         <h3 style="color: var(--color-light); margin-bottom: 10px;">Инструкция по заполнению</h3>
                         <p style="color: #a0a8c0; margin-bottom: 5px;">1. Все поля обязательны для заполнения</p>
                         <p style="color: #a0a8c0; margin-bottom: 5px;">2. Для вставки фото используйте скриншоты (PrintScreen → Ctrl+V)</p>
-                        <p style="color: #a0a8c0; margin-bottom: 5px;">3. Проверьте данные перед отправкой</p>
+                        <p style="color: #a0a8c0; margin-bottom: 5px;">3. Авторизуйтесь через Discord для автоматической подстановки ID</p>
+                        <p style="color: #a0a8c0; margin-bottom: 5px;">4. Проверьте данные перед отправкой</p>
                     </div>
                 </div>
             </div>
@@ -247,18 +331,35 @@
                                    class="form-control">
                             <p class="field-hint">Пример: Иван Иванов</p>
                         </div>
+                    </div>
 
-                        <div class="form-group">
-                            <label for="specialCommId">
-                                Ваш идентификатор спец. связи
-                                <span class="hint-icon" title="ПКМ по себе в Discord → 'Копировать ID Пользователя'">ℹ️</span>
-                            </label>
-                            <input type="text" id="specialCommId" name="specialCommId" required 
-                                   placeholder="Пример: 123456789012345678"
-                                   pattern="[0-9]{17,20}"
-                                   maxlength="20"
-                                   class="form-control">
-                            <p class="field-hint">ID пользователя Discord (17-20 цифр)</p>
+                    <!-- Блок авторизации Discord -->
+                    <div class="form-section discord-auth-section">
+                        <h3 class="form-section-title">🔐 Авторизация Discord</h3>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 20px; align-items: flex-start;">
+                            <!-- Информация о пользователе (скрыта до авторизации) -->
+                            <div class="discord-user-info" id="discordUserInfo">
+                                <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+                                    <div class="discord-user-avatar" id="discordAvatar">
+                                        🟢
+                                    </div>
+                                    <div class="discord-user-details">
+                                        <span class="discord-username" id="discordUsername">Загрузка...</span>
+                                        <span class="discord-id" id="discordIdDisplay">ID: </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Кнопка входа -->
+                            <button type="button" class="button discord-login-btn" id="discordLoginBtn">
+                                🔐 Войти через Discord
+                            </button>
+                            
+                            <!-- Статус авторизации -->
+                            <p class="discord-status" id="discordStatus">
+                                ⚠️ Необходима авторизация для отправки формы
+                            </p>
                         </div>
                     </div>
 
@@ -336,7 +437,7 @@
 
                     <!-- Кнопки формы -->
                     <div class="form-actions">
-                        <button type="submit" class="button button-primary" id="submitButton">
+                        <button type="submit" class="button button-primary" id="submitButton" disabled>
                             📝 Отправить на аккредитацию
                         </button>
                         
