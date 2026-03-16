@@ -4,44 +4,276 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>О нас | Коллегия государственных адвокатов | Majestic RP | Boston</title>
-    <link rel="stylesheet" href="../css/style.css">
-    <link rel="icon" type="image/x-icon" href="../favicon.ico">
+    <style>
+        /* ===== БАЗОВЫЕ СТИЛИ ===== */
+        :root {
+            --color-dark: #0a0e17;
+            --color-darker: #050811;
+            --color-primary: #1a2b4c;
+            --color-accent: #d4af37;
+            --color-accent-dark: #b8941f;
+            --color-light: #e6e9f0;
+            --color-gray: #2a3142;
+            --color-gray-light: #3a4357;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            --border-radius: 6px;
+            --transition: all 0.3s ease;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.5;
+            color: var(--color-light);
+            background-color: var(--color-dark);
+            min-height: 100vh;
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+
+        /* Шапка и навигация */
+        .header {
+            background-color: var(--color-darker);
+            border-bottom: 1px solid var(--color-gray);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            padding: 1rem 0;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo { display: flex; align-items: center; gap: 15px; }
+        .logo-image { width: 50px; height: 50px; position: relative; }
+        #main-logo { width: 100%; height: 100%; object-fit: contain; display: block; position: absolute; top: 0; left: 0; z-index: 2; }
+        .logo-placeholder {
+            width: 100%; height: 100%;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; font-weight: 900; color: var(--color-dark);
+            border: 2px solid var(--color-accent);
+            position: absolute; top: 0; left: 0; z-index: 1;
+        }
+        .logo-title { font-size: 1.3rem; font-weight: 700; color: var(--color-light); }
+        .logo-subtitle { font-size: 0.8rem; color: var(--color-gray-light); font-style: italic; }
+        .logo-image.has-logo .logo-placeholder { display: none; }
+        .logo-image:not(.has-logo) #main-logo { display: none; }
+
+        .nav-list { display: flex; list-style: none; gap: 10px; }
+        .nav-button {
+            display: block; padding: 10px 20px; background-color: var(--color-gray);
+            color: var(--color-light); text-decoration: none; border-radius: var(--border-radius);
+            font-weight: 600; transition: var(--transition); border: 1px solid transparent;
+            min-width: 120px; text-align: center;
+        }
+        .nav-button:hover { background-color: var(--color-gray-light); border-color: var(--color-accent); }
+        .nav-button.active { background-color: var(--color-accent); color: var(--color-dark); border-color: var(--color-accent-dark); }
+
+        .mobile-menu-btn { display: none; flex-direction: column; gap: 4px; background: none; border: none; cursor: pointer; padding: 5px; }
+        .mobile-menu-btn span { display: block; width: 25px; height: 2px; background-color: var(--color-light); transition: var(--transition); }
+        .mobile-nav { display: none; background-color: var(--color-darker); border-top: 1px solid var(--color-gray); padding: 15px 0; }
+        .mobile-nav.active { display: block; }
+        .mobile-nav-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+        .mobile-nav-button {
+            display: block; padding: 12px 20px; background-color: var(--color-gray);
+            color: var(--color-light); text-decoration: none; border-radius: var(--border-radius);
+            transition: var(--transition);
+        }
+        .mobile-nav-button:hover,
+        .mobile-nav-button.active { background-color: var(--color-gray-light); border-left: 3px solid var(--color-accent); }
+
+        /* Основной контент */
+        .main { padding: 60px 0; min-height: 70vh; }
+
+        /* Подвал */
+        .footer {
+            background-color: var(--color-darker);
+            border-top: 1px solid var(--color-gray);
+            padding: 30px 0;
+            text-align: center;
+        }
+        .footer p { margin-bottom: 10px; color: #a0a8c0; font-size: 0.9rem; }
+
+        /* ===== СТИЛИ ДЛЯ СТРАНИЦЫ "О НАС" ===== */
+        .page-header { text-align: center; padding: 40px 0; border-bottom: 1px solid var(--color-gray); margin-bottom: 40px; }
+        .page-title { font-size: 2.5rem; color: var(--color-light); margin-bottom: 15px; }
+        .page-subtitle { color: #a0a8c0; max-width: 600px; margin: 0 auto; }
+
+        .team-section { margin-bottom: 60px; }
+        .section-title {
+            font-size: 1.8rem; color: var(--color-light); margin-bottom: 30px;
+            padding-bottom: 10px; border-bottom: 1px solid var(--color-gray);
+        }
+
+        .profile-card {
+            background-color: var(--color-gray);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            transition: var(--transition);
+            border: 1px solid transparent;
+            height: 100%;
+        }
+        .profile-card:hover { border-color: var(--color-accent); transform: translateY(-5px); box-shadow: var(--shadow); }
+
+        .profile-avatar {
+            width: 120px; height: 120px; margin: 0 auto 20px; position: relative;
+            border-radius: 50%; overflow: hidden; border: 3px solid var(--color-accent);
+        }
+        .avatar-image { width: 100%; height: 100%; object-fit: cover; display: block; position: absolute; top: 0; left: 0; z-index: 2; }
+        .avatar-placeholder {
+            width: 100%; height: 100%;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-gray-light));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2.5rem; font-weight: 900; color: var(--color-light);
+            position: absolute; top: 0; left: 0; z-index: 1;
+        }
+        .profile-avatar.has-avatar .avatar-placeholder { display: none; }
+        .profile-avatar:not(.has-avatar) .avatar-image { display: none; }
+
+        .profile-name { font-size: 1.3rem; color: var(--color-light); margin-bottom: 5px; text-align: center; }
+        .profile-position { color: var(--color-accent); font-size: 0.9rem; margin-bottom: 15px; text-align: center; font-weight: 600; }
+        .profile-description { color: #a0a8c0; margin-bottom: 15px; font-size: 0.95rem; line-height: 1.5; }
+
+        .profile-badge {
+            display: inline-block; padding: 5px 12px; background-color: rgba(212, 175, 55, 0.2);
+            color: var(--color-accent); border-radius: 20px; font-size: 0.8rem; font-weight: 700;
+            margin-bottom: 15px; border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+        .profile-tag {
+            display: inline-block; padding: 4px 10px; background-color: rgba(42, 49, 66, 0.7);
+            color: var(--color-light); border-radius: 4px; font-size: 0.8rem; border: 1px solid var(--color-gray-light);
+        }
+
+        .profile-contacts, .profile-stats {
+            display: flex; flex-direction: column; gap: 8px; margin-top: 15px;
+            padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .contact-item, .stat-item { font-size: 0.85rem; color: #a0a8c0; }
+
+        .team-leader { display: flex; justify-content: center; }
+        .leader-card {
+            max-width: 600px; display: flex; align-items: center; gap: 30px; text-align: left;
+        }
+        .leader-card .profile-avatar { width: 150px; height: 150px; margin: 0; flex-shrink: 0; }
+        .leader-card .profile-name,
+        .leader-card .profile-position { text-align: left; }
+
+        .team-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+            gap: 30px; 
+        }
+        .team-grid:empty { display: none; }
+        
+        .senior-grid { 
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+        }
+
+        .about-info { padding: 40px 0; border-top: 1px solid var(--color-gray); margin-top: 40px; }
+        .info-content { max-width: 800px; margin: 0 auto; }
+        .info-content p { color: #a0a8c0; margin-bottom: 30px; line-height: 1.6; }
+
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; margin-top: 30px;
+        }
+        .stats-grid .stat-item {
+            text-align: center; padding: 20px; background-color: var(--color-gray);
+            border-radius: var(--border-radius); border: 1px solid transparent; transition: var(--transition);
+        }
+        .stats-grid .stat-item:hover { border-color: var(--color-accent); }
+        .stat-number { font-size: 2rem; font-weight: 900; color: var(--color-accent); margin-bottom: 5px; }
+        .stat-label { font-size: 0.9rem; color: #a0a8c0; }
+
+        .discord-minimal {
+            display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px;
+            background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(114, 137, 218, 0.3);
+            border-radius: 8px; color: #7289da; text-decoration: none; font-size: 14px;
+            transition: all 0.2s ease; margin: 5px 0;
+        }
+        .discord-minimal:hover { background: rgba(114, 137, 218, 0.1); border-color: #7289da; transform: translateX(4px); }
+        .discord-minimal-handle { margin-left: auto; font-weight: 500; opacity: 0.9; }
+
+        /* Прелоадер */
+        .page-transition {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--color-darker); z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .page-transition.active { opacity: 1; visibility: visible; }
+        .loader {
+            width: 50px; height: 50px; border: 3px solid var(--color-gray);
+            border-top-color: var(--color-accent); border-radius: 50%;
+            animation: spin 1s linear infinite; margin-bottom: 20px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .nav-list { display: none; }
+            .mobile-menu-btn { display: flex; }
+            .leader-card { flex-direction: column; text-align: center; }
+            .leader-card .profile-name,
+            .leader-card .profile-position { text-align: center; }
+            .team-grid { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 480px) {
+            .page-title { font-size: 1.8rem; }
+            .section-title { font-size: 1.5rem; }
+            .profile-avatar { width: 100px; height: 100px; }
+            .leader-card .profile-avatar { width: 120px; height: 120px; }
+            .stats-grid { grid-template-columns: 1fr; }
+        }
+
+        /* Скрытие секций без данных */
+        .team-section:has(.team-grid:empty):not(:has(.leader-card)) {
+            display: none;
+        }
+        
+        /* Информация о бюро скрывается если нет данных */
+        .about-info:has([data-field="description_text"]:empty):not(:has(.stat-number:not(:empty))) {
+            display: none;
+        }
+    </style>
 </head>
 <body>
-    <!-- Прелоадер для плавного перехода -->
-<div class="page-transition" id="pageTransition">
-    <div class="loader"></div>
-    <div class="loader-text">ЗАГРУЗКА</div>
-</div>
-    <!-- Шапка (такая же как на главной) -->
+    <!-- Прелоадер -->
+    <div class="page-transition" id="pageTransition">
+        <div class="loader"></div>
+        <div class="loader-text">ЗАГРУЗКА</div>
+    </div>
+
+    <!-- Шапка -->
     <header class="header">
         <div class="container header-container">
             <div class="logo">
-                <div class="logo-image">
-                    <img href="../index.html" src="../assets/logo.png" alt="Логотип адвокатского бюро" id="main-logo">
-                    <a href="../index.html"></a>
-                    <div class="logo-placeholder" id="logo-placeholder">AB</div>
+                <div class="logo-image" id="logoContainer">
+                    <img src="../assets/logo.png" alt="Логотип" id="main-logo">
+                    <div class="logo-placeholder">AB</div>
                 </div>
                 <div class="logo-text">
                     <h1 class="logo-title">Коллегия государственных адвокатов</h1>
                     <p class="logo-subtitle">Majestic RP | Boston</p>
                 </div>
             </div>
-
             <nav class="main-nav">
                 <ul class="nav-list">
-                    <li><a href="../index.html" class="nav-button active">Главная</a></li>
-                    <li><a href="../pages/about.html" class="nav-button">О нас</a></li>
-                    <li><a href="../pages/appeal.html" class="nav-button">Обращение</a></li>
-                    <li><a href="../pages/law.html" class="nav-button">Законы</a></li>
-                    <li><a href="../pages/blacklist.html" class="nav-button">ЧС адвокатуры</a></li>
+                    <li><a href="../index.html" class="nav-button">Главная</a></li>
+                    <li><a href="#" class="nav-button active">О нас</a></li>
+                    <li><a href="appeal.html" class="nav-button">Обращение</a></li>
+                    <li><a href="law.html" class="nav-button">Законы</a></li>
+                    <li><a href="blacklist.html" class="nav-button">ЧС адвокатуры</a></li>
                 </ul>
             </nav>
-
             <button class="mobile-menu-btn" id="mobileMenuBtn">
-                <span></span>
-                <span></span>
-                <span></span>
+                <span></span><span></span><span></span>
             </button>
         </div>
     </header>
@@ -50,289 +282,29 @@
     <nav class="mobile-nav" id="mobileNav">
         <ul class="mobile-nav-list">
             <li><a href="../index.html" class="mobile-nav-button">Главная</a></li>
-            <li><a href="about.html" class="mobile-nav-button active">О нас</a></li>
+            <li><a href="#" class="mobile-nav-button active">О нас</a></li>
             <li><a href="appeal.html" class="mobile-nav-button">Обращение</a></li>
             <li><a href="law.html" class="mobile-nav-button">Законы</a></li>
         </ul>
     </nav>
 
-    <!-- Основной контент страницы -->
+    <!-- Основной контент -->
     <main class="main">
         <div class="container">
-            <!-- Заголовок страницы -->
-            <section class="page-header" data-animate="fadeIn" data-delay="0.1">
+            <section class="page-header">
                 <h2 class="page-title">Коллегия адвокатов</h2>
                 <p class="page-subtitle">Профессиональная команда, стоящая на защите ваших прав в мире Majestic RP | Boston</p>
             </section>
 
-            <!-- Глава коллегии -->
-            <section class="team-section" data-animate="fadeIn" data-delay="0.1">
-                <h3 class="section-title">Глава коллегии</h3>
-                <div class="team-leader">
-                    <div class="profile-card leader-card" data-animate="scaleIn" data-delay="0.2">
-                        <div class="profile-avatar">
-                            <img src="../assets/avatars/leader.jpg" alt="Глава коллегии" class="avatar-image">
-                            <div class="avatar-placeholder">JW</div>
-                        </div>
-                        <div class="profile-info">
-                            <h4 class="profile-name">Jeffrey Ward</h4>
-                            <p class="profile-position">Глава коллегии</p>
-                            <div class="profile-badge">Руководитель</div>
-                            <p class="profile-description">25 лет юридической практики. Специализируется на сложных уголовных делах и международном праве.</p>
-                            <div class="profile-contacts">
-                                <span class="contact-item">⚖️ Специализация: Уголовное право</span>
-                                <a href="https://discord.com/users/leman.52" target="_blank" class="discord-minimal">
-    <span class="discord-minimal-icon">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M13.55,11.42c-0.72,0.54-1.55,0.99-2.47,1.33c-0.07,0.02-0.15,0.03-0.22,0.03c-0.29,0-0.56-0.17-0.68-0.44c-0.16-0.36,0.02-0.78,0.38-0.94c0.77-0.34,1.46-0.75,2.06-1.22c0.32-0.24,0.38-0.71,0.14-1.03c-0.24-0.32-0.71-0.38-1.03-0.14c-0.52,0.39-1.13,0.73-1.81,1.01c-0.36,0.15-0.78-0.03-0.94-0.38c-0.16-0.36,0.02-0.78,0.38-0.94c0.62-0.27,1.18-0.59,1.67-0.95c0.32-0.24,0.38-0.71,0.14-1.03c-0.24-0.32-0.71-0.38-1.03-0.14c-0.42,0.31-0.91,0.58-1.46,0.81c-0.36,0.15-0.78-0.03-0.94-0.38c-0.16-0.36,0.02-0.78,0.38-0.94c0.5-0.21,0.95-0.45,1.36-0.71c0.32-0.24,0.38-0.71,0.14-1.03c-0.24-0.32-0.71-0.38-1.03-0.14c-0.33,0.25-0.7,0.48-1.11,0.68c-2.05,0.84-4.56,0.84-6.61,0c-0.41-0.2-0.78-0.43-1.11-0.68c-0.32-0.24-0.79-0.18-1.03,0.14c-0.24,0.32-0.18,0.79,0.14,1.03c0.41,0.31,0.9,0.58,1.46,0.81c0.36,0.15,0.53,0.58,0.38,0.94c-0.15,0.36-0.58,0.53-0.94,0.38c-0.62-0.27-1.18-0.59-1.67-0.95c-0.32-0.24-0.79-0.18-1.03,0.14c-0.24,0.32-0.18,0.79,0.14,1.03c0.49,0.36,1.1,0.7,1.81,1.01c0.36,0.15,0.53,0.58,0.38,0.94c-0.15,0.36-0.58,0.53-0.94,0.38c-0.77-0.34-1.46-0.75-2.06-1.22c-0.32-0.24-0.79-0.18-1.03,0.14c-0.24,0.32-0.18,0.79,0.14,1.03c0.6,0.45,1.33,0.87,2.15,1.23c-0.07,0.33-0.11,0.67-0.11,1.02c0,0.35,0.04,0.69,0.11,1.02c-1.16,0.41-2.42,0.41-3.58,0c-0.07-0.33-0.11-0.67-0.11-1.02c0-2.76,2.24-5,5-5s5,2.24,5,5c0,0.35-0.04,0.69-0.11,1.02C9.71,13.32,8.45,13.32,7.29,12.91z"/>
-        </svg>
-    </span>
-    <span>Связаться в Discord</span>
-    <span class="discord-minimal-handle">@leman.52</span>
-</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Заместители -->
-            <section class="team-section" data-animate="fadeIn" data-delay="0.1">
-                <h3 class="section-title">Заместители коллегии</h3>
-                <div class="team-grid">
-                    <!-- Заместитель 1 -->
-                    <div class="profile-card" data-animate="scaleIn" data-delay="0.2">
-                        <div class="profile-avatar">
-                            <img src="../assets/avatars/deputy1.jpg" alt="Заместитель 1" class="avatar-image">
-                            <div class="avatar-placeholder">CG</div>
-                        </div>
-                        <h4 class="profile-name">Conte Grande</h4>
-                        <p class="profile-position">Первый заместитель</p>
-                        <div class="profile-badge">15 лет стажа</div>
-                        <p class="profile-description">Специалист по гражданскому праву и договорным отношениям. Ведёт самые сложные имущественные споры.</p>
-                        <div class="profile-stats">
-                            <span class="stat-item">✅ 200+ дел</span>
-                            <span class="stat-item">⚖️ Гражданские дела</span>
-                        </div>
-                    </div>
-
-                    <!-- Заместитель 2 -->
-                    <div class="profile-card" data-animate="scaleIn" data-delay="0.2">
-                        <div class="profile-avatar">
-                            <img src="../assets/avatars/deputy2.jpg" alt="Заместитель 2" class="avatar-image">
-                            <div class="avatar-placeholder">SV</div>
-                        </div>
-                        <h4 class="profile-name">Sievol Ahishkavich</h4>
-                        <p class="profile-position">Заместитель по уголовным делам</p>
-                        <div class="profile-badge">Эксперт</div>
-                        <p class="profile-description">Бывший прокурор. Специализируется на защите по тяжким статьям и обжаловании приговоров.</p>
-                        <div class="profile-stats">
-                            <span class="stat-item">✅ 150+ дел</span>
-                            <span class="stat-item">⚖️ Уголовные дела</span>
-                        </div>
-                    </div>
-
-                    <!-- Заместитель 3 -->
-                    <div class="profile-card" data-animate="scaleIn" data-delay="0.2">
-                        <div class="profile-avatar">
-                            <img src="../assets/avatars/deputy3.jpg" alt="Заместитель 3" class="avatar-image">
-                            <div class="avatar-placeholder">-</div>
-                        </div>
-                        <h4 class="profile-name">Magomed Petardov</h4>
-                        <p class="profile-position">ЗГКА</p>
-                        <div class="profile-badge">Эксперт</div>
-                        <p class="profile-description">Специалист по кадровым вопросам</p>
-                        <div class="profile-stats">
-                            <span class="stat-item">✅ 150+ дел</span>
-                            <span class="stat-item">⚖️ Административные дела</span>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Старшие адвокаты -->
-            <section class="team-section" data-animate="fadeIn" data-delay="0.1">
-                <h3 class="section-title">Старшие адвокаты</h3>
-                <div class="team-grid senior-grid">
-                    <!-- Адвокат 1 -->
-                    <div class="profile-card senior-card" data-animate="scaleIn" data-delay="0.2">
-                        <div class="profile-avatar">
-                            <img src="../assets/avatars/senior1.jpg" alt="Старший адвокат 3" class="avatar-image">
-                            <div class="avatar-placeholder">LV</div>
-                        </div>
-                        <h4 class="profile-name">Lui Volta</h4>
-                        <p class="profile-position">Старший адвокат</p>
-                        <p class="profile-description">Семейное право</p>
-                        <div class="profile-tag">Административные дела</div>
-                    </div>
-
-                    <!-- Адвокат 2 -->
-                    <div class="profile-card senior-card" data-animate="scaleIn" data-delay="0.2">
-                        <div class="profile-avatar">
-                            <img src="../assets/avatars/senior2.jpg" alt="Старший адвокат 2" class="avatar-image">
-                            <div class="avatar-placeholder">YM</div>
-                        </div>
-                        <h4 class="profile-name">Yashar Miles</h4>
-                        <p class="profile-position">Старший адвокат</p>
-                        <p class="profile-description">Административное право, споры с государственными органами.</p>
-                        <div class="profile-tag">Административные дела</div>
-                    </div>
-
-                    <!-- Адвокат 3 -->
-                    <div class="profile-card senior-card" data-animate="scaleIn" data-delay="0.2">
-                        <div class="profile-avatar">
-                            <img src="../assets/avatars/senior3.jpg" alt="Старший адвокат 3" class="avatar-image">
-                            <div class="avatar-placeholder">DB</div>
-                        </div>
-                        <h4 class="profile-name">Dean Bacardi</h4>
-                        <p class="profile-position">Старший адвокат</p>
-                        <p class="profile-description">Семейное право</p>
-                        <div class="profile-tag">Административные дела</div>
-                    </div>
-
-                    <!-- Адвокат 4 -->
-                    <div class="profile-card senior-card" data-animate="scaleIn" data-delay="0.2">
-                        <div class="profile-avatar">
-                            <img src="../assets/avatars/senior4.jpg" alt="Старший адвокат 4" class="avatar-image">
-                            <div class="avatar-placeholder">MH</div>
-                        </div>
-                        <h4 class="profile-name">Mars Huntez</h4>
-                        <p class="profile-position">Старший адвокат</p>
-                        <p class="profile-description">Консультирует по правовым вопросам. Представляет интересы в суде. Участвует в разбирательствах.</p>
-                        <div class="profile-tag">Правовой консультант</div>
-                    </div>
-
-                    <!-- Адвокат 5 -->
-                    <div class="profile-card senior-card" data-animate="scaleIn" data-delay="0.2">
-                        <div class="profile-avatar">
-                            <img src="../assets/avatars/senior5.jpg" alt="Старший адвокат 5" class="avatar-image">
-                            <div class="avatar-placeholder">SL</div>
-                        </div>
-                        <h4 class="profile-name">Severino Lorenzo</h4>
-                        <p class="profile-position">Старший адвокат</p>
-                        <p class="profile-description">Консультирует по правовым вопросам. Представляет интересы в суде. Участвует в разбирательствах.</p>
-                        <div class="profile-tag">Уголовное право</div>
-                    </div>
-                </div>
-            </section>
-
-
-            <!--Друзья адвокатуры-->
-
-
-
-
-            
-            <section class="team-section" data-animate="fadeIn" data-delay="0.1">
-                <h3 class="section-title">Почетные друзья коллегии</h3>
-                <div class="team-grid">
-
-
-
-                    <!-- Друг 2 -->
-                    <div class="profile-card" data-animate="scaleIn" data-delay="0.2">
-                        <div class="profile-avatar">
-                            <img src="../assets/avatars/friend3.jpg" alt="Заместитель 1" class="avatar-image">
-                            <div class="avatar-placeholder">EO</div>
-                        </div>
-                        <h4 class="profile-name">Enzo Oswald</h4>
-                        <p class="profile-position">Вице-Губернатор</p>
-                        <div class="profile-badge">GOV</div>
-                        <p class="profile-description"></p>
-                        <!--<div class="profile-stats">
-                            <span class="stat-item">✅ 200+ задушенных частных адвокатов</span>
-                            <span class="stat-item">✅ 200+ проверок</span>
-                        </div>-->
-                    </div>
-
-
-
-                    
-                    <!-- Друг 1 -->
-                    <div class="profile-card" data-animate="scaleIn" data-delay="0.2">
-                        <div class="profile-avatar">
-                            <img src="../assets/avatars/friend1.jpg" alt="Заместитель 1" class="avatar-image">
-                            <div class="avatar-placeholder">KG</div>
-                        </div>
-                        <h4 class="profile-name">Klava Gattuso</h4>
-                        <p class="profile-position">Советник губернатора</p>
-                        <div class="profile-badge">GOV</div>
-                        <p class="profile-description">Специалист про проведению душных собеседований</p>
-                        <div class="profile-stats">
-                            <!--<div class="profile-stats">
-                            <span class="stat-item">✅ 200+ задушенных частных адвокатов</span>
-                            <span class="stat-item">✅ 200+ проверок</span>
-                        </div>-->
-                        </div>
-                    </div>
-
-
-                     <!-- Друг 3 -->
-                    <div class="profile-card" data-animate="scaleIn" data-delay="0.2">
-                        <div class="profile-avatar">
-                            <img src="../assets/avatars/friend2.jpg" alt="Заместитель 1" class="avatar-image">
-                            <div class="avatar-placeholder">MC</div>
-                        </div>
-                        <h4 class="profile-name">Mac Queen</h4>
-                        <p class="profile-position">assistant chief</p>
-                        <div class="profile-badge">LSPD</div>
-                        <p class="profile-description">⚡🚗 Человек легенда. Живое воплощение скорости.</p>
-                        <!--<div class="profile-stats">
-                            <span class="stat-item">✅ 200+ задушенных частных адвокатов</span>
-                            <span class="stat-item">✅ 200+ проверок</span>
-                        </div>-->
-                    </div>
-
-                     <!-- Друг 4 -->
-                    <div class="profile-card" data-animate="scaleIn" data-delay="0.2">
-                        <div class="profile-avatar">
-                            <img src="../assets/avatars/friend4.jpg" alt="Заместитель 1" class="avatar-image">
-                            <div class="avatar-placeholder">VI</div>
-                        </div>
-                        <h4 class="profile-name">Varya Immortal</h4>
-                        <p class="profile-position">Экс-Глава отдела USSS</p>
-                        <div class="profile-badge">GOV</div>
-                        <p class="profile-description">Душа любой компании</p>
-                        <!--<div class="profile-stats">
-                            <span class="stat-item">✅ 200+ задушенных частных адвокатов</span>
-                            <span class="stat-item">✅ 200+ проверок</span>
-                        </div>-->
-                    </div>
-                </div>
-
-            </section>
-
-
-            <!-- Информация о бюро -->
-            <section class="about-info" data-animate="fadeIn" data-delay="0.1">
-                <h3 class="section-title">О нашей коллегии</h3>
-                <div class="info-content">
-                    <p>Коллегия государственных адвокатов было основано в 2010 году с целью предоставления качественных юридических услуг в мире Majestic RP | Boston. За годы работы мы помогли тысячам клиентов защитить свои права и интересы.</p>
-                    
-                    <div class="stats-grid">
-                        <div class="stat-item">
-                            <div class="stat-number">13+</div>
-                            <div class="stat-label">Лет работы</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-number">Сотни</div>
-                            <div class="stat-label">Успешных дел</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-number">24/7</div>
-                            <div class="stat-label">Доступность</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-number">Штат</div>
-                            <div class="stat-label">Профессионалов</div>
-                        </div>
-                    </div>
-                </div>
-            </section>
+            <!-- Контейнеры для динамического заполнения -->
+            <div id="leaderContainer"></div>
+            <div id="deputiesContainer"></div>
+            <div id="seniorsContainer"></div>
+            <div id="friendsContainer"></div>
+            <div id="infoContainer"></div>
         </div>
     </main>
 
-    <!-- Подвал -->
     <footer class="footer">
         <div class="container">
             <p>© Коллегия государственных адвокатов, Majestic RP | Boston</p>
@@ -340,29 +312,332 @@
         </div>
     </footer>
 
-    <!-- Подключаем общий JS и дополнение для этой страницы -->
-    <script src="../js/script.js"></script>
-    <script src="../js/about.js"></script>
+    <script>
+        // ==================== КОНФИГУРАЦИЯ ====================
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzFgIxmcvANbC3Zs4aWpb3wwnUeiVnvJw0kpxT2adhB-Th_A7xjlzVEEAZovR_z6ReadQ/exec'; // ЗАМЕНИТЕ НА ВАШ URL
+        const DEV_MODE = false; // В разработке true, в продакшене false
+
+        // ==================== ТЕСТОВЫЕ ДАННЫЕ ====================
+        const MOCK_DATA = {
+            leader: {
+                name: "Jeffrey Ward",
+                position: "Глава коллегии",
+                badge: "Руководитель",
+                description: "25 лет юридической практики. Специализируется на сложных уголовных делах и международном праве.",
+                specialization: "Уголовное право",
+                discord: "leman.52",
+                avatar_url: ""
+            },
+            deputies: [
+                {
+                    name: "Conte Grande",
+                    position: "Первый заместитель",
+                    badge: "15 лет стажа",
+                    description: "Специалист по гражданскому праву и договорным отношениям. Ведёт самые сложные имущественные споры.",
+                    cases: "200+",
+                    specialization: "Гражданские дела",
+                    avatar_url: ""
+                },
+                {
+                    name: "Sievol Ahishkavich",
+                    position: "Заместитель по уголовным делам",
+                    badge: "Эксперт",
+                    description: "Бывший прокурор. Специализируется на защите по тяжким статьям и обжаловании приговоров.",
+                    cases: "150+",
+                    specialization: "Уголовные дела",
+                    avatar_url: ""
+                }
+            ],
+            seniors: [
+                { name: "Lui Volta", position: "Старший адвокат", description: "Семейное право", tag: "Административные дела", avatar_url: "" },
+                { name: "Yashar Miles", position: "Старший адвокат", description: "Административное право, споры с государственными органами.", tag: "Административные дела", avatar_url: "" },
+                { name: "Dean Bacardi", position: "Старший адвокат", description: "Семейное право", tag: "Административные дела", avatar_url: "" }
+            ],
+            friends: [
+                { name: "Klava Gattuso", position: "Советник губернатора", badge: "GOV", description: "Специалист по проведению душных собеседований", avatar_url: "" },
+                { name: "Enzo Oswald", position: "Вице-Губернатор", badge: "GOV", description: "", avatar_url: "" },
+                { name: "Mac Queen", position: "assistant chief", badge: "LSPD", description: "⚡🚗 Человек легенда. Живое воплощение скорости.", avatar_url: "" }
+            ],
+            info: {
+                years: "13+",
+                cases_total: "Сотни",
+                availability: "24/7",
+                staff: "Штат",
+                description_text: "Коллегия государственных адвокатов была основана в 2010 году с целью предоставления качественных юридических услуг в мире Majestic RP | Boston. За годы работы мы помогли тысячам клиентов защитить свои права и интересы."
+            }
+        };
+
+        // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
+        function getInitials(name) {
+            if (!name) return '?';
+            return name.split(' ').map(word => word.charAt(0).toUpperCase()).join('').slice(0, 2);
+        }
+
+        // ==================== ФУНКЦИИ СОЗДАНИЯ КАРТОЧЕК ====================
+        function createLeaderCard(data) {
+            if (!data || !data.name) return '';
+            
+            const initials = getInitials(data.name);
+            const discordHandle = data.discord ? `@${data.discord}` : '';
+            const discordLink = data.discord ? `https://discord.com/users/${data.discord}` : '#';
+            const specialization = data.specialization ? `⚖️ Специализация: ${data.specialization}` : '';
+            
+            return `
+                <section class="team-section">
+                    <h3 class="section-title">Глава коллегии</h3>
+                    <div class="team-leader">
+                        <div class="profile-card leader-card">
+                            <div class="profile-avatar ${data.avatar_url ? 'has-avatar' : ''}">
+                                <img src="${data.avatar_url || ''}" alt="${data.name}" class="avatar-image">
+                                <div class="avatar-placeholder">${initials}</div>
+                            </div>
+                            <div class="profile-info">
+                                <h4 class="profile-name">${data.name || ''}</h4>
+                                <p class="profile-position">${data.position || ''}</p>
+                                ${data.badge ? `<div class="profile-badge">${data.badge}</div>` : ''}
+                                <p class="profile-description">${data.description || ''}</p>
+                                <div class="profile-contacts">
+                                    ${specialization ? `<span class="contact-item">${specialization}</span>` : ''}
+                                    ${data.discord ? `
+                                        <a href="${discordLink}" class="discord-minimal" target="_blank">
+                                            <span class="discord-minimal-icon">
+                                                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                                    <path d="M13.55,11.42c-0.72,0.54-1.55,0.99-2.47,1.33c-0.07,0.02-0.15,0.03-0.22,0.03c-0.29,0-0.56-0.17-0.68-0.44c-0.16-0.36,0.02-0.78,0.38-0.94c0.77-0.34,1.46-0.75,2.06-1.22c0.32-0.24,0.38-0.71,0.14-1.03c-0.24-0.32-0.71-0.38-1.03-0.14c-0.52,0.39-1.13,0.73-1.81,1.01c-0.36,0.15-0.78-0.03-0.94-0.38c-0.16-0.36,0.02-0.78,0.38-0.94c0.62-0.27,1.18-0.59,1.67-0.95c0.32-0.24,0.38-0.71,0.14-1.03c-0.24-0.32-0.71-0.38-1.03-0.14c-0.42,0.31-0.91,0.58-1.46,0.81c-0.36,0.15-0.78-0.03-0.94-0.38c-0.16-0.36,0.02-0.78,0.38-0.94c0.5-0.21,0.95-0.45,1.36-0.71c0.32-0.24,0.38-0.71,0.14-1.03c-0.24-0.32-0.71-0.38-1.03-0.14c-0.33,0.25-0.7,0.48-1.11,0.68c-2.05,0.84-4.56,0.84-6.61,0c-0.41-0.2-0.78-0.43-1.11-0.68c-0.32-0.24-0.79-0.18-1.03,0.14c-0.24,0.32-0.18,0.79,0.14,1.03c0.41,0.31,0.9,0.58,1.46,0.81c0.36,0.15,0.53,0.58,0.38,0.94c-0.15,0.36-0.58,0.53-0.94,0.38c-0.62-0.27-1.18-0.59-1.67-0.95c-0.32-0.24-0.79-0.18-1.03,0.14c-0.24,0.32-0.18,0.79,0.14,1.03c0.49,0.36,1.1,0.7,1.81,1.01c0.36,0.15,0.53,0.58,0.38,0.94c-0.15,0.36-0.58,0.53-0.94,0.38c-0.77-0.34-1.46-0.75-2.06-1.22c-0.32-0.24-0.79-0.18-1.03,0.14c-0.24,0.32-0.18,0.79,0.14,1.03c0.6,0.45,1.33,0.87,2.15,1.23c-0.07,0.33-0.11,0.67-0.11,1.02c0,0.35,0.04,0.69,0.11,1.02c-1.16,0.41-2.42,0.41-3.58,0c-0.07-0.33-0.11-0.67-0.11-1.02c0-2.76,2.24-5,5-5s5,2.24,5,5c0,0.35-0.04,0.69-0.11,1.02C9.71,13.32,8.45,13.32,7.29,12.91z"/>
+                                                </svg>
+                                            </span>
+                                            <span>Связаться в Discord</span>
+                                            <span class="discord-minimal-handle">${discordHandle}</span>
+                                        </a>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            `;
+        }
+
+        function createDeputyCard(deputy) {
+            const initials = getInitials(deputy.name);
+            
+            return `
+                <div class="profile-card">
+                    <div class="profile-avatar ${deputy.avatar_url ? 'has-avatar' : ''}">
+                        <img src="${deputy.avatar_url || ''}" alt="${deputy.name}" class="avatar-image">
+                        <div class="avatar-placeholder">${initials}</div>
+                    </div>
+                    <h4 class="profile-name">${deputy.name || ''}</h4>
+                    <p class="profile-position">${deputy.position || ''}</p>
+                    ${deputy.badge ? `<div class="profile-badge">${deputy.badge}</div>` : ''}
+                    <p class="profile-description">${deputy.description || ''}</p>
+                    <div class="profile-stats">
+                        ${deputy.cases ? `<span class="stat-item">✅ ${deputy.cases}</span>` : ''}
+                        ${deputy.specialization ? `<span class="stat-item">⚖️ ${deputy.specialization}</span>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function createSeniorCard(senior) {
+            const initials = getInitials(senior.name);
+            
+            return `
+                <div class="profile-card senior-card">
+                    <div class="profile-avatar ${senior.avatar_url ? 'has-avatar' : ''}">
+                        <img src="${senior.avatar_url || ''}" alt="${senior.name}" class="avatar-image">
+                        <div class="avatar-placeholder">${initials}</div>
+                    </div>
+                    <h4 class="profile-name">${senior.name || ''}</h4>
+                    <p class="profile-position">${senior.position || ''}</p>
+                    <p class="profile-description">${senior.description || ''}</p>
+                    ${senior.tag ? `<div class="profile-tag">${senior.tag}</div>` : ''}
+                </div>
+            `;
+        }
+
+        function createFriendCard(friend) {
+            const initials = getInitials(friend.name);
+            
+            return `
+                <div class="profile-card">
+                    <div class="profile-avatar ${friend.avatar_url ? 'has-avatar' : ''}">
+                        <img src="${friend.avatar_url || ''}" alt="${friend.name}" class="avatar-image">
+                        <div class="avatar-placeholder">${initials}</div>
+                    </div>
+                    <h4 class="profile-name">${friend.name || ''}</h4>
+                    <p class="profile-position">${friend.position || ''}</p>
+                    ${friend.badge ? `<div class="profile-badge">${friend.badge}</div>` : ''}
+                    <p class="profile-description">${friend.description || ''}</p>
+                </div>
+            `;
+        }
+
+        function createInfoSection(info) {
+            if (!info || (!info.description_text && !info.years && !info.cases_total && !info.availability && !info.staff)) {
+                return '';
+            }
+            
+            return `
+                <section class="about-info">
+                    <h3 class="section-title">О нашей коллегии</h3>
+                    <div class="info-content">
+                        ${info.description_text ? `<p>${info.description_text}</p>` : ''}
+                        <div class="stats-grid">
+                            ${info.years ? `
+                                <div class="stat-item">
+                                    <div class="stat-number">${info.years}</div>
+                                    <div class="stat-label">Лет работы</div>
+                                </div>
+                            ` : ''}
+                            ${info.cases_total ? `
+                                <div class="stat-item">
+                                    <div class="stat-number">${info.cases_total}</div>
+                                    <div class="stat-label">Успешных дел</div>
+                                </div>
+                            ` : ''}
+                            ${info.availability ? `
+                                <div class="stat-item">
+                                    <div class="stat-number">${info.availability}</div>
+                                    <div class="stat-label">Доступность</div>
+                                </div>
+                            ` : ''}
+                            ${info.staff ? `
+                                <div class="stat-item">
+                                    <div class="stat-number">${info.staff}</div>
+                                    <div class="stat-label">Профессионалов</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </section>
+            `;
+        }
+
+        // ==================== ОСНОВНАЯ ФУНКЦИЯ ЗАГРУЗКИ ====================
+        async function loadAllData() {
+            const transition = document.getElementById('pageTransition');
+            if (transition) transition.classList.add('active');
+
+            try {
+                let data;
+                
+                if (DEV_MODE) {
+                    console.log('Используются тестовые данные');
+                    data = MOCK_DATA;
+                } else {
+                    try {
+                        const response = await fetch(GAS_URL);
+                        if (!response.ok) throw new Error('Ошибка загрузки');
+                        data = await response.json();
+                    } catch (fetchError) {
+                        console.warn('Не удалось загрузить данные, используем тестовые:', fetchError);
+                        data = MOCK_DATA;
+                    }
+                }
+                
+                if (data.error) throw new Error(data.error);
+
+                // Очищаем контейнеры
+                document.getElementById('leaderContainer').innerHTML = '';
+                document.getElementById('deputiesContainer').innerHTML = '';
+                document.getElementById('seniorsContainer').innerHTML = '';
+                document.getElementById('friendsContainer').innerHTML = '';
+                document.getElementById('infoContainer').innerHTML = '';
+
+                // Заполняем данными
+                if (data.leader && data.leader.name) {
+                    document.getElementById('leaderContainer').innerHTML = createLeaderCard(data.leader);
+                }
+
+                if (data.deputies && data.deputies.length > 0) {
+                    const deputiesHtml = data.deputies.map(d => createDeputyCard(d)).join('');
+                    document.getElementById('deputiesContainer').innerHTML = `
+                        <section class="team-section">
+                            <h3 class="section-title">Заместители коллегии</h3>
+                            <div class="team-grid">${deputiesHtml}</div>
+                        </section>
+                    `;
+                }
+
+                if (data.seniors && data.seniors.length > 0) {
+                    const seniorsHtml = data.seniors.map(s => createSeniorCard(s)).join('');
+                    document.getElementById('seniorsContainer').innerHTML = `
+                        <section class="team-section">
+                            <h3 class="section-title">Старшие адвокаты</h3>
+                            <div class="team-grid senior-grid">${seniorsHtml}</div>
+                        </section>
+                    `;
+                }
+
+                if (data.friends && data.friends.length > 0) {
+                    const friendsHtml = data.friends.map(f => createFriendCard(f)).join('');
+                    document.getElementById('friendsContainer').innerHTML = `
+                        <section class="team-section">
+                            <h3 class="section-title">Почетные друзья коллегии</h3>
+                            <div class="team-grid">${friendsHtml}</div>
+                        </section>
+                    `;
+                }
+
+                if (data.info && (data.info.description_text || data.info.years || data.info.cases_total || data.info.availability || data.info.staff)) {
+                    document.getElementById('infoContainer').innerHTML = createInfoSection(data.info);
+                }
+
+                // Инициализируем аватарки
+                initAvatars();
+
+            } catch (e) {
+                console.error('Не удалось загрузить данные:', e);
+            } finally {
+                if (transition) transition.classList.remove('active');
+            }
+        }
+
+        function initAvatars() {
+            const profileAvatars = document.querySelectorAll('.profile-avatar');
+            profileAvatars.forEach(avatar => {
+                const img = avatar.querySelector('.avatar-image');
+                if (img && img.src) {
+                    if (img.complete && img.naturalWidth > 0) {
+                        avatar.classList.add('has-avatar');
+                    } else {
+                        img.onload = () => avatar.classList.add('has-avatar');
+                        img.onerror = () => avatar.classList.remove('has-avatar');
+                    }
+                }
+            });
+        }
+
+        // ==================== ИНИЦИАЛИЗАЦИЯ ЛОГОТИПА ====================
+        function initLogo() {
+            const logoContainer = document.getElementById('logoContainer');
+            const logoImg = document.getElementById('main-logo');
+            
+            if (logoImg) {
+                // Проверяем, загрузилось ли изображение
+                if (logoImg.complete && logoImg.naturalWidth > 0) {
+                    logoContainer.classList.add('has-logo');
+                } else {
+                    logoImg.onload = () => logoContainer.classList.add('has-logo');
+                    logoImg.onerror = () => logoContainer.classList.remove('has-logo');
+                }
+            }
+        }
+
+        // ==================== ИНИЦИАЛИЗАЦИЯ ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAllData();
+            initLogo(); // Инициализируем логотип
+
+            // Мобильное меню
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const mobileNav = document.getElementById('mobileNav');
+            if (mobileMenuBtn && mobileNav) {
+                mobileMenuBtn.addEventListener('click', () => {
+                    mobileNav.classList.toggle('active');
+                });
+            }
+        });
+    </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
