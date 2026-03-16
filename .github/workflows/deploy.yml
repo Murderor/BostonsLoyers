@@ -16,20 +16,26 @@ jobs:
       - name: 📦 Checkout
         uses: actions/checkout@v4
       
-      - name: 🔍 Проверка секрета
+      - name: 🔍 Проверка секретов
         run: |
           if [ -z "${{ secrets.DISCORD_WEBHOOK_URL }}" ]; then
             echo "❌ DISCORD_WEBHOOK_URL не настроен!"
             exit 1
           fi
-          echo "✅ Discord webhook настроен"
+          if [ -z "${{ secrets.DISCORD_CLIENT_ID }}" ]; then
+            echo "❌ DISCORD_CLIENT_ID не настроен!"
+            exit 1
+          fi
+          echo "✅ Discord webhook и client ID настроены"
           # Показываем начало вебхука для проверки
           WEBHOOK="${{ secrets.DISCORD_WEBHOOK_URL }}"
           echo "🔐 Вебхук начинается с: ${WEBHOOK:0:30}..."
+          CLIENT="${{ secrets.DISCORD_CLIENT_ID }}"
+          echo "🆔 Client ID: ${CLIENT:0:10}..."
       
       - name: 🛠️ Создание discord-config.js
         run: |
-          echo "Создаем discord-config.js с реальным вебхуком..."
+          echo "Создаем discord-config.js с реальным вебхуком и client ID..."
           
           # Сначала получаем дату
           CURRENT_DATE=$(date '+%Y-%m-%d %H:%M:%S')
@@ -37,14 +43,16 @@ jobs:
           cat > discord-config.js << EOF
           // ⚠️ ВНИМАНИЕ: Этот файл создан автоматически GitHub Actions
           // ⚠️ Не добавляйте его в git!
-          // ⚠️ Реальный вебхук находится только здесь
+          // ⚠️ Реальные данные находятся только здесь
           
-          // ВАЖНО: объявляем как глобальную переменную
+          // ВАЖНО: объявляем как глобальные переменные
           var DISCORD_WEBHOOK_URL = "${{ secrets.DISCORD_WEBHOOK_URL }}";
+          var DISCORD_CLIENT_ID = "${{ secrets.DISCORD_CLIENT_ID }}";
           
           var DISCORD_CONFIG = {
               webhook: "${{ secrets.DISCORD_WEBHOOK_URL }}",
-              version: "1.1",
+              clientId: "${{ secrets.DISCORD_CLIENT_ID }}",
+              version: "1.2",
               buildDate: "$CURRENT_DATE",
               buildId: "${{ github.run_id }}",
               commitHash: "${{ github.sha }}",
@@ -64,17 +72,20 @@ jobs:
           console.log("🎯 Discord Config v" + DISCORD_CONFIG.version + " ЗАГРУЖЕН");
           console.log("📅 Сборка: " + DISCORD_CONFIG.buildDate);
           console.log("🔗 Вебхук: " + (DISCORD_WEBHOOK_URL ? "✅ Настроен" : "❌ Отсутствует"));
+          console.log("🆔 Client ID: " + (DISCORD_CLIENT_ID ? "✅ Настроен" : "❌ Отсутствует"));
           
           // Экспортируем в глобальную область видимости
           if (typeof window !== 'undefined') {
               window.DISCORD_CONFIG = DISCORD_CONFIG;
               window.DISCORD_WEBHOOK_URL = DISCORD_WEBHOOK_URL;
+              window.DISCORD_CLIENT_ID = DISCORD_CLIENT_ID;
           }
           
           // Для прямого доступа (если не через window)
           if (typeof globalThis !== 'undefined') {
               globalThis.DISCORD_WEBHOOK_URL = DISCORD_WEBHOOK_URL;
               globalThis.DISCORD_CONFIG = DISCORD_CONFIG;
+              globalThis.DISCORD_CLIENT_ID = DISCORD_CLIENT_ID;
           }
           EOF
           
@@ -94,6 +105,6 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./
-          commit_message: "🚀 Deploy: Фикс Discord конфига (v1.1)"
+          commit_message: "🚀 Deploy: Добавлен Discord Client ID для OAuth (v1.2)"
           user_name: 'github-actions[bot]'
           user_email: 'github-actions[bot]@users.noreply.github.com'
