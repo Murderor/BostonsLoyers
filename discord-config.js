@@ -1,16 +1,18 @@
 // ⚠️ ВНИМАНИЕ: Этот файл создан автоматически GitHub Actions
 // ⚠️ Не добавляйте его в git!
-// ⚠️ Реальный вебхук находится только здесь
+// ⚠️ Реальные данные находятся только здесь
 
-// ВАЖНО: объявляем как глобальную переменную
+// ВАЖНО: объявляем как глобальные переменные
 var DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1467445185297387723/TGBXdJ1zQwVn5UKjM0CRvKj0xnTTIeWcAyCDlMsp87AALfcm0NN7XItbblI10FE4bDYW";
+var DISCORD_CLIENT_ID = "1472490639445852201";
 
 var DISCORD_CONFIG = {
     webhook: "https://discord.com/api/webhooks/1467445185297387723/TGBXdJ1zQwVn5UKjM0CRvKj0xnTTIeWcAyCDlMsp87AALfcm0NN7XItbblI10FE4bDYW",
-    version: "1.1",
-    buildDate: "2026-03-16 18:12:28",
-    buildId: "23158957236",
-    commitHash: "a1931ce4500a2fce0c34c7b46d22d5c7188904a4",
+    clientId: "1472490639445852201",
+    version: "1.2",
+    buildDate: "2026-03-16 18:15:44",
+    buildId: "23159088339",
+    commitHash: "7708d8da324c8862aa9dbeeb37579820be328b0e",
     roles: {
         main: "<@&1321503127987421316>",
         secondary: "<@&1321503135302291516>",
@@ -27,15 +29,18 @@ var DISCORD_CONFIG = {
 console.log("🎯 Discord Config v" + DISCORD_CONFIG.version + " ЗАГРУЖЕН");
 console.log("📅 Сборка: " + DISCORD_CONFIG.buildDate);
 console.log("🔗 Вебхук: " + (DISCORD_WEBHOOK_URL ? "✅ Настроен" : "❌ Отсутствует"));
+console.log("🆔 Client ID: " + (DISCORD_CLIENT_ID ? "✅ Настроен" : "❌ Отсутствует"));
 
 // Экспортируем в глобальную область видимости
 if (typeof window !== 'undefined') {
     window.DISCORD_CONFIG = DISCORD_CONFIG;
     window.DISCORD_WEBHOOK_URL = DISCORD_WEBHOOK_URL;
+    window.DISCORD_CLIENT_ID = DISCORD_CLIENT_ID;
 }
 
 // Для прямого доступа (если не через window)
 if (typeof globalThis !== 'undefined') {
     globalThis.DISCORD_WEBHOOK_URL = DISCORD_WEBHOOK_URL;
     globalThis.DISCORD_CONFIG = DISCORD_CONFIG;
+    globalThis.DISCORD_CLIENT_ID = DISCORD_CLIENT_ID;
 }
