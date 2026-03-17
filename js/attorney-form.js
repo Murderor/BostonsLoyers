@@ -1,5 +1,18 @@
+/**
+ * Форма повышения до Адвоката с Discord OAuth2 авторизацией
+ * Замена поля ручного ввода ID на кнопку входа через Discord
+ */
+
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Форма адвоката с загрузкой изображений загружена');
+    console.log('🚀 Форма адвоката с Discord OAuth2 загружена');
+
+    // ===== КОНФИГУРАЦИЯ DISCORD OAuth2 =====
+    const CLIENT_ID = typeof DISCORD_CLIENT_ID !== 'undefined' ? DISCORD_CLIENT_ID : null;
+    const REDIRECT_URI = window.location.href.split('?')[0].split('#')[0];
+    const DISCORD_API = 'https://discord.com/api/v10';
+
+    // ===== СОСТОЯНИЕ АВТОРИЗАЦИИ =====
+    let discordUser = null;
 
     // ===== ПРОВЕРКА И ЗАГРУЗКА КОНФИГА DISCORD =====
     let discordWebhookUrl = null;
@@ -19,6 +32,198 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         console.warn('⚠️ Discord вебхук не настроен. Тестовый режим.');
         showNotification('⚠️ Discord вебхук не настроен. Заявки будут сохраняться локально.', 'warning');
+    }
+
+    if (!CLIENT_ID) {
+        console.error('❌ Не задан DISCORD_CLIENT_ID в discord-config.js');
+        const statusEl = document.getElementById('discordStatus');
+        if (statusEl) {
+            statusEl.textContent = '❌ Ошибка: client_id не настроен';
+            statusEl.classList.add('error');
+        }
+        return;
+    }
+
+    console.log('✅ Discord Client ID загружен:', CLIENT_ID.substring(0, 10) + '...');
+    console.log('🔁 Redirect URI:', REDIRECT_URI);
+
+    // ===== ПОЛУЧЕНИЕ ЭЛЕМЕНТОВ =====
+    const loginBtn = document.getElementById('discordLoginBtn');
+    const userInfoDiv = document.getElementById('discordUserInfo');
+    const discordUsernameSpan = document.getElementById('discordUsername');
+    const discordIdSpan = document.getElementById('discordIdDisplay');
+    const discordAvatar = document.getElementById('discordAvatar');
+    const discordStatus = document.getElementById('discordStatus');
+    const discordIdHidden = document.getElementById('specialCommId'); // скрытое поле для ID
+    const submitBtn = document.getElementById('submitButton');
+    const form = document.getElementById('attorneyForm');
+    const saveDraftButton = document.getElementById('saveDraftButton');
+
+    if (!loginBtn || !userInfoDiv || !discordUsernameSpan || !discordIdSpan || !discordStatus || !discordIdHidden || !submitBtn || !form) {
+        console.error('❌ Не найдены необходимые элементы формы');
+        return;
+    }
+
+    // ===== OAuth2 PKCE ФУНКЦИИ =====
+    function generateCodeVerifier() {
+        const array = new Uint8Array(32);
+        crypto.getRandomValues(array);
+        return base64URLEncode(array);
+    }
+
+    function base64URLEncode(buffer) {
+        return btoa(String.fromCharCode(...new Uint8Array(buffer)))
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_')
+            .replace(/=+$/, '');
+    }
+
+    async function generateCodeChallenge(verifier) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(verifier);
+        const digest = await crypto.subtle.digest('SHA-256', data);
+        return base64URLEncode(new Uint8Array(digest));
+    }
+
+    function redirectToDiscord() {
+        const verifier = generateCodeVerifier();
+        localStorage.setItem('discord_verifier', verifier);
+        
+        generateCodeChallenge(verifier).then(challenge => {
+            const params = new URLSearchParams({
+                client_id: CLIENT_ID,
+                redirect_uri: REDIRECT_URI,
+                response_type: 'code',
+                scope: 'identify',
+                code_challenge: challenge,
+                code_challenge_method: 'S256',
+                prompt: 'consent'
+            });
+            
+            const authUrl = `https://discord.com/oauth2/authorize?${params.toString()}`;
+            console.log('🔐 Перенаправление на Discord...');
+            window.location.href = authUrl;
+        }).catch(error => {
+            console.error('❌ Ошибка генерации challenge:', error);
+            discordStatus.textContent = '❌ Ошибка при подготовке авторизации';
+            discordStatus.classList.add('error');
+        });
+    }
+
+    async function exchangeCode(code, verifier) {
+        const body = new URLSearchParams({
+            client_id: CLIENT_ID,
+            grant_type: 'authorization_code',
+            code: code,
+            redirect_uri: REDIRECT_URI,
+            code_verifier: verifier
+        });
+
+        const response = await fetch('https://discord.com/api/oauth2/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: body.toString()
+        });
+
+        if (!response.ok) {
+            const err = await response.text();
+            throw new Error(`Token exchange failed: ${err}`);
+        }
+
+        const data = await response.json();
+        return data.access_token;
+    }
+
+    async function fetchUser(accessToken) {
+        const response = await fetch(`${DISCORD_API}/users/@me`, {
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+        });
+        if (!response.ok) throw new Error('Failed to fetch user');
+        return await response.json();
+    }
+
+    // Обработка callback
+    async function handleDiscordCallback() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const error = urlParams.get('error');
+
+        if (error) {
+            console.error('❌ Discord error:', error);
+            discordStatus.textContent = `❌ Ошибка авторизации: ${error}`;
+            discordStatus.classList.add('error');
+            return;
+        }
+
+        if (code) {
+            const verifier = localStorage.getItem('discord_verifier');
+            if (!verifier) {
+                discordStatus.textContent = '❌ Ошибка: не найден верификатор';
+                discordStatus.classList.add('error');
+                return;
+            }
+
+            try {
+                discordStatus.textContent = '🔄 Получение токена...';
+                discordStatus.classList.remove('error', 'success');
+                
+                const accessToken = await exchangeCode(code, verifier);
+                const user = await fetchUser(accessToken);
+                discordUser = { 
+                    id: user.id, 
+                    username: user.username, 
+                    avatar: user.avatar,
+                    global_name: user.global_name
+                };
+
+                localStorage.setItem('discord_user', JSON.stringify(discordUser));
+                window.history.replaceState({}, document.title, window.location.pathname);
+
+                updateUIAfterLogin();
+                discordStatus.textContent = `✅ Авторизован как ${discordUser.username}`;
+                discordStatus.classList.add('success');
+            } catch (err) {
+                console.error('❌ Ошибка авторизации:', err);
+                discordStatus.textContent = '❌ Ошибка авторизации. Попробуйте снова.';
+                discordStatus.classList.add('error');
+            } finally {
+                localStorage.removeItem('discord_verifier');
+            }
+        }
+    }
+
+    function updateUIAfterLogin() {
+        if (discordUser) {
+            userInfoDiv.style.display = 'block';
+            discordUsernameSpan.textContent = discordUser.username;
+            discordIdSpan.textContent = `ID: ${discordUser.id}`;
+            discordIdHidden.value = discordUser.id; // Заполняем скрытое поле
+            
+            if (discordUser.avatar) {
+                const avatarUrl = `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`;
+                discordAvatar.innerHTML = `<img src="${avatarUrl}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+            } else {
+                discordAvatar.textContent = discordUser.username.charAt(0).toUpperCase();
+            }
+            
+            loginBtn.disabled = true;
+            discordStatus.textContent = `✅ Авторизован как ${discordUser.username}`;
+            discordStatus.classList.add('success');
+        }
+    }
+
+    function loadStoredUser() {
+        const stored = localStorage.getItem('discord_user');
+        if (stored) {
+            try {
+                discordUser = JSON.parse(stored);
+                updateUIAfterLogin();
+                console.log('✅ Загружен сохранённый пользователь:', discordUser.username);
+            } catch (e) {
+                console.warn('⚠️ Ошибка загрузки сохранённого пользователя');
+                localStorage.removeItem('discord_user');
+            }
+        }
     }
 
     // ===== ОБРАБОТКА ВЫБОРА ИЗОБРАЖЕНИЯ =====
@@ -109,237 +314,239 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ===== ФОРМАТИРОВАНИЕ ИМЕНИ ДЛЯ ВЕТКИ =====
     function formatThreadName(fullName) {
-        // Убираем лишние пробелы и ограничиваем длину (Discord ограничение - 100 символов)
         const cleanName = fullName.trim().replace(/\s+/g, ' ');
-        // Обрезаем если слишком длинное (оставляем место для " | Заявка: Повышение до Адвоката")
         const maxNameLength = 50;
         const shortName = cleanName.length > maxNameLength 
             ? cleanName.substring(0, maxNameLength) + '...' 
             : cleanName;
         
-        return `📋 ${shortName} | Заявка: Повышение до Адвоката`;
+        return `📋 ${shortName} | Повышение до Адвоката`;
     }
 
-   // ===== ОТПРАВКА В DISCORD (С ФАЙЛАМИ И СОЗДАНИЕМ ВЕТКИ) =====
-// ===== ОТПРАВКА В DISCORD С ИЗОБРАЖЕНИЯМИ И СОЗДАНИЕМ ВЕТКИ =====
-async function sendToDiscord(formData, files) {
-    const isDiscordAvailable = discordWebhookUrl ? await checkDiscordAvailability() : false;
-    
-    if (!isDiscordAvailable) {
-        console.log('Discord недоступен, сохраняем локально');
-        return {
-            success: true,
-            id: `local-save-${Date.now()}`,
-            message: 'Заявка сохранена локально',
-            local: true
-        };
+    // Транслитерация для безопасного названия ветки
+    function transliterate(text) {
+        const rus = "абвгдеёжзийклмнопрстуфхцчшщъыьэюя";
+        const eng = "abvgdeejziyklmnoprstufhzcssyyeiya";
+        let result = "";
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i].toLowerCase();
+            const index = rus.indexOf(char);
+            if (index !== -1) {
+                result += eng[index];
+            } else {
+                result += text[i];
+            }
+        }
+        return result;
     }
 
-    try {
-        showNotification('Отправка заявки в Discord...', 'info');
+    // ===== ОТПРАВКА В DISCORD С ИЗОБРАЖЕНИЯМИ =====
+    async function sendToDiscord(formData, files) {
+        const isDiscordAvailable = discordWebhookUrl ? await checkDiscordAvailability() : false;
         
-        // Транслитерация для безопасного названия ветки
-        function transliterate(text) {
-            const rus = "абвгдеёжзийклмнопрстуфхцчшщъыьэюя";
-            const eng = "abvgdeejziyklmnoprstufhzcssyyeiya";
-            let result = "";
-            for (let i = 0; i < text.length; i++) {
-                const char = text[i].toLowerCase();
-                const index = rus.indexOf(char);
-                if (index !== -1) {
-                    result += eng[index];
-                } else {
-                    result += text[i];
-                }
-            }
-            return result;
-        }
-
-        // Создаём безопасное название для ветки
-        const cleanName = formData.fullName.trim().replace(/\s+/g, ' ');
-        const latinName = transliterate(cleanName);
-        const safeName = latinName.replace(/[^a-zA-Z0-9\s\-_]/g, '').substring(0, 50);
-        const threadName = `📋 ${safeName} | Повышение до Адвоката`.trim();
-
-        // Роли из конфига или дефолтные
-        const discordRoles = discordConfig?.roles ? 
-            `${discordConfig.roles.main}, ${discordConfig.roles.secondary}, ${discordConfig.roles.tertiary}` :
-            '<@&1321503127987421316>, <@&1321503135302291516>, <@&1371785937180426270>';
-
-        // Основной embed
-        const mainEmbed = {
-            title: '📈 Заявка на повышение до Адвоката',
-            description: `**Заявитель:** ${formData.fullName}\n**Повышение с должности:** Младший адвокат → Адвокат\n\n${discordRoles}`,
-            color: 0x3498db,
-            fields: [
-                {
-                    name: '👤 Имя заявителя',
-                    value: formData.fullName,
-                    inline: true
-                },
-                {
-                    name: '📞 ID для связи',
-                    value: `<@${formData.specialCommId}>`,
-                    inline: true
-                },
-                {
-                    name: '📋 Номер заявки',
-                    value: formData.applicationId,
-                    inline: true
-                },
-                {
-                    name: '📅 Дата подачи',
-                    value: new Date(formData.timestamp).toLocaleString('ru-RU'),
-                    inline: true
-                },
-                {
-                    name: '🖼️ Скриншоты вызовов',
-                    value: 'Прикреплены к сообщению (3 файла)',
-                    inline: true
-                },
-                {
-                    name: '🎓 Подтверждение устного экзамена',
-                    value: formData.examLink ? `[Ссылка на результат](${formData.examLink})` : 'Не указано',
-                    inline: false
-                }
-            ],
-            footer: {
-                text: `Адвокатское бюро Majestic RP | Форма повышения | v${discordConfig?.version || '1.0'}`,
-                icon_url: 'https://cdn.discordapp.com/embed/avatars/0.png'
-            },
-            timestamp: new Date().toISOString()
-        };
-
-        // Создаём FormData для multipart-запроса
-        const formDataToSend = new FormData();
-        
-        // Добавляем файлы
-        for (let i = 0; i < files.length; i++) {
-            formDataToSend.append(`files[${i}]`, files[i], `call_${i+1}.png`);
-        }
-        
-        // Добавляем payload_json с embed и названием ветки
-        const payload = {
-            username: 'Секретарь Адвокатуры',
-            avatar_url: 'https://i.pinimg.com/originals/7a/af/81/7aaf811aa403514a33e1d468e7405f9a.png',
-            thread_name: threadName,
-            embeds: [mainEmbed],
-            content: `📢 **Новая заявка на повышение!** <@${formData.specialCommId}> подает заявку на повышение до Адвоката.\n\n**Скриншоты вызовов прикреплены к сообщению.**\n**Ссылка на экзамен:** ${formData.examLink}`,
-            allowed_mentions: {
-                users: [formData.specialCommId]
-            }
-        };
-        
-        formDataToSend.append('payload_json', JSON.stringify(payload));
-
-        const response = await fetch(discordWebhookUrl, {
-            method: 'POST',
-            body: formDataToSend
-        });
-
-        if (!response.ok) {
-            let errorMessage = `Ошибка Discord (${response.status})`;
-            try {
-                const errorText = await response.text();
-                if (errorText) {
-                    try {
-                        const errorJson = JSON.parse(errorText);
-                        errorMessage += `: ${errorJson.message || errorText}`;
-                    } catch {
-                        errorMessage += `: ${errorText}`;
-                    }
-                }
-            } catch (e) {}
-            throw new Error(errorMessage);
-        }
-
-        let result = null;
-        try {
-            const responseText = await response.text();
-            result = responseText ? JSON.parse(responseText) : { success: true, id: `thread-${Date.now()}` };
-        } catch {
-            result = { success: true, id: `thread-${Date.now()}` };
-        }
-
-        console.log('✅ Заявка успешно отправлена в Discord, создана ветка:', threadName);
-        return { ...result, message: `Ветка создана: ${threadName}` };
-
-    } catch (error) {
-        console.error('❌ Ошибка отправки в Discord:', error);
-        
-        // Пробуем отправить без создания ветки как запасной вариант
-        if (error.message.includes('thread') || error.message.includes('ветк')) {
-            try {
-                console.log('Пробуем отправить без создания ветки...');
-                
-                const formDataToSend = new FormData();
-                for (let i = 0; i < files.length; i++) {
-                    formDataToSend.append(`files[${i}]`, files[i], `call_${i+1}.png`);
-                }
-                
-                const payload = {
-                    username: 'Секретарь Адвокатуры',
-                    avatar_url: 'https://i.pinimg.com/originals/7a/af/81/7aaf811aa403514a33e1d468e7405f9a.png',
-                    embeds: [mainEmbed],
-                    content: `📢 **Новая заявка на повышение!** <@${formData.specialCommId}> подает заявку на повышение до Адвоката.\n\n⚠️ **Не удалось создать ветку. Заявка отправлена в основной канал.**\n\n**Скриншоты вызовов прикреплены к сообщению.**\n**Ссылка на экзамен:** ${formData.examLink}`,
-                    allowed_mentions: {
-                        users: [formData.specialCommId]
-                    }
-                };
-                
-                formDataToSend.append('payload_json', JSON.stringify(payload));
-                
-                const fallbackResponse = await fetch(discordWebhookUrl, {
-                    method: 'POST',
-                    body: formDataToSend
-                });
-                
-                if (!fallbackResponse.ok) {
-                    throw new Error('Не удалось отправить даже в основной канал');
-                }
-                
-                return {
-                    success: true,
-                    id: `channel-${Date.now()}`,
-                    message: 'Заявка отправлена в основной канал (ветка не создана)',
-                    local: false
-                };
-            } catch (fallbackError) {
-                console.error('Запасной вариант тоже не сработал:', fallbackError);
-            }
-        }
-        
-        if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
+        if (!isDiscordAvailable) {
+            console.log('Discord недоступен, сохраняем локально');
             return {
                 success: true,
                 id: `local-save-${Date.now()}`,
-                message: 'Заявка сохранена локально (Discord недоступен)',
+                message: 'Заявка сохранена локально',
                 local: true
             };
         }
-        throw error;
+
+        try {
+            showNotification('Отправка заявки в Discord...', 'info');
+            
+            // Создаём безопасное название для ветки
+            const cleanName = formData.fullName.trim().replace(/\s+/g, ' ');
+            const latinName = transliterate(cleanName);
+            const safeName = latinName.replace(/[^a-zA-Z0-9\s\-_]/g, '').substring(0, 50);
+            const threadName = `📋 ${safeName} | Повышение до Адвоката`.trim();
+
+            // Роли из конфига или дефолтные
+            const discordRoles = discordConfig?.roles ? 
+                `${discordConfig.roles.main}, ${discordConfig.roles.secondary}, ${discordConfig.roles.tertiary}` :
+                '<@&1321503127987421316>, <@&1321503135302291516>, <@&1371785937180426270>';
+
+            // Основной embed
+            const mainEmbed = {
+                title: '📈 Заявка на повышение до Адвоката',
+                description: `**Заявитель:** ${formData.fullName}\n**Повышение с должности:** Младший адвокат → Адвокат\n\n${discordRoles}`,
+                color: 0x3498db,
+                fields: [
+                    {
+                        name: '👤 Имя заявителя',
+                        value: formData.fullName,
+                        inline: true
+                    },
+                    {
+                        name: '📞 ID для связи',
+                        value: `<@${formData.specialCommId}>`,
+                        inline: true
+                    },
+                    {
+                        name: '📋 Номер заявки',
+                        value: formData.applicationId,
+                        inline: true
+                    },
+                    {
+                        name: '📅 Дата подачи',
+                        value: new Date(formData.timestamp).toLocaleString('ru-RU'),
+                        inline: true
+                    },
+                    {
+                        name: '🖼️ Скриншоты вызовов',
+                        value: 'Прикреплены к сообщению (3 файла)',
+                        inline: true
+                    },
+                    {
+                        name: '🎓 Подтверждение устного экзамена',
+                        value: formData.examLink ? `[Ссылка на результат](${formData.examLink})` : 'Не указано',
+                        inline: false
+                    }
+                ],
+                footer: {
+                    text: `Адвокатское бюро Majestic RP | Форма повышения | v${discordConfig?.version || '1.0'}`,
+                    icon_url: 'https://cdn.discordapp.com/embed/avatars/0.png'
+                },
+                timestamp: new Date().toISOString()
+            };
+
+            // Создаём FormData для multipart-запроса
+            const formDataToSend = new FormData();
+            
+            // Добавляем файлы
+            for (let i = 0; i < files.length; i++) {
+                formDataToSend.append(`files[${i}]`, files[i], `call_${i+1}.png`);
+            }
+            
+            // Добавляем payload_json с embed и названием ветки
+            const payload = {
+                username: 'Секретарь Адвокатуры',
+                avatar_url: 'https://i.pinimg.com/originals/7a/af/81/7aaf811aa403514a33e1d468e7405f9a.png',
+                thread_name: threadName,
+                embeds: [mainEmbed],
+                content: `📢 **Новая заявка на повышение!** <@${formData.specialCommId}> подает заявку на повышение до Адвоката.\n\n**Скриншоты вызовов прикреплены к сообщению.**\n**Ссылка на экзамен:** ${formData.examLink}`,
+                allowed_mentions: {
+                    users: [formData.specialCommId]
+                }
+            };
+            
+            formDataToSend.append('payload_json', JSON.stringify(payload));
+
+            const response = await fetch(discordWebhookUrl, {
+                method: 'POST',
+                body: formDataToSend
+            });
+
+            if (!response.ok) {
+                let errorMessage = `Ошибка Discord (${response.status})`;
+                try {
+                    const errorText = await response.text();
+                    if (errorText) {
+                        try {
+                            const errorJson = JSON.parse(errorText);
+                            errorMessage += `: ${errorJson.message || errorText}`;
+                        } catch {
+                            errorMessage += `: ${errorText}`;
+                        }
+                    }
+                } catch (e) {}
+                throw new Error(errorMessage);
+            }
+
+            let result = null;
+            try {
+                const responseText = await response.text();
+                result = responseText ? JSON.parse(responseText) : { success: true, id: `thread-${Date.now()}` };
+            } catch {
+                result = { success: true, id: `thread-${Date.now()}` };
+            }
+
+            console.log('✅ Заявка успешно отправлена в Discord, создана ветка:', threadName);
+            return { ...result, message: `Ветка создана: ${threadName}` };
+
+        } catch (error) {
+            console.error('❌ Ошибка отправки в Discord:', error);
+            
+            // Пробуем отправить без создания ветки как запасной вариант
+            if (error.message.includes('thread') || error.message.includes('ветк')) {
+                try {
+                    console.log('Пробуем отправить без создания ветки...');
+                    
+                    const formDataToSend = new FormData();
+                    for (let i = 0; i < files.length; i++) {
+                        formDataToSend.append(`files[${i}]`, files[i], `call_${i+1}.png`);
+                    }
+                    
+                    const payload = {
+                        username: 'Секретарь Адвокатуры',
+                        avatar_url: 'https://i.pinimg.com/originals/7a/af/81/7aaf811aa403514a33e1d468e7405f9a.png',
+                        embeds: [mainEmbed],
+                        content: `📢 **Новая заявка на повышение!** <@${formData.specialCommId}> подает заявку на повышение до Адвоката.\n\n⚠️ **Не удалось создать ветку. Заявка отправлена в основной канал.**\n\n**Скриншоты вызовов прикреплены к сообщению.**\n**Ссылка на экзамен:** ${formData.examLink}`,
+                        allowed_mentions: {
+                            users: [formData.specialCommId]
+                        }
+                    };
+                    
+                    formDataToSend.append('payload_json', JSON.stringify(payload));
+                    
+                    const fallbackResponse = await fetch(discordWebhookUrl, {
+                        method: 'POST',
+                        body: formDataToSend
+                    });
+                    
+                    if (!fallbackResponse.ok) {
+                        throw new Error('Не удалось отправить даже в основной канал');
+                    }
+                    
+                    return {
+                        success: true,
+                        id: `channel-${Date.now()}`,
+                        message: 'Заявка отправлена в основной канал (ветка не создана)',
+                        local: false
+                    };
+                } catch (fallbackError) {
+                    console.error('Запасной вариант тоже не сработал:', fallbackError);
+                }
+            }
+            
+            if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
+                return {
+                    success: true,
+                    id: `local-save-${Date.now()}`,
+                    message: 'Заявка сохранена локально (Discord недоступен)',
+                    local: true
+                };
+            }
+            throw error;
+        }
     }
-}
 
     // ===== ВАЛИДАЦИЯ ФОРМЫ ПЕРЕД ОТПРАВКОЙ =====
-    const form = document.getElementById('attorneyForm');
-    const submitButton = document.getElementById('submitButton');
-
-    if (form && submitButton) {
+    if (form && submitBtn) {
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
             
+            // Проверка авторизации Discord
+            if (!discordUser || !discordUser.id) {
+                discordStatus.textContent = '❌ Необходимо авторизоваться через Discord';
+                discordStatus.classList.add('error');
+                
+                const warningDiv = document.createElement('div');
+                warningDiv.className = 'discord-warning';
+                warningDiv.innerHTML = '⚠️ Для отправки формы необходимо авторизоваться через Discord';
+                form.parentNode.insertBefore(warningDiv, form);
+                
+                setTimeout(() => warningDiv.remove(), 5000);
+                return;
+            }
+
             const errors = [];
 
             // Проверка имени
             const fullName = document.getElementById('fullName').value.trim();
             if (!fullName) errors.push('• Введите ваше полное имя');
-
-            // Проверка ID спецсвязи
-            const specialCommId = document.getElementById('specialCommId').value;
-            if (!/^\d{17,20}$/.test(specialCommId)) {
-                errors.push('• ID спецсвязи должен содержать 17-20 цифр');
-            }
 
             // Проверка изображений (3 шт.)
             const imageFiles = [];
@@ -383,13 +590,13 @@ async function sendToDiscord(formData, files) {
             }
 
             // Блокируем кнопку
-            submitButton.disabled = true;
-            submitButton.innerHTML = '⏳ Отправка в Discord...';
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '⏳ Отправка в Discord...';
 
             // Собираем данные
             const formData = {
                 fullName,
-                specialCommId,
+                specialCommId: discordUser.id, // Используем ID из авторизации
                 examLink,
                 timestamp: new Date().toISOString(),
                 applicationId: `ATT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -407,7 +614,8 @@ async function sendToDiscord(formData, files) {
 
                 saveApplicationToStorage(formData, discordResult);
                 form.reset();
-                // Скрыть все превью
+                
+                // Скрыть все превью, но сохранить авторизацию
                 for (let i = 1; i <= 3; i++) {
                     const preview = document.getElementById(`preview${i}`);
                     if (preview) {
@@ -416,6 +624,8 @@ async function sendToDiscord(formData, files) {
                     }
                 }
                 updateImagesCounter();
+                
+                // Сбрасываем статус экзамена, но НЕ сбрасываем авторизацию
                 document.getElementById('examFilled').innerHTML = '❌ не заполнено';
                 document.getElementById('examFilled').style.color = '#e74c3c';
                 document.getElementById('examValidation').className = 'link-validation';
@@ -437,24 +647,22 @@ async function sendToDiscord(formData, files) {
                 showNotification(errorMessage, 'error');
             } finally {
                 setTimeout(() => {
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = '📤 Отправить заявку';
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '📤 Отправить заявку';
                 }, 2000);
             }
         });
     }
 
     // ===== СОХРАНЕНИЕ ЧЕРНОВИКА =====
-    const saveDraftButton = document.getElementById('saveDraftButton');
     if (saveDraftButton) {
         saveDraftButton.addEventListener('click', function() {
             const draftData = {
                 fullName: document.getElementById('fullName')?.value || '',
-                specialCommId: document.getElementById('specialCommId')?.value || '',
+                specialCommId: discordUser?.id || '', // Сохраняем ID из авторизации
                 examLink: document.getElementById('examLink')?.value || '',
                 timestamp: new Date().toLocaleString()
             };
-            // Файлы не сохраняем в черновике
             const confirmation = document.getElementById('confirmation');
             if (confirmation) draftData.confirmation = confirmation.checked;
             
@@ -471,7 +679,10 @@ async function sendToDiscord(formData, files) {
             try {
                 const draftData = JSON.parse(draft);
                 document.getElementById('fullName').value = draftData.fullName || '';
-                document.getElementById('specialCommId').value = draftData.specialCommId || '';
+                if (draftData.specialCommId && !discordUser) {
+                    // Если есть ID в черновике, но пользователь не авторизован
+                    discordIdHidden.value = draftData.specialCommId;
+                }
                 document.getElementById('examLink').value = draftData.examLink || '';
                 if (draftData.examLink) validateExamLink(document.getElementById('examLink'));
                 
@@ -615,9 +826,17 @@ async function sendToDiscord(formData, files) {
         }
     }
 
+    // ===== ОБРАБОТЧИКИ =====
+    loginBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        redirectToDiscord();
+    });
+
     // ===== ИНИЦИАЛИЗАЦИЯ =====
     updateImagesCounter();
+    loadStoredUser();
     loadDraft();
+    handleDiscordCallback();
 
     // Анимация появления формы
     setTimeout(() => {
@@ -634,24 +853,5 @@ async function sendToDiscord(formData, files) {
         });
     }, 500);
 
-    console.log('Форма адвоката с изображениями инициализирована');
+    console.log('✅ Форма адвоката с Discord OAuth2 инициализирована');
 });
-
-// CSS анимации (добавьте в head, если ещё нет)
-if (!document.getElementById('dynamicFormStyles')) {
-    const style = document.createElement('style');
-    style.id = 'dynamicFormStyles';
-    style.textContent = `
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        @keyframes slideOut {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(100%); opacity: 0; }
-        }
-    `;
-    document.head.appendChild(style);
-}
-
-
