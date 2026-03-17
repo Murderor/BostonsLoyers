@@ -136,7 +136,7 @@
             padding-top: 25px;
         }
 
-        /* Новые стили для предпросмотра изображений */
+        /* Стили для предпросмотра изображений */
         .image-preview {
             display: flex;
             flex-direction: column;
@@ -188,6 +188,109 @@
 
         .call-input[type="file"]::file-selector-button:hover {
             background-color: #c9a23b;
+        }
+
+        /* Стили для Discord авторизации */
+        .discord-auth-section {
+            background: linear-gradient(135deg, rgba(88, 101, 242, 0.1), rgba(0, 0, 0, 0.2));
+            border: 1px solid rgba(88, 101, 242, 0.3);
+            border-left: 4px solid #5865F2;
+        }
+
+        .discord-user-info {
+            display: none;
+            background: rgba(88, 101, 242, 0.1);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            width: 100%;
+            border-left: 4px solid #5865F2;
+            margin-bottom: 15px;
+        }
+
+        .discord-user-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--color-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--color-accent);
+            flex-shrink: 0;
+        }
+
+        .discord-user-details {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .discord-username {
+            color: var(--color-light);
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .discord-id {
+            color: #a0a8c0;
+            font-size: 0.85rem;
+            font-family: monospace;
+        }
+
+        .discord-login-btn {
+            background: #5865F2 !important;
+            border-color: #5865F2 !important;
+            color: white !important;
+            font-size: 1.1rem;
+            padding: 15px 30px !important;
+            transition: all 0.3s ease;
+        }
+
+        .discord-login-btn:hover {
+            background: #4752c4 !important;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(88, 101, 242, 0.4);
+        }
+
+        .discord-login-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .discord-status {
+            color: #a0a8c0;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+
+        .discord-status.success {
+            color: #86efac;
+        }
+
+        .discord-status.error {
+            color: #f87171;
+        }
+
+        .discord-warning {
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            color: white;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 10px;
+            text-align: center;
+            border-left: 5px solid #ff5722;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
         }
     </style>
 </head>
@@ -265,7 +368,7 @@
                     <span class="notification-icon">📋</span>
                     <div>
                         <h3 style="color: var(--color-light); margin-bottom: 10px;">Необходимые данные</h3>
-                        <p style="color: #a0a8c0; margin-bottom: 5px;">1. Заполните ваше имя и ID Discord</p>
+                        <p style="color: #a0a8c0; margin-bottom: 5px;">1. Заполните ваше имя и Discord ID (автоматически)</p>
                         <p style="color: #a0a8c0; margin-bottom: 5px;">2. Загрузите 3 скриншота вызовов с адвокатами рангом выше (изображения до 8 МБ)</p>
                         <p style="color: #a0a8c0; margin-bottom: 5px;">3. Вставьте ссылку на подтверждение устного экзамена</p>
                         <p style="color: #a0a8c0;">4. Подтвердите согласие с правилами</p>
@@ -287,18 +390,39 @@
                                    class="form-control">
                             <p class="field-hint">Пример: Иван Иванов</p>
                         </div>
+                    </div>
 
-                        <div class="form-group">
-                            <label for="specialCommId">
-                                Ваш идентификатор спец. связи
-                                <span class="hint-icon" title="ПКМ по себе в Discord → 'Копировать ID Пользователя'">ℹ️</span>
-                            </label>
-                            <input type="text" id="specialCommId" name="specialCommId" required 
-                                   placeholder="Пример: 123456789012345678"
-                                   pattern="[0-9]{17,20}"
-                                   maxlength="20"
-                                   class="form-control">
-                            <p class="field-hint">ID пользователя Discord (17-20 цифр)</p>
+                    <!-- БЛОК АВТОРИЗАЦИИ DISCORD (вместо поля ID) -->
+                    <div class="minimal-section discord-auth-section">
+                        <h3 class="form-section-title">🔐 Авторизация Discord</h3>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 20px; align-items: flex-start;">
+                            
+                            <!-- Информация о пользователе (скрыта до авторизации) -->
+                            <div class="discord-user-info" id="discordUserInfo">
+                                <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+                                    <div class="discord-user-avatar" id="discordAvatar">
+                                        🟢
+                                    </div>
+                                    <div class="discord-user-details">
+                                        <span class="discord-username" id="discordUsername">Загрузка...</span>
+                                        <span class="discord-id" id="discordIdDisplay">ID: </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Кнопка входа -->
+                            <button type="button" class="button discord-login-btn" id="discordLoginBtn">
+                                🔐 Войти через Discord
+                            </button>
+                            
+                            <!-- Скрытое поле для хранения ID (заполняется автоматически) -->
+                            <input type="hidden" id="specialCommId" name="specialCommId" value="">
+                            
+                            <!-- Статус авторизации -->
+                            <p class="discord-status" id="discordStatus">
+                                ⚠️ Авторизуйтесь через Discord для автоматической подстановки ID
+                            </p>
                         </div>
                     </div>
 
@@ -317,10 +441,10 @@
                                     <span class="call-number">1</span>
                                     <span class="call-title">Вызов #1</span>
                                 </div>
-                                <input type="file" name="callImage1" id="callImage1" accept="image/*" class="call-input" required onchange="handleImageSelect(this, 1)">
+                                <input type="file" name="callImage1" id="callImage1" accept="image/*" class="call-input" required onchange="window.handleImageSelect(this, 1)">
                                 <div class="image-preview" id="preview1" style="display: none;">
                                     <img src="#" alt="Предпросмотр" style="max-width: 100%; max-height: 200px; border-radius: 5px; border: 1px solid var(--color-gray-light);">
-                                    <button type="button" class="remove-image" onclick="removeImage(1)">❌ Удалить</button>
+                                    <button type="button" class="remove-image" onclick="window.removeImage(1)">❌ Удалить</button>
                                 </div>
                                 <div class="call-hint">Загрузите скриншот вызова (изображение)</div>
                             </div>
@@ -331,10 +455,10 @@
                                     <span class="call-number">2</span>
                                     <span class="call-title">Вызов #2</span>
                                 </div>
-                                <input type="file" name="callImage2" id="callImage2" accept="image/*" class="call-input" required onchange="handleImageSelect(this, 2)">
+                                <input type="file" name="callImage2" id="callImage2" accept="image/*" class="call-input" required onchange="window.handleImageSelect(this, 2)">
                                 <div class="image-preview" id="preview2" style="display: none;">
                                     <img src="#" alt="Предпросмотр" style="max-width: 100%; max-height: 200px; border-radius: 5px; border: 1px solid var(--color-gray-light);">
-                                    <button type="button" class="remove-image" onclick="removeImage(2)">❌ Удалить</button>
+                                    <button type="button" class="remove-image" onclick="window.removeImage(2)">❌ Удалить</button>
                                 </div>
                                 <div class="call-hint">Загрузите скриншот вызова (изображение)</div>
                             </div>
@@ -345,10 +469,10 @@
                                     <span class="call-number">3</span>
                                     <span class="call-title">Вызов #3</span>
                                 </div>
-                                <input type="file" name="callImage3" id="callImage3" accept="image/*" class="call-input" required onchange="handleImageSelect(this, 3)">
+                                <input type="file" name="callImage3" id="callImage3" accept="image/*" class="call-input" required onchange="window.handleImageSelect(this, 3)">
                                 <div class="image-preview" id="preview3" style="display: none;">
                                     <img src="#" alt="Предпросмотр" style="max-width: 100%; max-height: 200px; border-radius: 5px; border: 1px solid var(--color-gray-light);">
-                                    <button type="button" class="remove-image" onclick="removeImage(3)">❌ Удалить</button>
+                                    <button type="button" class="remove-image" onclick="window.removeImage(3)">❌ Удалить</button>
                                 </div>
                                 <div class="call-hint">Загрузите скриншот вызова (изображение)</div>
                             </div>
@@ -378,7 +502,7 @@
                                    placeholder="https://discord.com/channels/..."
                                    pattern="https?://.+"
                                    required
-                                   oninput="validateExamLink(this)">
+                                   oninput="window.validateExamLink(this)">
                             <div class="call-hint">Скопируйте ссылку на сообщение (ПКМ → Копировать ссылку на сообщение)</div>
                             <div class="link-validation" id="examValidation"></div>
                         </div>
