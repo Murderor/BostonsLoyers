@@ -11,7 +11,271 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
     <style>
-        /* стили аналогичные твоей форме */
+        /* Базовые стили */
+        :root {
+            --color-dark: #0a0e17;
+            --color-darker: #050811;
+            --color-primary: #1a2b4c;
+            --color-accent: #d4af37;
+            --color-accent-dark: #b8941f;
+            --color-light: #e6e9f0;
+            --color-gray: #2a3142;
+            --color-gray-light: #3a4357;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            --border-radius: 6px;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.5;
+            color: var(--color-light);
+            background-color: var(--color-dark);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Шапка */
+        .header {
+            background-color: var(--color-darker);
+            border-bottom: 1px solid var(--color-gray);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            padding: 1rem 0;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-image {
+            width: 50px;
+            height: 50px;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        #main-logo {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 2;
+        }
+
+        .logo-placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 900;
+            color: var(--color-dark);
+            border: 2px solid var(--color-accent);
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        .logo-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--color-light);
+        }
+
+        .logo-subtitle {
+            font-size: 0.8rem;
+            color: var(--color-gray-light);
+            font-style: italic;
+        }
+
+        .nav-list {
+            display: flex;
+            list-style: none;
+            gap: 10px;
+        }
+
+        .nav-button {
+            display: block;
+            padding: 10px 20px;
+            background-color: var(--color-gray);
+            color: var(--color-light);
+            text-decoration: none;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            transition: var(--transition);
+            border: 1px solid transparent;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .nav-button:hover {
+            background-color: var(--color-gray-light);
+            border-color: var(--color-accent);
+        }
+
+        .nav-button.active {
+            background-color: var(--color-accent);
+            color: var(--color-dark);
+            border-color: var(--color-accent-dark);
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .mobile-menu-btn span {
+            display: block;
+            width: 25px;
+            height: 2px;
+            background-color: var(--color-light);
+            transition: var(--transition);
+        }
+
+        .mobile-nav {
+            display: none;
+            background-color: var(--color-darker);
+            border-top: 1px solid var(--color-gray);
+            padding: 15px 0;
+        }
+
+        .mobile-nav.active {
+            display: block;
+        }
+
+        .mobile-nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .mobile-nav-button {
+            display: block;
+            padding: 12px 20px;
+            background-color: var(--color-gray);
+            color: var(--color-light);
+            text-decoration: none;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+        }
+
+        .mobile-nav-button:hover,
+        .mobile-nav-button.active {
+            background-color: var(--color-gray-light);
+            border-left: 3px solid var(--color-accent);
+        }
+
+        /* Главный контент */
+        .main {
+            padding: 60px 0;
+            min-height: 70vh;
+        }
+
+        /* Хлебные крошки */
+        .breadcrumbs {
+            margin-bottom: 30px;
+            padding: 15px 0;
+            border-bottom: 1px solid var(--color-gray);
+        }
+
+        .breadcrumbs a {
+            color: var(--color-accent);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .breadcrumbs a:hover {
+            color: var(--color-accent-dark);
+            text-decoration: underline;
+        }
+
+        .breadcrumbs span {
+            color: #a0a8c0;
+            margin: 0 10px;
+        }
+
+        /* Заголовок страницы */
+        .page-header {
+            text-align: center;
+            padding: 40px 0;
+            border-bottom: 1px solid var(--color-gray);
+            margin-bottom: 40px;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            color: var(--color-light);
+            margin-bottom: 15px;
+        }
+
+        .page-subtitle {
+            color: #a0a8c0;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Уведомление */
+        .form-notification {
+            background: rgba(26, 43, 76, 0.5);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-bottom: 32px;
+            border: 1px solid #475569;
+        }
+
+        .notification-icon {
+            font-size: 1.8rem;
+            margin-right: 16px;
+            color: var(--color-accent);
+        }
+
+        /* Форма */
+        .form-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .appeal-form {
+            background-color: var(--color-gray);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            border: 1px solid var(--color-gray-light);
+        }
+
         .form-section {
             background: rgba(5, 8, 17, 0.5);
             border-radius: var(--border-radius);
@@ -20,7 +284,28 @@
             border-left: 4px solid var(--color-accent);
         }
 
-        .form-group { margin-bottom: 24px; }
+        .form-section-title {
+            color: var(--color-light);
+            font-size: 1.4rem;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--color-accent);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            color: var(--color-light);
+            margin-bottom: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+        }
 
         .form-control {
             width: 100%;
@@ -30,6 +315,7 @@
             background: #0f172a;
             color: #e2e8f0;
             font-size: 1.05rem;
+            transition: var(--transition);
         }
 
         .form-control:focus {
@@ -52,11 +338,26 @@
             margin-bottom: 16px;
         }
 
+        .checkbox-group input[type="checkbox"] {
+            margin-top: 5px;
+            width: 18px;
+            height: 18px;
+            accent-color: var(--color-accent);
+            flex-shrink: 0;
+        }
+
         .checkbox-group label {
             color: #cbd5e1;
             line-height: 1.5;
+            margin: 0;
+            cursor: pointer;
         }
 
+        .checkbox-group label:hover {
+            color: var(--color-light);
+        }
+
+        /* Кнопки */
         .form-actions {
             display: flex;
             flex-wrap: wrap;
@@ -65,11 +366,15 @@
         }
 
         .button {
+            display: inline-block;
             padding: 12px 28px;
             border-radius: 8px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
+            border: none;
+            font-size: 1rem;
+            text-decoration: none;
         }
 
         .button-primary {
@@ -78,7 +383,11 @@
             border: none;
         }
 
-        .button-primary:hover { background: #2563eb; }
+        .button-primary:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
 
         .button-secondary {
             background: #334155;
@@ -86,22 +395,106 @@
             border: none;
         }
 
-        .button-secondary:hover { background: #475569; }
+        .button-secondary:hover {
+            background: #475569;
+            transform: translateY(-2px);
+        }
 
-        .form-notification {
-            background: rgba(26, 43, 76, 0.5);
-            border-radius: var(--border-radius);
+        /* Discord стили */
+        .discord-auth-section {
+            background: linear-gradient(135deg, rgba(88, 101, 242, 0.1), rgba(0, 0, 0, 0.2));
+            border: 1px solid rgba(88, 101, 242, 0.3);
+            border-left: 4px solid #5865F2;
+        }
+
+        .discord-user-info {
+            display: none;
+            background: rgba(88, 101, 242, 0.1);
             padding: 20px;
-            margin-bottom: 32px;
-            border: 1px solid #475569;
+            border-radius: var(--border-radius);
+            width: 100%;
+            border-left: 4px solid #5865F2;
+            margin-bottom: 15px;
         }
 
-        .notification-icon {
-            font-size: 1.8rem;
-            margin-right: 16px;
+        .discord-user-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--color-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
             color: var(--color-accent);
+            flex-shrink: 0;
         }
 
+        .discord-user-details {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .discord-username {
+            color: var(--color-light);
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .discord-id {
+            color: #a0a8c0;
+            font-size: 0.85rem;
+            font-family: monospace;
+        }
+
+        .discord-login-btn {
+            background: #5865F2 !important;
+            border-color: #5865F2 !important;
+            color: white !important;
+            font-size: 1.1rem;
+            padding: 15px 30px !important;
+            transition: all 0.3s ease;
+        }
+
+        .discord-login-btn:hover {
+            background: #4752c4 !important;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(88, 101, 242, 0.4);
+        }
+
+        .discord-login-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .discord-status {
+            color: #a0a8c0;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+
+        .discord-status.success {
+            color: #86efac;
+        }
+
+        .discord-status.error {
+            color: #f87171;
+        }
+
+        .discord-warning {
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            color: white;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 10px;
+            text-align: center;
+            border-left: 5px solid #ff5722;
+        }
+
+        /* Flatpickr */
         .flatpickr-input {
             background: #0f172a url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%2394a3b8" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>') no-repeat 98% center;
             background-size: 20px;
@@ -114,15 +507,109 @@
             font-weight: 500;
         }
 
-        .discord-warning {
-            background: linear-gradient(135deg, #ff9800, #f57c00);
-            color: white;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 10px;
+        /* Подвал */
+        .footer {
+            background-color: var(--color-darker);
+            border-top: 1px solid var(--color-gray);
+            padding: 30px 0;
             text-align: center;
-            box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
-            border-left: 5px solid #ff5722;
+        }
+
+        .footer p {
+            margin-bottom: 10px;
+            color: #a0a8c0;
+            font-size: 0.9rem;
+        }
+
+        .footer p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Прелоадер */
+        .page-transition {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--color-darker);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .page-transition.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 3px solid var(--color-gray);
+            border-top-color: var(--color-accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loader-text {
+            color: var(--color-accent);
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .nav-list {
+                display: none;
+            }
+            
+            .mobile-menu-btn {
+                display: flex;
+            }
+            
+            .page-title {
+                font-size: 2rem;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
+            
+            .button {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .page-title {
+                font-size: 1.8rem;
+            }
+            
+            .form-section {
+                padding: 20px;
+            }
+            
+            .discord-user-info > div {
+                flex-direction: column;
+                text-align: center;
+            }
         }
     </style>
 </head>
@@ -164,6 +651,16 @@
         </div>
     </header>
 
+    <!-- Мобильное меню -->
+    <nav class="mobile-nav" id="mobileNav">
+        <ul class="mobile-nav-list">
+            <li><a href="../../index.html" class="mobile-nav-button">Главная</a></li>
+            <li><a href="../about.html" class="mobile-nav-button">О нас</a></li>
+            <li><a href="../appeal.html" class="mobile-nav-button active">Обращение</a></li>
+            <li><a href="../law.html" class="mobile-nav-button">Законы</a></li>
+        </ul>
+    </nav>
+
     <main class="main">
         <div class="container">
             <nav class="breadcrumbs">
@@ -181,7 +678,7 @@
                     <span class="notification-icon">🗓️</span>
                     <div>
                         <h3 style="color: var(--color-light); margin-bottom: 10px;">Инструкция по заполнению</h3>
-                        <p style="color: #a0a8c0; margin-bottom: 5px;">1. Все поля обязательны</p>
+                        <p style="color: #a0a8c0; margin-bottom: 5px;">1. Авторизуйтесь через Discord (ID подставится автоматически)</p>
                         <p style="color: #a0a8c0; margin-bottom: 5px;">2. Укажите реальное удобное время (по МСК)</p>
                         <p style="color: #a0a8c0;">3. После отправки с вами свяжутся в Discord</p>
                     </div>
@@ -194,15 +691,44 @@
                         <h3 class="form-section-title">Основная информация</h3>
 
                         <div class="form-group">
-                            <label for="nameStatic">Имя и статик *</label>
-                            <input type="text" id="nameStatic" name="nameStatic" required placeholder="Nick [0000]" class="form-control">
-                            <p class="field-hint">Пример: Денис Моро [3141]</p>
+                            <label for="nameStatic">Ваше имя</label>
+                            <input type="text" id="nameStatic" name="nameStatic" required 
+                                   placeholder="Имя | static ID" class="form-control">
+                            <p class="field-hint">Пример: Conte Grande | 202027</p>
                         </div>
+                    </div>
 
-                        <div class="form-group">
-                            <label for="discordId">ID Discord *</label>
-                            <input type="text" id="discordId" name="discordId" required placeholder="123456789012345678" pattern="[0-9]{17,20}" maxlength="20" class="form-control">
-                            <p class="field-hint">ПКМ по себе в Discord → Копировать ID пользователя</p>
+                    <!-- БЛОК АВТОРИЗАЦИИ DISCORD (ВМЕСТО ПОЛЯ ID) -->
+                    <div class="form-section discord-auth-section">
+                        <h3 class="form-section-title">🔐 Авторизация Discord</h3>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 20px; align-items: flex-start;">
+                            
+                            <!-- Информация о пользователе (скрыта до авторизации) -->
+                            <div class="discord-user-info" id="discordUserInfo">
+                                <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+                                    <div class="discord-user-avatar" id="discordAvatar">
+                                        🟢
+                                    </div>
+                                    <div class="discord-user-details">
+                                        <span class="discord-username" id="discordUsername">Загрузка...</span>
+                                        <span class="discord-id" id="discordIdDisplay">ID: </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Кнопка входа -->
+                            <button type="button" class="button discord-login-btn" id="discordLoginBtn">
+                                🔐 Войти через Discord
+                            </button>
+                            
+                            <!-- Скрытое поле для хранения ID (заполняется автоматически) -->
+                            <input type="hidden" id="discordId" name="discordId" value="">
+                            
+                            <!-- Статус авторизации -->
+                            <p class="discord-status" id="discordStatus">
+                                ⚠️ Авторизуйтесь через Discord для автоматической подстановки ID
+                            </p>
                         </div>
                     </div>
 
@@ -211,13 +737,15 @@
 
                         <div class="form-group">
                             <label for="examDateTime">Когда вам удобно пройти экзамен *</label>
-                            <input type="text" id="examDateTime" name="examDateTime" required class="form-control flatpickr-input" placeholder="Выберите дату и время...">
+                            <input type="text" id="examDateTime" name="examDateTime" required 
+                                   class="form-control flatpickr-input" placeholder="Выберите дату и время...">
                             <p class="field-hint">По МСК, шаг 15 минут</p>
                         </div>
 
                         <div class="form-group">
                             <label for="preferredExaminer">Предпочтительный экзаменатор (если есть)</label>
-                            <input type="text" id="preferredExaminer" name="preferredExaminer" placeholder="Ник [стат] или @username" class="form-control">
+                            <input type="text" id="preferredExaminer" name="preferredExaminer" 
+                                   placeholder="Ник [стат] или @username" class="form-control">
                             <p class="field-hint">Можно оставить пустым</p>
                         </div>
                     </div>
@@ -239,7 +767,7 @@
                             📅 Записаться на экзамен
                         </button>
 
-                        <button type="reset" class="button button-secondary">
+                        <button type="reset" class="button button-secondary" onclick="clearForm()">
                             🗑️ Очистить форму
                         </button>
 
@@ -266,6 +794,359 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://npmcdn.com/flatpickr/dist/l10n/ru.js"></script>
     <script src="../../discord-config.js"></script>
-    <script src="../../js/oral-exam-form.js"></script>
+    
+    <!-- ОСНОВНОЙ СКРИПТ ФОРМЫ (встроен для надежности) -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Форма записи на устный экзамен с Discord OAuth2');
+
+            // --- Конфигурация ---
+            const CLIENT_ID = typeof DISCORD_CLIENT_ID !== 'undefined' ? DISCORD_CLIENT_ID : null;
+            const REDIRECT_URI = window.location.href.split('?')[0].split('#')[0];
+            const DISCORD_API = 'https://discord.com/api/v10';
+
+            if (!CLIENT_ID) {
+                console.error('❌ Не задан DISCORD_CLIENT_ID в discord-config.js');
+                const statusEl = document.getElementById('discordStatus');
+                if (statusEl) {
+                    statusEl.textContent = '❌ Ошибка: client_id не настроен';
+                    statusEl.classList.add('error');
+                }
+                return;
+            }
+
+            console.log('✅ Discord Client ID загружен:', CLIENT_ID.substring(0, 10) + '...');
+            console.log('🔁 Redirect URI:', REDIRECT_URI);
+
+            // --- Состояние авторизации ---
+            let discordUser = null;
+
+            // --- Webhook из конфига ---
+            let discordWebhookUrl = null;
+            if (typeof DISCORD_WEBHOOK_URL !== 'undefined' &&
+                DISCORD_WEBHOOK_URL !== "{{DISCORD_WEBHOOK_PLACEHOLDER}}" &&
+                DISCORD_WEBHOOK_URL.includes('discord.com')) {
+                discordWebhookUrl = DISCORD_WEBHOOK_URL;
+                console.log('✅ Discord Webhook загружен');
+            } else {
+                console.error('❌ Webhook не найден');
+                alert('Ошибка: Webhook не настроен. Обратитесь к администратору.');
+                return;
+            }
+
+            // --- Элементы ---
+            const loginBtn = document.getElementById('discordLoginBtn');
+            const userInfoDiv = document.getElementById('discordUserInfo');
+            const discordUsernameSpan = document.getElementById('discordUsername');
+            const discordIdSpan = document.getElementById('discordIdDisplay');
+            const discordAvatar = document.getElementById('discordAvatar');
+            const discordStatus = document.getElementById('discordStatus');
+            const discordIdHidden = document.getElementById('discordId');
+            const submitBtn = document.getElementById('submitButton');
+            const form = document.getElementById('examSignupForm');
+
+            if (!loginBtn || !userInfoDiv || !discordUsernameSpan || !discordIdSpan || !discordStatus || !discordIdHidden || !submitBtn || !form) {
+                console.error('❌ Не найдены необходимые элементы формы');
+                return;
+            }
+
+            // Flatpickr
+            flatpickr("#examDateTime", {
+                enableTime: true,
+                dateFormat: "d.m.Y H:i",
+                time_24hr: true,
+                minDate: "today",
+                locale: "ru",
+                minuteIncrement: 15,
+                defaultHour: 18,
+                defaultMinute: 0
+            });
+
+            // --- OAuth2 PKCE функции ---
+            function generateCodeVerifier() {
+                const array = new Uint8Array(32);
+                crypto.getRandomValues(array);
+                return base64URLEncode(array);
+            }
+
+            function base64URLEncode(buffer) {
+                return btoa(String.fromCharCode(...new Uint8Array(buffer)))
+                    .replace(/\+/g, '-')
+                    .replace(/\//g, '_')
+                    .replace(/=+$/, '');
+            }
+
+            async function generateCodeChallenge(verifier) {
+                const encoder = new TextEncoder();
+                const data = encoder.encode(verifier);
+                const digest = await crypto.subtle.digest('SHA-256', data);
+                return base64URLEncode(new Uint8Array(digest));
+            }
+
+            function redirectToDiscord() {
+                const verifier = generateCodeVerifier();
+                localStorage.setItem('discord_verifier', verifier);
+                
+                generateCodeChallenge(verifier).then(challenge => {
+                    const params = new URLSearchParams({
+                        client_id: CLIENT_ID,
+                        redirect_uri: REDIRECT_URI,
+                        response_type: 'code',
+                        scope: 'identify',
+                        code_challenge: challenge,
+                        code_challenge_method: 'S256',
+                        prompt: 'consent'
+                    });
+                    
+                    const authUrl = `https://discord.com/oauth2/authorize?${params.toString()}`;
+                    console.log('🔐 Перенаправление на Discord...');
+                    window.location.href = authUrl;
+                }).catch(error => {
+                    console.error('❌ Ошибка генерации challenge:', error);
+                    discordStatus.textContent = '❌ Ошибка при подготовке авторизации';
+                    discordStatus.classList.add('error');
+                });
+            }
+
+            async function exchangeCode(code, verifier) {
+                const body = new URLSearchParams({
+                    client_id: CLIENT_ID,
+                    grant_type: 'authorization_code',
+                    code: code,
+                    redirect_uri: REDIRECT_URI,
+                    code_verifier: verifier
+                });
+
+                const response = await fetch('https://discord.com/api/oauth2/token', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: body.toString()
+                });
+
+                if (!response.ok) {
+                    const err = await response.text();
+                    throw new Error(`Token exchange failed: ${err}`);
+                }
+
+                const data = await response.json();
+                return data.access_token;
+            }
+
+            async function fetchUser(accessToken) {
+                const response = await fetch(`${DISCORD_API}/users/@me`, {
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+                if (!response.ok) throw new Error('Failed to fetch user');
+                return await response.json();
+            }
+
+            // Обработка callback
+            async function handleDiscordCallback() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const code = urlParams.get('code');
+                const error = urlParams.get('error');
+
+                if (error) {
+                    console.error('❌ Discord error:', error);
+                    discordStatus.textContent = `❌ Ошибка авторизации: ${error}`;
+                    discordStatus.classList.add('error');
+                    return;
+                }
+
+                if (code) {
+                    const verifier = localStorage.getItem('discord_verifier');
+                    if (!verifier) {
+                        discordStatus.textContent = '❌ Ошибка: не найден верификатор';
+                        discordStatus.classList.add('error');
+                        return;
+                    }
+
+                    try {
+                        discordStatus.textContent = '🔄 Получение токена...';
+                        discordStatus.classList.remove('error', 'success');
+                        
+                        const accessToken = await exchangeCode(code, verifier);
+                        const user = await fetchUser(accessToken);
+                        discordUser = { 
+                            id: user.id, 
+                            username: user.username, 
+                            avatar: user.avatar,
+                            global_name: user.global_name
+                        };
+
+                        localStorage.setItem('discord_user', JSON.stringify(discordUser));
+                        window.history.replaceState({}, document.title, window.location.pathname);
+
+                        updateUIAfterLogin();
+                        discordStatus.textContent = `✅ Авторизован как ${discordUser.username}`;
+                        discordStatus.classList.add('success');
+                    } catch (err) {
+                        console.error('❌ Ошибка авторизации:', err);
+                        discordStatus.textContent = '❌ Ошибка авторизации. Попробуйте снова.';
+                        discordStatus.classList.add('error');
+                    } finally {
+                        localStorage.removeItem('discord_verifier');
+                    }
+                }
+            }
+
+            function updateUIAfterLogin() {
+                if (discordUser) {
+                    userInfoDiv.style.display = 'block';
+                    discordUsernameSpan.textContent = discordUser.username;
+                    discordIdSpan.textContent = `ID: ${discordUser.id}`;
+                    discordIdHidden.value = discordUser.id;
+                    
+                    if (discordUser.avatar) {
+                        const avatarUrl = `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`;
+                        discordAvatar.innerHTML = `<img src="${avatarUrl}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+                    } else {
+                        discordAvatar.textContent = discordUser.username.charAt(0).toUpperCase();
+                    }
+                    
+                    loginBtn.disabled = true;
+                    discordStatus.textContent = `✅ Авторизован как ${discordUser.username}`;
+                    discordStatus.classList.add('success');
+                }
+            }
+
+            function loadStoredUser() {
+                const stored = localStorage.getItem('discord_user');
+                if (stored) {
+                    try {
+                        discordUser = JSON.parse(stored);
+                        updateUIAfterLogin();
+                        console.log('✅ Загружен сохранённый пользователь:', discordUser.username);
+                    } catch (e) {
+                        console.warn('⚠️ Ошибка загрузки сохранённого пользователя');
+                        localStorage.removeItem('discord_user');
+                    }
+                }
+            }
+
+            // Очистка формы
+            window.clearForm = function() {
+                form.reset();
+                // Не сбрасываем авторизацию
+            };
+
+            // --- Обработчики ---
+            loginBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                redirectToDiscord();
+            });
+
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                // Проверка авторизации
+                if (!discordUser || !discordUser.id) {
+                    discordStatus.textContent = '❌ Необходимо авторизоваться через Discord';
+                    discordStatus.classList.add('error');
+                    
+                    const warningDiv = document.createElement('div');
+                    warningDiv.className = 'discord-warning';
+                    warningDiv.innerHTML = '⚠️ Для отправки формы необходимо авторизоваться через Discord';
+                    form.parentNode.insertBefore(warningDiv, form);
+                    
+                    setTimeout(() => warningDiv.remove(), 5000);
+                    return;
+                }
+
+                // Валидация полей
+                const nameStatic = document.getElementById('nameStatic').value.trim();
+                const examDateTime = document.getElementById('examDateTime').value.trim();
+                const preferredExaminer = document.getElementById('preferredExaminer').value.trim() || 'Не указан';
+
+                if (!nameStatic || !examDateTime) {
+                    document.getElementById('formResult').innerHTML = '<span style="color:#f87171;">Пожалуйста, заполните все обязательные поля</span>';
+                    return;
+                }
+
+                const agreement = document.getElementById('agreement');
+                const rules = document.getElementById('rules');
+                
+                if (!agreement || !agreement.checked) {
+                    document.getElementById('formResult').innerHTML = '<span style="color:#f87171;">Необходимо подтвердить достоверность данных</span>';
+                    return;
+                }
+                if (!rules || !rules.checked) {
+                    document.getElementById('formResult').innerHTML = '<span style="color:#f87171;">Необходимо ознакомиться с правилами</span>';
+                    return;
+                }
+
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Отправка...';
+                document.getElementById('formResult').innerHTML = '<span style="color:#86efac;">Отправляем заявку в Discord...</span>';
+
+                const payload = {
+                    username: "Секретарь Коллегии адвокатов",
+                    avatar_url: "https://i.pinimg.com/originals/7a/af/81/7aaf811aa403514a33e1d468e7405f9a.png",
+                    thread_name: `Запись на экзамен — ${nameStatic}`,
+                    content: "<@&1321503127987421316> <@&1371785937180426270> <@&1321503135302291516>\nНовая заявка на устный экзамен",
+                    embeds: [{
+                        title: "🗓️ Новая запись на устный экзамен",
+                        description: `**${nameStatic}** подал заявку на прохождение устного экзамена`,
+                        color: 0x60a5fa,
+                        fields: [
+                            { name: "👤 Имя и статик", value: nameStatic, inline: true },
+                            { name: "📱 Discord", value: `<@${discordUser.id}>`, inline: true },
+                            { name: "🕒 Удобное время", value: examDateTime, inline: false },
+                            { name: "🎓 Предпочтительный экзаменатор", value: preferredExaminer, inline: false }
+                        ],
+                        timestamp: new Date().toISOString(),
+                        footer: {
+                            text: "Коллегия государственных адвокатов • Majestic RP | Boston",
+                            icon_url: "https://i.pinimg.com/originals/7a/af/81/7aaf811aa403514a33e1d468e7405f9a.png"
+                        }
+                    }]
+                };
+
+                try {
+                    const response = await fetch(discordWebhookUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.ok) {
+                        document.getElementById('formResult').innerHTML = '<span style="color:#86efac;">✅ Заявка успешно отправлена! Ожидайте ответа в Discord.</span>';
+                        form.reset();
+                        // Авторизация сохраняется
+                    } else {
+                        document.getElementById('formResult').innerHTML = '<span style="color:#f87171;">❌ Ошибка отправки. Попробуйте позже.</span>';
+                    }
+                } catch (err) {
+                    console.error('Сетевая ошибка:', err);
+                    document.getElementById('formResult').innerHTML = '<span style="color:#f87171;">❌ Не удалось отправить заявку. Проверьте соединение.</span>';
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = '📅 Записаться на экзамен';
+                    setTimeout(() => {
+                        document.getElementById('formResult').innerHTML = '';
+                    }, 8000);
+                }
+            });
+
+            // Инициализация
+            loadStoredUser();
+            handleDiscordCallback();
+
+            // Анимация секций
+            setTimeout(() => {
+                document.querySelectorAll('.form-section').forEach((s, i) => {
+                    s.style.opacity = '0';
+                    s.style.transform = 'translateY(20px)';
+                    setTimeout(() => {
+                        s.style.transition = 'all 0.5s ease';
+                        s.style.opacity = '1';
+                        s.style.transform = 'translateY(0)';
+                    }, 100 * i);
+                });
+            }, 300);
+
+            console.log('✅ Форма записи на экзамен с Discord OAuth2 готова');
+        });
+    </script>
 </body>
 </html>
