@@ -835,29 +835,29 @@
 
                 const formData = new FormData();
 
-                const payload = {
-                    username: "Секретарь Коллегии адвокатов",
-                    avatar_url: "https://i.pinimg.com/originals/7a/af/81/7aaf811aa403514a33e1d468e7405f9a.png",
-                    thread_name: `Отчёт адвоката — ${suspectName}`,
-                    content: "<@&1321503127987421316> <@&1371785937180426270> <@&1321503135302291516>\nНовый отчёт о задержании",
-                    embeds: [{
-                        title: "📋 Отчёт адвоката о задержании",
-                        description: `**${suspectName}** — результат: **${resultValue}**`,
-                        color: 0xd4af37,
-                        fields: [
-                            { name: "👤 Подозреваемый", value: suspectName, inline: true },
-                            { name: "⚖️ Результат", value: resultValue, inline: true },
-                            { name: "📱 Адвокат (Discord)", value: `<@${window.discordUser.id}>`, inline: true },
-                            { name: "📝 Причина задержания", value: reason, inline: false },
-                            { name: "🕐 Дата отчёта", value: new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }), inline: true }
-                        ],
-                        timestamp: new Date().toISOString(),
-                        footer: {
-                            text: "Коллегия государственных адвокатов | Majestic RP | Boston",
-                            icon_url: "https://i.pinimg.com/originals/7a/af/81/7aaf811aa403514a33e1d468e7405f9a.png"
-                        }
-                    }]
-                };
+               const payload = {
+    username: "Секретарь Коллегии адвокатов",
+    avatar_url: "https://i.pinimg.com/originals/7a/af/81/7aaf811aa403514a33e1d468e7405f9a.png",
+    // убираем thread_name
+    content: "<@&1321503127987421316> <@&1371785937180426270> <@&1321503135302291516>\nНовый отчёт о задержании",
+    embeds: [{
+        title: "📋 Отчёт адвоката о задержании",
+        description: `**${suspectName}** — результат: **${resultValue}**`,
+        color: 0xd4af37,
+        fields: [
+            { name: "👤 Адвокат", value: suspectName, inline: true },
+            { name: "⚖️ Результат", value: resultValue, inline: true },
+            { name: "📱 Адвокат (Discord)", value: `<@${window.discordUser.id}>`, inline: true },
+            { name: "📝 Причина задержания", value: reason, inline: false },
+            { name: "🕐 Дата отчёта", value: new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }), inline: true }
+        ],
+        timestamp: new Date().toISOString(),
+        footer: {
+            text: "Коллегия государственных адвокатов | Majestic RP | Boston",
+            icon_url: "https://i.pinimg.com/originals/7a/af/81/7aaf811aa403514a33e1d468e7405f9a.png"
+        }
+    }]
+};
 
                 formData.append('payload_json', JSON.stringify(payload));
                 if (photoFields.photo1.file) formData.append('files[0]', photoFields.photo1.file, 'photo1.jpg');
