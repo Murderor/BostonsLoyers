@@ -118,6 +118,8 @@
             transition: var(--transition);
             border: 1px solid transparent;
             height: 100%;
+            display: flex;
+            flex-direction: column;
         }
         .profile-card:hover { border-color: var(--color-accent); transform: translateY(-5px); box-shadow: var(--shadow); }
 
@@ -144,10 +146,12 @@
             display: inline-block; padding: 5px 12px; background-color: rgba(212, 175, 55, 0.2);
             color: var(--color-accent); border-radius: 20px; font-size: 0.8rem; font-weight: 700;
             margin-bottom: 15px; border: 1px solid rgba(212, 175, 55, 0.3);
+            align-self: center;
         }
         .profile-tag {
             display: inline-block; padding: 4px 10px; background-color: rgba(42, 49, 66, 0.7);
             color: var(--color-light); border-radius: 4px; font-size: 0.8rem; border: 1px solid var(--color-gray-light);
+            align-self: center;
         }
 
         .profile-contacts, .profile-stats {
@@ -195,6 +199,7 @@
             background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(114, 137, 218, 0.3);
             border-radius: 8px; color: #7289da; text-decoration: none; font-size: 14px;
             transition: all 0.2s ease; margin: 5px 0;
+            width: fit-content;
         }
         .discord-minimal:hover { background: rgba(114, 137, 218, 0.1); border-color: #7289da; transform: translateX(4px); }
         .discord-minimal-handle { margin-left: auto; font-weight: 500; opacity: 0.9; }
@@ -317,7 +322,7 @@
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbzFgIxmcvANbC3Zs4aWpb3wwnUeiVnvJw0kpxT2adhB-Th_A7xjlzVEEAZovR_z6ReadQ/exec'; // ЗАМЕНИТЕ НА ВАШ URL
         const DEV_MODE = false; // В разработке true, в продакшене false
 
-        // ==================== ТЕСТОВЫЕ ДАННЫЕ ====================
+        // ==================== ТЕСТОВЫЕ ДАННЫЕ (с добавленными Discord для заместителей и старших) ====================
         const MOCK_DATA = {
             leader: {
                 name: "Jeffrey Ward",
@@ -336,6 +341,7 @@
                     description: "Специалист по гражданскому праву и договорным отношениям. Ведёт самые сложные имущественные споры.",
                     cases: "200+",
                     specialization: "Гражданские дела",
+                    discord: "conte.grande",
                     avatar_url: ""
                 },
                 {
@@ -345,13 +351,35 @@
                     description: "Бывший прокурор. Специализируется на защите по тяжким статьям и обжаловании приговоров.",
                     cases: "150+",
                     specialization: "Уголовные дела",
+                    discord: "sievol.legal",
                     avatar_url: ""
                 }
             ],
             seniors: [
-                { name: "Lui Volta", position: "Старший адвокат", description: "Семейное право", tag: "Административные дела", avatar_url: "" },
-                { name: "Yashar Miles", position: "Старший адвокат", description: "Административное право, споры с государственными органами.", tag: "Административные дела", avatar_url: "" },
-                { name: "Dean Bacardi", position: "Старший адвокат", description: "Семейное право", tag: "Административные дела", avatar_url: "" }
+                { 
+                    name: "Lui Volta", 
+                    position: "Старший адвокат", 
+                    description: "Семейное право", 
+                    tag: "Семейные дела", 
+                    discord: "lui.volta",
+                    avatar_url: "" 
+                },
+                { 
+                    name: "Yashar Miles", 
+                    position: "Старший адвокат", 
+                    description: "Административное право, споры с государственными органами.", 
+                    tag: "Административные дела", 
+                    discord: "yashar.miles",
+                    avatar_url: "" 
+                },
+                { 
+                    name: "Dean Bacardi", 
+                    position: "Старший адвокат", 
+                    description: "Семейное право", 
+                    tag: "Семейные дела", 
+                    discord: "dean.bacardi",
+                    avatar_url: "" 
+                }
             ],
             friends: [
                 { name: "Klava Gattuso", position: "Советник губернатора", badge: "GOV", description: "Специалист по проведению душных собеседований", avatar_url: "" },
@@ -373,13 +401,29 @@
             return name.split(' ').map(word => word.charAt(0).toUpperCase()).join('').slice(0, 2);
         }
 
+        // Функция для создания Discord блока
+        function createDiscordBlock(discord) {
+            if (!discord) return '';
+            const discordHandle = discord.startsWith('@') ? discord : `@${discord}`;
+            const discordLink = `https://discord.com/users/${discord.replace('@', '')}`;
+            return `
+                <a href="${discordLink}" class="discord-minimal" target="_blank">
+                    <span class="discord-minimal-icon">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M13.55,11.42c-0.72,0.54-1.55,0.99-2.47,1.33c-0.07,0.02-0.15,0.03-0.22,0.03c-0.29,0-0.56-0.17-0.68-0.44c-0.16-0.36,0.02-0.78,0.38-0.94c0.77-0.34,1.46-0.75,2.06-1.22c0.32-0.24,0.38-0.71,0.14-1.03c-0.24-0.32-0.71-0.38-1.03-0.14c-0.52,0.39-1.13,0.73-1.81,1.01c-0.36,0.15-0.78-0.03-0.94-0.38c-0.16-0.36,0.02-0.78,0.38-0.94c0.62-0.27,1.18-0.59,1.67-0.95c0.32-0.24,0.38-0.71,0.14-1.03c-0.24-0.32-0.71-0.38-1.03-0.14c-0.42,0.31-0.91,0.58-1.46,0.81c-0.36,0.15-0.78-0.03-0.94-0.38c-0.16-0.36,0.02-0.78,0.38-0.94c0.5-0.21,0.95-0.45,1.36-0.71c0.32-0.24,0.38-0.71,0.14-1.03c-0.24-0.32-0.71-0.38-1.03-0.14c-0.33,0.25-0.7,0.48-1.11,0.68c-2.05,0.84-4.56,0.84-6.61,0c-0.41-0.2-0.78-0.43-1.11-0.68c-0.32-0.24-0.79-0.18-1.03,0.14c-0.24,0.32-0.18,0.79,0.14,1.03c0.41,0.31,0.9,0.58,1.46,0.81c0.36,0.15,0.53,0.58,0.38,0.94c-0.15,0.36-0.58,0.53-0.94,0.38c-0.62-0.27-1.18-0.59-1.67-0.95c-0.32-0.24-0.79-0.18-1.03,0.14c-0.24,0.32-0.18,0.79,0.14,1.03c0.49,0.36,1.1,0.7,1.81,1.01c0.36,0.15,0.53,0.58,0.38,0.94c-0.15,0.36-0.58,0.53-0.94,0.38c-0.77-0.34-1.46-0.75-2.06-1.22c-0.32-0.24-0.79-0.18-1.03,0.14c-0.24,0.32-0.18,0.79,0.14,1.03c0.6,0.45,1.33,0.87,2.15,1.23c-0.07,0.33-0.11,0.67-0.11,1.02c0,0.35,0.04,0.69,0.11,1.02c-1.16,0.41-2.42,0.41-3.58,0c-0.07-0.33-0.11-0.67-0.11-1.02c0-2.76,2.24-5,5-5s5,2.24,5,5c0,0.35-0.04,0.69-0.11,1.02C9.71,13.32,8.45,13.32,7.29,12.91z"/>
+                        </svg>
+                    </span>
+                    <span>Связаться в Discord</span>
+                    <span class="discord-minimal-handle">${discordHandle}</span>
+                </a>
+            `;
+        }
+
         // ==================== ФУНКЦИИ СОЗДАНИЯ КАРТОЧЕК ====================
         function createLeaderCard(data) {
             if (!data || !data.name) return '';
             
             const initials = getInitials(data.name);
-            const discordHandle = data.discord ? `@${data.discord}` : '';
-            const discordLink = data.discord ? `https://discord.com/users/${data.discord}` : '#';
             const specialization = data.specialization ? `⚖️ Специализация: ${data.specialization}` : '';
             
             return `
@@ -398,17 +442,7 @@
                                 <p class="profile-description">${data.description || ''}</p>
                                 <div class="profile-contacts">
                                     ${specialization ? `<span class="contact-item">${specialization}</span>` : ''}
-                                    ${data.discord ? `
-                                        <a href="${discordLink}" class="discord-minimal" target="_blank">
-                                            <span class="discord-minimal-icon">
-                                                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                                                    <path d="M13.55,11.42c-0.72,0.54-1.55,0.99-2.47,1.33c-0.07,0.02-0.15,0.03-0.22,0.03c-0.29,0-0.56-0.17-0.68-0.44c-0.16-0.36,0.02-0.78,0.38-0.94c0.77-0.34,1.46-0.75,2.06-1.22c0.32-0.24,0.38-0.71,0.14-1.03c-0.24-0.32-0.71-0.38-1.03-0.14c-0.52,0.39-1.13,0.73-1.81,1.01c-0.36,0.15-0.78-0.03-0.94-0.38c-0.16-0.36,0.02-0.78,0.38-0.94c0.62-0.27,1.18-0.59,1.67-0.95c0.32-0.24,0.38-0.71,0.14-1.03c-0.24-0.32-0.71-0.38-1.03-0.14c-0.42,0.31-0.91,0.58-1.46,0.81c-0.36,0.15-0.78-0.03-0.94-0.38c-0.16-0.36,0.02-0.78,0.38-0.94c0.5-0.21,0.95-0.45,1.36-0.71c0.32-0.24,0.38-0.71,0.14-1.03c-0.24-0.32-0.71-0.38-1.03-0.14c-0.33,0.25-0.7,0.48-1.11,0.68c-2.05,0.84-4.56,0.84-6.61,0c-0.41-0.2-0.78-0.43-1.11-0.68c-0.32-0.24-0.79-0.18-1.03,0.14c-0.24,0.32-0.18,0.79,0.14,1.03c0.41,0.31,0.9,0.58,1.46,0.81c0.36,0.15,0.53,0.58,0.38,0.94c-0.15,0.36-0.58,0.53-0.94,0.38c-0.62-0.27-1.18-0.59-1.67-0.95c-0.32-0.24-0.79-0.18-1.03,0.14c-0.24,0.32-0.18,0.79,0.14,1.03c0.49,0.36,1.1,0.7,1.81,1.01c0.36,0.15,0.53,0.58,0.38,0.94c-0.15,0.36-0.58,0.53-0.94,0.38c-0.77-0.34-1.46-0.75-2.06-1.22c-0.32-0.24-0.79-0.18-1.03,0.14c-0.24,0.32-0.18,0.79,0.14,1.03c0.6,0.45,1.33,0.87,2.15,1.23c-0.07,0.33-0.11,0.67-0.11,1.02c0,0.35,0.04,0.69,0.11,1.02c-1.16,0.41-2.42,0.41-3.58,0c-0.07-0.33-0.11-0.67-0.11-1.02c0-2.76,2.24-5,5-5s5,2.24,5,5c0,0.35-0.04,0.69-0.11,1.02C9.71,13.32,8.45,13.32,7.29,12.91z"/>
-                                                </svg>
-                                            </span>
-                                            <span>Связаться в Discord</span>
-                                            <span class="discord-minimal-handle">${discordHandle}</span>
-                                        </a>
-                                    ` : ''}
+                                    ${createDiscordBlock(data.discord)}
                                 </div>
                             </div>
                         </div>
@@ -433,6 +467,7 @@
                     <div class="profile-stats">
                         ${deputy.cases ? `<span class="stat-item">✅ ${deputy.cases}</span>` : ''}
                         ${deputy.specialization ? `<span class="stat-item">⚖️ ${deputy.specialization}</span>` : ''}
+                        ${createDiscordBlock(deputy.discord)}
                     </div>
                 </div>
             `;
@@ -442,7 +477,7 @@
             const initials = getInitials(senior.name);
             
             return `
-                <div class="profile-card senior-card">
+                <div class="profile-card">
                     <div class="profile-avatar ${senior.avatar_url ? 'has-avatar' : ''}">
                         <img src="${senior.avatar_url || ''}" alt="${senior.name}" class="avatar-image">
                         <div class="avatar-placeholder">${initials}</div>
@@ -451,6 +486,9 @@
                     <p class="profile-position">${senior.position || ''}</p>
                     <p class="profile-description">${senior.description || ''}</p>
                     ${senior.tag ? `<div class="profile-tag">${senior.tag}</div>` : ''}
+                    <div class="profile-stats">
+                        ${createDiscordBlock(senior.discord)}
+                    </div>
                 </div>
             `;
         }
@@ -468,6 +506,9 @@
                     <p class="profile-position">${friend.position || ''}</p>
                     ${friend.badge ? `<div class="profile-badge">${friend.badge}</div>` : ''}
                     <p class="profile-description">${friend.description || ''}</p>
+                    <div class="profile-stats">
+                        ${createDiscordBlock(friend.discord)}
+                    </div>
                 </div>
             `;
         }
