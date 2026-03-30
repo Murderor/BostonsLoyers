@@ -322,7 +322,7 @@
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbzFgIxmcvANbC3Zs4aWpb3wwnUeiVnvJw0kpxT2adhB-Th_A7xjlzVEEAZovR_z6ReadQ/exec'; // ЗАМЕНИТЕ НА ВАШ URL
         const DEV_MODE = false; // В разработке true, в продакшене false
 
-        // ==================== ТЕСТОВЫЕ ДАННЫЕ (с добавленными Discord для заместителей и старших) ====================
+        // ==================== ТЕСТОВЫЕ ДАННЫЕ (с добавленными Discord, specialization и cases для старших) ====================
         const MOCK_DATA = {
             leader: {
                 name: "Jeffrey Ward",
@@ -359,24 +359,30 @@
                 { 
                     name: "Lui Volta", 
                     position: "Старший адвокат", 
-                    description: "Семейное право", 
+                    description: "Специалист по семейным спорам и наследственным делам.", 
                     tag: "Семейные дела", 
+                    cases: "120+",
+                    specialization: "Семейное право",
                     discord: "lui.volta",
                     avatar_url: "" 
                 },
                 { 
                     name: "Yashar Miles", 
                     position: "Старший адвокат", 
-                    description: "Административное право, споры с государственными органами.", 
+                    description: "Эксперт в административных спорах и взаимодействии с госорганами.", 
                     tag: "Административные дела", 
+                    cases: "95+",
+                    specialization: "Административное право",
                     discord: "yashar.miles",
                     avatar_url: "" 
                 },
                 { 
                     name: "Dean Bacardi", 
                     position: "Старший адвокат", 
-                    description: "Семейное право", 
+                    description: "Специализация — разводы, раздел имущества, алименты.", 
                     tag: "Семейные дела", 
+                    cases: "80+",
+                    specialization: "Семейное право",
                     discord: "dean.bacardi",
                     avatar_url: "" 
                 }
@@ -487,6 +493,8 @@
                     <p class="profile-description">${senior.description || ''}</p>
                     ${senior.tag ? `<div class="profile-tag">${senior.tag}</div>` : ''}
                     <div class="profile-stats">
+                        ${senior.cases ? `<span class="stat-item">✅ ${senior.cases}</span>` : ''}
+                        ${senior.specialization ? `<span class="stat-item">⚖️ ${senior.specialization}</span>` : ''}
                         ${createDiscordBlock(senior.discord)}
                     </div>
                 </div>
