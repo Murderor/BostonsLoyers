@@ -862,43 +862,59 @@
             }
 
             // ==================== ОТПРАВКА В GOOGLE SHEETS (БЕЗ CORS ОШИБОК) ====================
-            function sendToGoogleSheets(lawyerName, discordId, result, lawyerPresent) {
-                const lawyerCallsValue = lawyerPresent ? 1 : 0;
-                
-                const dataToSend = {
-                    lawyerName: lawyerName,
-                    discordId: discordId,
-                    result: result,
-                    lawyerPresent: lawyerPresent,
-                    lawyerCalls: lawyerCallsValue,
-                    timestamp: new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })
-                };
-                
-                console.log('📊 Отправка в Google Sheets (через iframe):', dataToSend);
-                
-                // Способ 1: Отправка через fetch в режиме no-cors (не вызывает CORS ошибку в консоли)
-                fetch(GAS_WEBHOOK_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(dataToSend)
-                }).catch(err => console.log('📤 Отправлено (no-cors режим)'));
-                
-                // Способ 2: Отправка через iframe (альтернативный метод)
-                const iframe = document.getElementById('googleSheetsIframe');
-                if (iframe) {
-                    const formHtml = `
-                        <form method="POST" action="${GAS_WEBHOOK_URL}">
-                            <input name="data" value='${JSON.stringify(dataToSend)}'>
-                        </form>
-                        <script>document.forms[0].submit();<\/script>
-                    `;
-                    iframe.srcdoc = formHtml;
-                    setTimeout(() => { iframe.srcdoc = ''; }, 1000);
-                }
-                
-                console.log('✅ Данные отправлены в Google Sheets (CORS не блокирует)');
-            }
+            // Отправка в Google Sheets через изображение (самый надежный способ без CORS)
+function sendToGoogleSheets(lawyerName, discordId, result, lawyerPresent) {
+    const lawyerCallsValue = lawyerPresent ? 1 : 0;
+    
+    // Кодируем данные в URL параметры
+    const params = new URLSearchParams();
+    params.append('lawyerName', lawyerName);
+    params.append('discordId', discordId);
+    params.append('result', result);
+    params.append('lawyerPresent', lawyerPresent ? 'true' : 'false');
+    params.append('lawyerCalls', lawyerCallsValue);
+    params.append('timestamp', new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }));
+    
+    // Способ 1: Отправка через fetch с mode: 'no-cors' (без заголовков)
+    fetch(GAS_WEBHOOK_URL + '?' + params.toString(), {
+        method: 'POST',
+        mode: 'no-cors',
+        // Не отправляем body, данные уже в URL
+    }).catch(err => console.log('📤 Отправлено (GET метод)'));
+    
+    // Способ 2: Создаем невидимую форму и отправляем
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = GAS_WEBHOOK_URL;
+    form.style.display = 'none';
+    
+    // Добавляем данные как поля формы
+    const fields = {
+        lawyerName: lawyerName,
+        discordId: discordId,
+        result: result,
+        lawyerPresent: lawyerPresent ? 'true' : 'false',
+        lawyerCalls: lawyerCallsValue,
+        timestamp: new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })
+    };
+    
+    for (const [key, value] of Object.entries(fields)) {
+        const input = document.createElement('input');
+        input.name = key;
+        input.value = value;
+        form.appendChild(input);
+    }
+    
+    document.body.appendChild(form);
+    form.submit();
+    
+    // Удаляем форму через секунду
+    setTimeout(() => {
+        if (form.parentNode) form.parentNode.removeChild(form);
+    }, 1000);
+    
+    console.log('✅ Данные отправлены в Google Sheets:', fields);
+}
 
             // Обработка отправки формы
             form.addEventListener('submit', async function(e) {
