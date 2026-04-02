@@ -132,7 +132,6 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            color: var(--color-light);
             transition: var(--transition);
         }
         
@@ -265,6 +264,50 @@
             color: var(--color-light);
             font-size: 1rem;
         }
+
+        /* Чекбокс "Юрист на выезде" */
+        .lawyer-checkbox-group {
+            margin: 20px 0 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(212, 175, 55, 0.08);
+            padding: 12px 20px;
+            border-radius: var(--border-radius);
+            border-left: 3px solid var(--color-accent);
+        }
+        .lawyer-checkbox-group input {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: var(--color-accent);
+        }
+        .lawyer-checkbox-group label {
+            color: var(--color-light);
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .lawyer-checkbox-group small {
+            color: #a0a8c0;
+            font-size: 0.85rem;
+        }
+
+        /* Дополнительное поле фото (скрыто по умолчанию) */
+        .additional-photo-container {
+            margin-top: 20px;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .photo-counter {
+            text-align: center;
+            color: #a0a8c0;
+            margin-top: 15px;
+        }
     </style>
 </head>
 <body>
@@ -335,14 +378,15 @@
                         <p style="color: #a0a8c0; margin-bottom: 5px;">1. Авторизуйтесь через Discord (обязательно)</p>
                         <p style="color: #a0a8c0; margin-bottom: 5px;">2. Укажите данные подозреваемого и причину задержания</p>
                         <p style="color: #a0a8c0; margin-bottom: 5px;">3. Загрузите два фото-подтверждения (скриншоты / фото)</p>
-                        <p style="color: #a0a8c0; margin-bottom: 5px;">4. Выберите результат задержания и отправьте отчёт</p>
+                        <p style="color: #a0a8c0; margin-bottom: 5px;">4. При необходимости отметьте "Юрист на выезде" и добавьте фото-подтверждение</p>
+                        <p style="color: #a0a8c0; margin-bottom: 5px;">5. Выберите результат задержания и отправьте отчёт</p>
                     </div>
                 </div>
             </div>
 
             <section class="form-container">
                 <form id="reportForm" class="appeal-form">
-                    <!-- Блок авторизации Discord (полностью скопирован из формы юриста) -->
+                    <!-- Блок авторизации Discord -->
                     <div class="form-section discord-auth-section">
                         <h3 class="form-section-title">🔐 Авторизация Discord</h3>
                         
@@ -417,7 +461,7 @@
                             <div class="photo-upload-field" id="photo2Field">
                                 <div class="photo-upload-header">
                                     <div class="photo-icon">📸</div>
-                                    <h4 class="photo-title">Фото №2 (Если задержанный отпущен, то фото на улице, если посажен то непосредственно перед посадкой</h4>
+                                    <h4 class="photo-title">Фото №2 (Если задержанный отпущен, то фото на улице, если посажен то непосредственно перед посадкой)</h4>
                                 </div>
                                 <div class="photo-upload-area" id="photo2Upload">
                                     <div class="upload-placeholder">🖼️</div>
@@ -433,8 +477,36 @@
                             </div>
                         </div>
                         
-                        <div class="photo-counter" style="text-align: center; color: #a0a8c0; margin-top: 15px;">
+                        <div class="photo-counter">
                             Загружено: <span id="photoCount">0</span>/2 фото
+                        </div>
+
+                        <!-- Чекбокс "Юрист на выезде" -->
+                        <div class="lawyer-checkbox-group">
+                            <input type="checkbox" id="lawyerPresentCheckbox">
+                            <label for="lawyerPresentCheckbox">👨‍⚖️ На выезде присутствовал Юрист</label>
+                            <small>(требуется фото-подтверждение)</small>
+                        </div>
+
+                        <!-- Дополнительное поле для загрузки фото (появляется при включенном чекбоксе) -->
+                        <div class="additional-photo-container" id="additionalPhotoContainer">
+                            <div class="photo-upload-field" id="photoLawyerField">
+                                <div class="photo-upload-header">
+                                    <div class="photo-icon">⚖️</div>
+                                    <h4 class="photo-title">Фото №3 (подтверждение присутствия юриста на месте)</h4>
+                                </div>
+                                <div class="photo-upload-area" id="photoLawyerUpload">
+                                    <div class="upload-placeholder">🖼️</div>
+                                    <div class="upload-text">Нажмите или перетащите фото</div>
+                                    <div class="upload-hint">Скриншот с юристом на месте происшествия (Ctrl+V)</div>
+                                    <input type="file" id="photoLawyer" name="photoLawyer" accept="image/*" class="photo-input">
+                                    
+                                    <div class="photo-preview" id="photoLawyerPreview"></div>
+                                    <div class="photo-controls">
+                                        <div class="photo-control" onclick="clearPhoto('photoLawyer')" title="Очистить">✕</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -493,19 +565,13 @@
             console.log('Форма отчёта адвоката — запуск');
 
             // ==================== КОНФИГУРАЦИЯ ====================
-            // --- Discord OAuth2 ---
             const CLIENT_ID = typeof DISCORD_CLIENT_ID !== 'undefined' ? DISCORD_CLIENT_ID : null;
             const REDIRECT_URI = window.location.href.split('?')[0].split('#')[0];
             const DISCORD_API = 'https://discord.com/api/v10';
-
-            // --- Вебхук Discord для отчёта ---
             const REPORT_WEBHOOK_URL = 'https://discord.com/api/webhooks/1431806444721668217/5AWL9NYq74yUG_Xoz1Eo_cbHdpfLa7KIi28WhhQ6d7EbPnXcTk6byVUBPsmsqIxTHrOF';
+            const GAS_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbwZ_5Bwk6p82DwdYTynnQ_teOXT1xbiFqDrA1zRwhjVNRfRGnrgstddLoxACwXYHcURIA/exec';
 
-            // --- Google Sheets Web App URL (замените на ваш реальный URL после деплоя GAS) ---
-            // Инструкция: создайте Google Sheets, добавьте скрипт из описания, разверните как веб-приложение и вставьте URL сюда.
-            const GAS_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbwZ_5Bwk6p82DwdYTynnQ_teOXT1xbiFqDrA1zRwhjVNRfRGnrgstddLoxACwXYHcURIA/exec'; // <-- ЗАМЕНИТЕ НА РЕАЛЬНЫЙ URL
-
-            // ==================== ЭЛЕМЕНТЫ ФОРМЫ ====================
+            // ==================== ЭЛЕМЕНТЫ ====================
             const loginBtn = document.getElementById('discordLoginBtn');
             const userInfoDiv = document.getElementById('discordUserInfo');
             const discordUsernameSpan = document.getElementById('discordUsername');
@@ -514,8 +580,12 @@
             const discordStatus = document.getElementById('discordStatus');
             const submitBtn = document.getElementById('submitButton');
             const form = document.getElementById('reportForm');
+            
+            // Чекбокс юриста и контейнер доп. фото
+            const lawyerCheckbox = document.getElementById('lawyerPresentCheckbox');
+            const additionalPhotoContainer = document.getElementById('additionalPhotoContainer');
 
-            // --- Фото (два поля) ---
+            // --- Фото поля (базовые 2 + дополнительное) ---
             const photoFields = {
                 photo1: { 
                     uploadArea: document.getElementById('photo1Upload'), 
@@ -530,6 +600,13 @@
                     input: document.getElementById('photo2'), 
                     field: document.getElementById('photo2Field'), 
                     file: null 
+                },
+                photoLawyer: {
+                    uploadArea: document.getElementById('photoLawyerUpload'),
+                    preview: document.getElementById('photoLawyerPreview'),
+                    input: document.getElementById('photoLawyer'),
+                    field: document.getElementById('photoLawyerField'),
+                    file: null
                 }
             };
 
@@ -537,10 +614,14 @@
             const photoCountElement = document.getElementById('photoCount');
 
             function updatePhotoCount() {
-                uploadedPhotos = Object.values(photoFields).filter(f => f.file).length;
+                // Считаем только основные 2 фото (обязательные)
+                const mainPhotosCount = [photoFields.photo1, photoFields.photo2].filter(f => f && f.file).length;
+                uploadedPhotos = mainPhotosCount;
                 if (photoCountElement) photoCountElement.textContent = uploadedPhotos;
+                
+                // Подсветка полей
                 Object.values(photoFields).forEach(f => {
-                    if (f.field) f.field.classList.toggle('active', !!f.file);
+                    if (f && f.field) f.field.classList.toggle('active', !!f.file);
                 });
             }
 
@@ -562,7 +643,12 @@
             };
 
             window.clearAllPhotos = function() {
-                Object.keys(photoFields).forEach(clearPhoto);
+                Object.keys(photoFields).forEach(key => clearPhoto(key));
+                if (lawyerCheckbox) lawyerCheckbox.checked = false;
+                if (additionalPhotoContainer) additionalPhotoContainer.style.display = 'none';
+                // очистить чекбокс и скрыть поле
+                const lawyerField = photoFields.photoLawyer;
+                if (lawyerField && lawyerField.file) clearPhoto('photoLawyer');
             };
 
             // Инициализация загрузки фото (drag & drop, клик, вставка)
@@ -629,7 +715,22 @@
                 updatePhotoCount();
             }
 
-            // ==================== Discord OAuth2 (PKCE) ====================
+            // Управление показом дополнительного поля фото
+            if (lawyerCheckbox && additionalPhotoContainer) {
+                lawyerCheckbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        additionalPhotoContainer.style.display = 'block';
+                    } else {
+                        additionalPhotoContainer.style.display = 'none';
+                        // Очищаем фото юриста, если галочку сняли
+                        if (photoFields.photoLawyer && photoFields.photoLawyer.file) {
+                            clearPhoto('photoLawyer');
+                        }
+                    }
+                });
+            }
+
+            // ==================== DISCORD OAuth2 ====================
             if (!CLIENT_ID) {
                 console.error('❌ Не задан DISCORD_CLIENT_ID');
                 if (discordStatus) {
@@ -673,12 +774,9 @@
                         code_challenge_method: 'S256',
                         prompt: 'consent'
                     });
-                    
-                    const authUrl = `https://discord.com/oauth2/authorize?${params.toString()}`;
-                    console.log('🔐 Перенаправление на Discord...');
-                    window.location.href = authUrl;
+                    window.location.href = `https://discord.com/oauth2/authorize?${params.toString()}`;
                 }).catch(error => {
-                    console.error('❌ Ошибка генерации challenge:', error);
+                    console.error('❌ Ошибка:', error);
                     discordStatus.textContent = '❌ Ошибка при подготовке авторизации';
                     discordStatus.classList.add('error');
                 });
@@ -692,18 +790,12 @@
                     redirect_uri: REDIRECT_URI,
                     code_verifier: verifier
                 });
-
                 const response = await fetch('https://discord.com/api/oauth2/token', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: body.toString()
                 });
-
-                if (!response.ok) {
-                    const err = await response.text();
-                    throw new Error(`Token exchange failed: ${err}`);
-                }
-
+                if (!response.ok) throw new Error(`Token exchange failed`);
                 const data = await response.json();
                 return data.access_token;
             }
@@ -716,19 +808,15 @@
                 return await response.json();
             }
 
-            // Обработка callback (код в URL)
             async function handleDiscordCallback() {
                 const urlParams = new URLSearchParams(window.location.search);
                 const code = urlParams.get('code');
                 const error = urlParams.get('error');
-
                 if (error) {
-                    console.error('❌ Discord error:', error);
                     discordStatus.textContent = `❌ Ошибка авторизации: ${error}`;
                     discordStatus.classList.add('error');
                     return;
                 }
-
                 if (code) {
                     const verifier = localStorage.getItem('discord_verifier');
                     if (!verifier) {
@@ -736,11 +824,8 @@
                         discordStatus.classList.add('error');
                         return;
                     }
-
                     try {
                         discordStatus.textContent = '🔄 Получение токена...';
-                        discordStatus.classList.remove('error', 'success');
-                        
                         const accessToken = await exchangeCode(code, verifier);
                         const user = await fetchUser(accessToken);
                         window.discordUser = { 
@@ -749,15 +834,13 @@
                             avatar: user.avatar,
                             discriminator: user.discriminator
                         };
-
                         localStorage.setItem('discord_user', JSON.stringify(window.discordUser));
                         window.history.replaceState({}, document.title, window.location.pathname);
-
                         updateUIAfterLogin();
                         discordStatus.textContent = `✅ Авторизован как ${window.discordUser.username}`;
                         discordStatus.classList.add('success');
                     } catch (err) {
-                        console.error('❌ Ошибка авторизации:', err);
+                        console.error(err);
                         discordStatus.textContent = '❌ Ошибка авторизации. Попробуйте снова.';
                         discordStatus.classList.add('error');
                     } finally {
@@ -771,14 +854,11 @@
                     userInfoDiv.style.display = 'block';
                     discordUsernameSpan.textContent = window.discordUser.username;
                     discordIdSpan.textContent = `ID: ${window.discordUser.id}`;
-                    
                     if (window.discordUser.avatar) {
-                        const avatarUrl = `https://cdn.discordapp.com/avatars/${window.discordUser.id}/${window.discordUser.avatar}.png`;
-                        discordAvatar.innerHTML = `<img src="${avatarUrl}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+                        discordAvatar.innerHTML = `<img src="https://cdn.discordapp.com/avatars/${window.discordUser.id}/${window.discordUser.avatar}.png" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
                     } else {
                         discordAvatar.textContent = window.discordUser.username.charAt(0).toUpperCase();
                     }
-                    
                     loginBtn.disabled = true;
                     submitBtn.disabled = false;
                 }
@@ -792,22 +872,19 @@
                         updateUIAfterLogin();
                         discordStatus.textContent = `✅ Авторизован как ${window.discordUser.username}`;
                         discordStatus.classList.add('success');
-                        console.log('✅ Загружен сохранённый пользователь:', window.discordUser.username);
                     } catch (e) {
-                        console.warn('⚠️ Ошибка загрузки сохранённого пользователя');
                         localStorage.removeItem('discord_user');
                     }
                 }
             }
 
-            // ==================== ОТПРАВКА В GOOGLE SHEETS ====================
-            async function sendToGoogleSheets(lawyerName, discordId, result) {
+            // Отправка в Google Sheets (с полем lawyerPresent)
+            async function sendToGoogleSheets(lawyerName, discordId, result, lawyerPresent) {
                 if (!GAS_WEBHOOK_URL || GAS_WEBHOOK_URL === 'ВАШ_URL_ВЕБ_ПРИЛОЖЕНИЯ_GAS') {
-                    console.warn('⚠️ Google Sheets URL не настроен. Статистика не будет сохранена.');
+                    console.warn('⚠️ Google Sheets URL не настроен');
                     return;
                 }
                 try {
-                    // Используем mode: 'no-cors' для обхода CORS, ответ прочитать не сможем, но запрос уйдёт
                     await fetch(GAS_WEBHOOK_URL, {
                         method: 'POST',
                         mode: 'no-cors',
@@ -815,7 +892,8 @@
                         body: JSON.stringify({
                             lawyerName: lawyerName,
                             discordId: discordId,
-                            result: result
+                            result: result,
+                            lawyerPresent: lawyerPresent ? 1 : 0
                         })
                     });
                     console.log('✅ Данные отправлены в Google Sheets');
@@ -824,7 +902,7 @@
                 }
             }
 
-            // ==================== ОБРАБОТКА ОТПРАВКИ ФОРМЫ ====================
+            // Обработка отправки формы
             form.addEventListener('submit', async function(e) {
                 e.preventDefault();
 
@@ -832,37 +910,20 @@
                 const reason = document.getElementById('reason')?.value?.trim();
                 const resultRadio = document.querySelector('input[name="result"]:checked');
                 const resultValue = resultRadio ? resultRadio.value : null;
+                const lawyerPresent = lawyerCheckbox ? lawyerCheckbox.checked : false;
 
-                if (!suspectName) {
-                    alert('Введите имя');
-                    return;
-                }
-                if (!reason) {
-                    alert('Укажите причину задержания');
-                    return;
-                }
-                if (!resultValue) {
-                    alert('Выберите результат задержания');
-                    return;
-                }
-                if (!window.discordUser || !window.discordUser.id) {
-                    alert('Необходимо авторизоваться через Discord');
-                    return;
-                }
-                if (!photoFields.photo1.file) {
-                    alert('Загрузите первое фото');
-                    return;
-                }
-                if (!photoFields.photo2.file) {
-                    alert('Загрузите второе фото');
-                    return;
-                }
+                if (!suspectName) { alert('Введите имя'); return; }
+                if (!reason) { alert('Укажите причину задержания'); return; }
+                if (!resultValue) { alert('Выберите результат задержания'); return; }
+                if (!window.discordUser || !window.discordUser.id) { alert('Необходимо авторизоваться через Discord'); return; }
+                if (!photoFields.photo1.file) { alert('Загрузите первое фото'); return; }
+                if (!photoFields.photo2.file) { alert('Загрузите второе фото'); return; }
+                if (lawyerPresent && !photoFields.photoLawyer.file) { alert('Отметьте галочку "Юрист на выезде" — требуется загрузить фото-подтверждение'); return; }
 
                 submitBtn.disabled = true;
                 submitBtn.textContent = 'Отправка...';
 
                 const formData = new FormData();
-
                 const payload = {
                     username: "Секретарь Коллегии адвокатов",
                     avatar_url: "https://i.pinimg.com/originals/7a/af/81/7aaf811aa403514a33e1d468e7405f9a.png",
@@ -875,6 +936,7 @@
                             { name: "👤 Адвокат", value: suspectName, inline: true },
                             { name: "⚖️ Результат", value: resultValue, inline: true },
                             { name: "📱 Адвокат (Discord)", value: `<@${window.discordUser.id}>`, inline: true },
+                            { name: "👨‍⚖️ Юрист на выезде", value: lawyerPresent ? "✅ Да" : "❌ Нет", inline: true },
                             { name: "📝 Причина задержания", value: reason, inline: false },
                             { name: "🕐 Дата отчёта", value: new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }), inline: true }
                         ],
@@ -885,44 +947,32 @@
                         }
                     }]
                 };
-
                 formData.append('payload_json', JSON.stringify(payload));
                 if (photoFields.photo1.file) formData.append('files[0]', photoFields.photo1.file, 'photo1.jpg');
                 if (photoFields.photo2.file) formData.append('files[1]', photoFields.photo2.file, 'photo2.jpg');
+                if (lawyerPresent && photoFields.photoLawyer.file) formData.append('files[2]', photoFields.photoLawyer.file, 'photo_lawyer.jpg');
 
                 try {
-                    // 1. Отправка в Discord
-                    const response = await fetch(REPORT_WEBHOOK_URL, {
-                        method: 'POST',
-                        body: formData
-                    });
-
+                    const response = await fetch(REPORT_WEBHOOK_URL, { method: 'POST', body: formData });
                     if (response.ok) {
-                        // Показываем сообщение об успехе
                         const successMsg = document.createElement('div');
                         successMsg.innerHTML = '<span style="color:#86efac; font-weight:600;">✅ Отчёт успешно отправлен в Discord!</span>';
-                        successMsg.style.marginTop = '20px';
-                        successMsg.style.textAlign = 'center';
-                        successMsg.style.padding = '15px';
-                        successMsg.style.backgroundColor = 'rgba(134, 239, 172, 0.1)';
-                        successMsg.style.borderRadius = 'var(--border-radius)';
+                        successMsg.style.cssText = 'margin-top:20px;text-align:center;padding:15px;background:rgba(134,239,172,0.1);border-radius:var(--border-radius)';
                         form.appendChild(successMsg);
                         setTimeout(() => successMsg.remove(), 7000);
-
-                        // 2. Отправка в Google Sheets (не блокируем, ловим ошибки в консоль)
-                        await sendToGoogleSheets(suspectName, window.discordUser.id, resultValue);
-
-                        // Очищаем форму
+                        
+                        await sendToGoogleSheets(suspectName, window.discordUser.id, resultValue, lawyerPresent);
+                        
                         form.reset();
                         clearAllPhotos();
                         updatePhotoCount();
+                        if (lawyerCheckbox) lawyerCheckbox.checked = false;
+                        if (additionalPhotoContainer) additionalPhotoContainer.style.display = 'none';
                     } else {
-                        const errorText = await response.text();
-                        console.error('❌ Discord ошибка:', response.status, errorText);
                         alert(`Ошибка отправки в Discord (код ${response.status}). Попробуйте позже.`);
                     }
                 } catch (err) {
-                    console.error('❌ Сетевая ошибка:', err);
+                    console.error(err);
                     alert('Не удалось отправить отчёт. Проверьте подключение к интернету.');
                 } finally {
                     submitBtn.disabled = !window.discordUser;
@@ -930,17 +980,11 @@
                 }
             });
 
-            // ==================== ИНИЦИАЛИЗАЦИЯ ====================
             updatePhotoCount();
             loadStoredUser();
             handleDiscordCallback();
-
-            loginBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                redirectToDiscord();
-            });
-
-            console.log('✅ Форма отчёта адвоката готова');
+            loginBtn.addEventListener('click', (e) => { e.preventDefault(); redirectToDiscord(); });
+            console.log('✅ Форма отчёта адвоката готова (с юристом на выезде)');
         });
     </script>
 </body>
