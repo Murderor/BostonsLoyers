@@ -863,32 +863,23 @@
 
             // ==================== ОТПРАВКА В GOOGLE SHEETS (БЕЗ CORS ОШИБОК) ====================
             // Отправка в Google Sheets через изображение (самый надежный способ без CORS)
+// Отправка в Google Sheets
 function sendToGoogleSheets(lawyerName, discordId, result, lawyerPresent) {
-    const lawyerCallsValue = lawyerPresent ? 1 : 0;
-    
-    // Создаем данные для отправки
     const data = {
         lawyerName: lawyerName,
         discordId: discordId,
         result: result,
         lawyerPresent: lawyerPresent,
-        lawyerCalls: lawyerCallsValue,
         timestamp: new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })
     };
     
-    // Отправка через fetch с правильными заголовками
-    fetch(GAS_WEBHOOK_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-    }).catch(err => console.log('📤 Отправлено в Google Sheets:', data));
+    // Отправка через Image (работает всегда, нет CORS)
+    const url = GAS_WEBHOOK_URL + '?callback=callback&' + new URLSearchParams(data);
+    const img = new Image();
+    img.src = url;
     
-    console.log('✅ Данные отправлены в Google Sheets:', data);
+    console.log('✅ Отправлено в Google Sheets:', data);
 }
-
             // Обработка отправки формы
             form.addEventListener('submit', async function(e) {
                 e.preventDefault();
