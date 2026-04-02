@@ -418,7 +418,7 @@
                         <h3 class="form-section-title">📋 Данные о задержании</h3>
                         
                         <div class="form-group">
-                            <label for="suspectName">Ваше имя  | (Static)</label>
+                            <label for="suspectName">Ваше имя | (Static)</label>
                             <input type="text" id="suspectName" name="suspectName" required 
                                    placeholder="Введите ваше полное имя и статик"
                                    class="form-control">
@@ -646,9 +646,6 @@
                 Object.keys(photoFields).forEach(key => clearPhoto(key));
                 if (lawyerCheckbox) lawyerCheckbox.checked = false;
                 if (additionalPhotoContainer) additionalPhotoContainer.style.display = 'none';
-                // очистить чекбокс и скрыть поле
-                const lawyerField = photoFields.photoLawyer;
-                if (lawyerField && lawyerField.file) clearPhoto('photoLawyer');
             };
 
             // Инициализация загрузки фото (drag & drop, клик, вставка)
@@ -878,27 +875,55 @@
                 }
             }
 
-            // Отправка в Google Sheets (с полем lawyerPresent)
+            // ==================== ОТПРАВКА В GOOGLE SHEETS (ИСПРАВЛЕНО) ====================
             async function sendToGoogleSheets(lawyerName, discordId, result, lawyerPresent) {
-                if (!GAS_WEBHOOK_URL || GAS_WEBHOOK_URL === 'ВАШ_URL_ВЕБ_ПРИЛОЖЕНИЯ_GAS') {
-                    console.warn('⚠️ Google Sheets URL не настроен');
-                    return;
+                if (!GAS_WEBHOOK_URL || GAS_WEBHOOK_URL === 'https://script.google.com/macros/s/AKfycbwZ_5Bwk6p82DwdYTynnQ_teOXT1xbiFqDrA1zRwhjVNRfRGnrgstddLoxACwXYHcURIA/exec') {
+                    console.warn('⚠️ Google Sheets URL используется стандартный, проверьте корректность');
                 }
+                
+                // Формируем данные для отправки
+                // lawyerPresent = true -> добавляем 1 в колонку "Вызовов с юристами"
+                const lawyerCallsValue = lawyerPresent ? 1 : 0;
+                
+                const dataToSend = {
+                    lawyerName: lawyerName,           // Имя адвоката
+                    discordId: discordId,             // Discord ID
+                    result: result,                   // Результат (Отпустили/Посадили)
+                    lawyerPresent: lawyerPresent,     // Было ли присутствие юриста (true/false)
+                    lawyerCalls: lawyerCallsValue,    // Количество вызовов с юристами (0 или 1)
+                    timestamp: new Date().toISOString() // Время отправки
+                };
+                
+                console.log('📊 Отправка в Google Sheets:', dataToSend);
+                
                 try {
-                    await fetch(GAS_WEBHOOK_URL, {
+                    // Используем POST запрос с подробными заголовками
+                    const response = await fetch(GAS_WEBHOOK_URL, {
                         method: 'POST',
-                        mode: 'no-cors',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            lawyerName: lawyerName,
-                            discordId: discordId,
-                            result: result,
-                            lawyerPresent: lawyerPresent ? 1 : 0
-                        })
+                        headers: { 
+                            'Content-Type': 'application/json'
+                        },
+                        mode: 'cors', // Пытаемся использовать CORS, если не получится - fallback
+                        body: JSON.stringify(dataToSend)
                     });
-                    console.log('✅ Данные отправлены в Google Sheets');
+                    
+                    if (response.ok) {
+                        const responseData = await response.text();
+                        console.log('✅ Данные отправлены в Google Sheets, ответ:', responseData);
+                    } else {
+                        console.warn('⚠️ Google Sheets ответил с ошибкой:', response.status, await response.text());
+                        // Пробуем отправить в режиме no-cors как fallback
+                        await fetch(GAS_WEBHOOK_URL, {
+                            method: 'POST',
+                            mode: 'no-cors',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(dataToSend)
+                        });
+                        console.log('📤 Данные отправлены в режиме no-cors');
+                    }
                 } catch (err) {
                     console.error('❌ Ошибка отправки в Google Sheets:', err);
+                    // Не показываем ошибку пользователю, чтобы не мешать отправке в Discord
                 }
             }
 
@@ -961,6 +986,7 @@
                         form.appendChild(successMsg);
                         setTimeout(() => successMsg.remove(), 7000);
                         
+                        // Отправляем в Google Sheets с корректными данными
                         await sendToGoogleSheets(suspectName, window.discordUser.id, resultValue, lawyerPresent);
                         
                         form.reset();
@@ -969,10 +995,12 @@
                         if (lawyerCheckbox) lawyerCheckbox.checked = false;
                         if (additionalPhotoContainer) additionalPhotoContainer.style.display = 'none';
                     } else {
+                        const errorText = await response.text();
+                        console.error('Discord ошибка:', response.status, errorText);
                         alert(`Ошибка отправки в Discord (код ${response.status}). Попробуйте позже.`);
                     }
                 } catch (err) {
-                    console.error(err);
+                    console.error('Сетевая ошибка:', err);
                     alert('Не удалось отправить отчёт. Проверьте подключение к интернету.');
                 } finally {
                     submitBtn.disabled = !window.discordUser;
@@ -984,7 +1012,7 @@
             loadStoredUser();
             handleDiscordCallback();
             loginBtn.addEventListener('click', (e) => { e.preventDefault(); redirectToDiscord(); });
-            console.log('✅ Форма отчёта адвоката готова (с юристом на выезде)');
+            console.log('✅ Форма отчёта адвоката готова (с корректной отправкой в Google Sheets)');
         });
     </script>
 </body>
