@@ -492,25 +492,20 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Форма отчёта адвоката — запуск');
 
-            // --- Конфигурация Discord OAuth2 ---
+            // ==================== КОНФИГУРАЦИЯ ====================
+            // --- Discord OAuth2 ---
             const CLIENT_ID = typeof DISCORD_CLIENT_ID !== 'undefined' ? DISCORD_CLIENT_ID : null;
             const REDIRECT_URI = window.location.href.split('?')[0].split('#')[0];
             const DISCORD_API = 'https://discord.com/api/v10';
 
-            if (!CLIENT_ID) {
-                console.error('❌ Не задан DISCORD_CLIENT_ID');
-                const statusEl = document.getElementById('discordStatus');
-                if (statusEl) {
-                    statusEl.textContent = '❌ Ошибка: client_id не настроен';
-                    statusEl.classList.add('error');
-                }
-                return;
-            }
+            // --- Вебхук Discord для отчёта ---
+            const REPORT_WEBHOOK_URL = 'https://discord.com/api/webhooks/1455815181509591145/b4-7gy7-_N2AxOATRLShhV2fXSpcSQ33RaPqNmdNGwXnCR7V7K2nzn9K4RmMStFeiaPz';
 
-            // --- Вебхук для отчёта (новый) ---
-            const REPORT_WEBHOOK_URL = 'https://discord.com/api/webhooks/1431806444721668217/5AWL9NYq74yUG_Xoz1Eo_cbHdpfLa7KIi28WhhQ6d7EbPnXcTk6byVUBPsmsqIxTHrOF';
+            // --- Google Sheets Web App URL (замените на ваш реальный URL после деплоя GAS) ---
+            // Инструкция: создайте Google Sheets, добавьте скрипт из описания, разверните как веб-приложение и вставьте URL сюда.
+            const GAS_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbwZ_5Bwk6p82DwdYTynnQ_teOXT1xbiFqDrA1zRwhjVNRfRGnrgstddLoxACwXYHcURIA/exec'; // <-- ЗАМЕНИТЕ НА РЕАЛЬНЫЙ URL
 
-            // --- Элементы формы ---
+            // ==================== ЭЛЕМЕНТЫ ФОРМЫ ====================
             const loginBtn = document.getElementById('discordLoginBtn');
             const userInfoDiv = document.getElementById('discordUserInfo');
             const discordUsernameSpan = document.getElementById('discordUsername');
@@ -634,7 +629,16 @@
                 updatePhotoCount();
             }
 
-            // --- OAuth2 PKCE функции (те же) ---
+            // ==================== Discord OAuth2 (PKCE) ====================
+            if (!CLIENT_ID) {
+                console.error('❌ Не задан DISCORD_CLIENT_ID');
+                if (discordStatus) {
+                    discordStatus.textContent = '❌ Ошибка: client_id не настроен';
+                    discordStatus.classList.add('error');
+                }
+                return;
+            }
+
             function generateCodeVerifier() {
                 const array = new Uint8Array(32);
                 crypto.getRandomValues(array);
@@ -796,7 +800,31 @@
                 }
             }
 
-            // --- Обработка отправки формы ---
+            // ==================== ОТПРАВКА В GOOGLE SHEETS ====================
+            async function sendToGoogleSheets(lawyerName, discordId, result) {
+                if (!GAS_WEBHOOK_URL || GAS_WEBHOOK_URL === 'ВАШ_URL_ВЕБ_ПРИЛОЖЕНИЯ_GAS') {
+                    console.warn('⚠️ Google Sheets URL не настроен. Статистика не будет сохранена.');
+                    return;
+                }
+                try {
+                    // Используем mode: 'no-cors' для обхода CORS, ответ прочитать не сможем, но запрос уйдёт
+                    await fetch(GAS_WEBHOOK_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            lawyerName: lawyerName,
+                            discordId: discordId,
+                            result: result
+                        })
+                    });
+                    console.log('✅ Данные отправлены в Google Sheets');
+                } catch (err) {
+                    console.error('❌ Ошибка отправки в Google Sheets:', err);
+                }
+            }
+
+            // ==================== ОБРАБОТКА ОТПРАВКИ ФОРМЫ ====================
             form.addEventListener('submit', async function(e) {
                 e.preventDefault();
 
@@ -835,43 +863,44 @@
 
                 const formData = new FormData();
 
-               const payload = {
-    username: "Секретарь Коллегии адвокатов",
-    avatar_url: "https://i.pinimg.com/originals/7a/af/81/7aaf811aa403514a33e1d468e7405f9a.png",
-    // убираем thread_name
-    content: "<@&1321503127987421316> <@&1371785937180426270> <@&1321503135302291516>\nНовый отчёт о задержании",
-    embeds: [{
-        title: "📋 Отчёт адвоката о задержании",
-        description: `**${suspectName}** — результат: **${resultValue}**`,
-        color: 0xd4af37,
-        fields: [
-            { name: "👤 Адвокат", value: suspectName, inline: true },
-            { name: "⚖️ Результат", value: resultValue, inline: true },
-            { name: "📱 Адвокат (Discord)", value: `<@${window.discordUser.id}>`, inline: true },
-            { name: "📝 Причина задержания", value: reason, inline: false },
-            { name: "🕐 Дата отчёта", value: new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }), inline: true }
-        ],
-        timestamp: new Date().toISOString(),
-        footer: {
-            text: "Коллегия государственных адвокатов | Majestic RP | Boston",
-            icon_url: "https://i.pinimg.com/originals/7a/af/81/7aaf811aa403514a33e1d468e7405f9a.png"
-        }
-    }]
-};
+                const payload = {
+                    username: "Секретарь Коллегии адвокатов",
+                    avatar_url: "https://i.pinimg.com/originals/7a/af/81/7aaf811aa403514a33e1d468e7405f9a.png",
+                    content: "<@&1321503127987421316> <@&1371785937180426270> <@&1321503135302291516>\nНовый отчёт о задержании",
+                    embeds: [{
+                        title: "📋 Отчёт адвоката о задержании",
+                        description: `**${suspectName}** — результат: **${resultValue}**`,
+                        color: 0xd4af37,
+                        fields: [
+                            { name: "👤 Адвокат", value: suspectName, inline: true },
+                            { name: "⚖️ Результат", value: resultValue, inline: true },
+                            { name: "📱 Адвокат (Discord)", value: `<@${window.discordUser.id}>`, inline: true },
+                            { name: "📝 Причина задержания", value: reason, inline: false },
+                            { name: "🕐 Дата отчёта", value: new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }), inline: true }
+                        ],
+                        timestamp: new Date().toISOString(),
+                        footer: {
+                            text: "Коллегия государственных адвокатов | Majestic RP | Boston",
+                            icon_url: "https://i.pinimg.com/originals/7a/af/81/7aaf811aa403514a33e1d468e7405f9a.png"
+                        }
+                    }]
+                };
 
                 formData.append('payload_json', JSON.stringify(payload));
                 if (photoFields.photo1.file) formData.append('files[0]', photoFields.photo1.file, 'photo1.jpg');
                 if (photoFields.photo2.file) formData.append('files[1]', photoFields.photo2.file, 'photo2.jpg');
 
                 try {
+                    // 1. Отправка в Discord
                     const response = await fetch(REPORT_WEBHOOK_URL, {
                         method: 'POST',
                         body: formData
                     });
 
                     if (response.ok) {
+                        // Показываем сообщение об успехе
                         const successMsg = document.createElement('div');
-                        successMsg.innerHTML = '<span style="color:#86efac; font-weight:600;">✅ Отчёт успешно отправлен!</span>';
+                        successMsg.innerHTML = '<span style="color:#86efac; font-weight:600;">✅ Отчёт успешно отправлен в Discord!</span>';
                         successMsg.style.marginTop = '20px';
                         successMsg.style.textAlign = 'center';
                         successMsg.style.padding = '15px';
@@ -880,13 +909,17 @@
                         form.appendChild(successMsg);
                         setTimeout(() => successMsg.remove(), 7000);
 
+                        // 2. Отправка в Google Sheets (не блокируем, ловим ошибки в консоль)
+                        await sendToGoogleSheets(suspectName, window.discordUser.id, resultValue);
+
+                        // Очищаем форму
                         form.reset();
                         clearAllPhotos();
                         updatePhotoCount();
                     } else {
                         const errorText = await response.text();
                         console.error('❌ Discord ошибка:', response.status, errorText);
-                        alert(`Ошибка отправки (код ${response.status}). Попробуйте позже.`);
+                        alert(`Ошибка отправки в Discord (код ${response.status}). Попробуйте позже.`);
                     }
                 } catch (err) {
                     console.error('❌ Сетевая ошибка:', err);
@@ -897,7 +930,7 @@
                 }
             });
 
-            // --- Инициализация ---
+            // ==================== ИНИЦИАЛИЗАЦИЯ ====================
             updatePhotoCount();
             loadStoredUser();
             handleDiscordCallback();
