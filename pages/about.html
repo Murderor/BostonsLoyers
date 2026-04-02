@@ -100,8 +100,57 @@
         }
         .footer p { margin-bottom: 10px; color: #a0a8c0; font-size: 0.9rem; }
 
+        /* ===== КНОПКА "ЛУЧШИЕ СОТРУДНИКИ НЕДЕЛИ" (ТЕПЕРЬ ССЫЛКА) ===== */
+        .top-week-btn-wrapper {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+        .top-week-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(135deg, var(--color-accent-dark), var(--color-accent));
+            color: var(--color-darker);
+            font-weight: 800;
+            font-size: 1.2rem;
+            padding: 12px 28px;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 0 12px rgba(212, 175, 55, 0.4);
+            transition: all 0.25s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            backdrop-filter: blur(2px);
+            font-family: inherit;
+            text-decoration: none;
+        }
+        .top-week-link:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 22px rgba(212, 175, 55, 0.8);
+            background: linear-gradient(135deg, #e5c05a, #d4af37);
+        }
+        .top-week-link:active {
+            transform: translateY(1px);
+        }
+        .top-week-link svg {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+        /* Анимация пульсации */
+        @keyframes gentlePulse {
+            0% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.4); }
+            70% { box-shadow: 0 0 0 12px rgba(212, 175, 55, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
+        }
+        .top-week-link {
+            animation: gentlePulse 2s infinite;
+        }
+
         /* ===== СТИЛИ ДЛЯ СТРАНИЦЫ "О НАС" ===== */
-        .page-header { text-align: center; padding: 40px 0; border-bottom: 1px solid var(--color-gray); margin-bottom: 40px; }
+        .page-header { text-align: center; padding: 20px 0 40px; border-bottom: 1px solid var(--color-gray); margin-bottom: 40px; }
         .page-title { font-size: 2.5rem; color: var(--color-light); margin-bottom: 15px; }
         .page-subtitle { color: #a0a8c0; max-width: 600px; margin: 0 auto; }
 
@@ -237,12 +286,10 @@
             .stats-grid { grid-template-columns: 1fr; }
         }
 
-        /* Скрытие секций без данных */
         .team-section:has(.team-grid:empty):not(:has(.leader-card)) {
             display: none;
         }
         
-        /* Информация о бюро скрывается если нет данных */
         .about-info:has([data-field="description_text"]:empty):not(:has(.stat-number:not(:empty))) {
             display: none;
         }
@@ -296,6 +343,19 @@
     <!-- Основной контент -->
     <main class="main">
         <div class="container">
+            <!-- Кнопка-ссылка "Лучшие сотрудники недели" (ведёт на отдельную страницу) -->
+            <div class="top-week-btn-wrapper">
+                <a href="TopWeek.html" class="top-week-link">
+                    <svg viewBox="0 0 24 24" width="24" height="24">
+                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                    </svg>
+                    <span>Лучшие сотрудники недели</span>
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <path d="M7 10l5 5 5-5z"/>
+                    </svg>
+                </a>
+            </div>
+
             <section class="page-header">
                 <h2 class="page-title">Коллегия адвокатов</h2>
                 <p class="page-subtitle">Профессиональная команда, стоящая на защите ваших прав в мире Majestic RP | Boston</p>
@@ -319,10 +379,10 @@
 
     <script>
         // ==================== КОНФИГУРАЦИЯ ====================
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzFgIxmcvANbC3Zs4aWpb3wwnUeiVnvJw0kpxT2adhB-Th_A7xjlzVEEAZovR_z6ReadQ/exec'; // ЗАМЕНИТЕ НА ВАШ URL
-        const DEV_MODE = false; // В разработке true, в продакшене false
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzFgIxmcvANbC3Zs4aWpb3wwnUeiVnvJw0kpxT2adhB-Th_A7xjlzVEEAZovR_z6ReadQ/exec';
+        const DEV_MODE = false;
 
-        // ==================== ТЕСТОВЫЕ ДАННЫЕ (с добавленными Discord, specialization и cases для старших) ====================
+        // ==================== ТЕСТОВЫЕ ДАННЫЕ ====================
         const MOCK_DATA = {
             leader: {
                 name: "Jeffrey Ward",
@@ -338,7 +398,7 @@
                     name: "Conte Grande",
                     position: "Первый заместитель",
                     badge: "15 лет стажа",
-                    description: "Специалист по гражданскому праву и договорным отношениям. Ведёт самые сложные имущественные споры.",
+                    description: "Специалист по гражданскому праву и договорным отношениям.",
                     cases: "200+",
                     specialization: "Гражданские дела",
                     discord: "conte.grande",
@@ -348,7 +408,7 @@
                     name: "Sievol Ahishkavich",
                     position: "Заместитель по уголовным делам",
                     badge: "Эксперт",
-                    description: "Бывший прокурор. Специализируется на защите по тяжким статьям и обжаловании приговоров.",
+                    description: "Бывший прокурор. Специализируется на защите по тяжким статьям.",
                     cases: "150+",
                     specialization: "Уголовные дела",
                     discord: "sievol.legal",
@@ -369,7 +429,7 @@
                 { 
                     name: "Yashar Miles", 
                     position: "Старший адвокат", 
-                    description: "Эксперт в административных спорах и взаимодействии с госорганами.", 
+                    description: "Эксперт в административных спорах.", 
                     tag: "Административные дела", 
                     cases: "95+",
                     specialization: "Административное право",
@@ -379,7 +439,7 @@
                 { 
                     name: "Dean Bacardi", 
                     position: "Старший адвокат", 
-                    description: "Специализация — разводы, раздел имущества, алименты.", 
+                    description: "Специализация — разводы, раздел имущества.", 
                     tag: "Семейные дела", 
                     cases: "80+",
                     specialization: "Семейное право",
@@ -390,7 +450,7 @@
             friends: [
                 { name: "Klava Gattuso", position: "Советник губернатора", badge: "GOV", description: "Специалист по проведению душных собеседований", avatar_url: "" },
                 { name: "Enzo Oswald", position: "Вице-Губернатор", badge: "GOV", description: "", avatar_url: "" },
-                { name: "Mac Queen", position: "assistant chief", badge: "LSPD", description: "⚡🚗 Человек легенда. Живое воплощение скорости.", avatar_url: "" }
+                { name: "Mac Queen", position: "assistant chief", badge: "LSPD", description: "⚡🚗 Человек легенда.", avatar_url: "" }
             ],
             info: {
                 years: "13+",
@@ -407,7 +467,6 @@
             return name.split(' ').map(word => word.charAt(0).toUpperCase()).join('').slice(0, 2);
         }
 
-        // Функция для создания Discord блока
         function createDiscordBlock(discord) {
             if (!discord) return '';
             const discordHandle = discord.startsWith('@') ? discord : `@${discord}`;
@@ -428,10 +487,8 @@
         // ==================== ФУНКЦИИ СОЗДАНИЯ КАРТОЧЕК ====================
         function createLeaderCard(data) {
             if (!data || !data.name) return '';
-            
             const initials = getInitials(data.name);
             const specialization = data.specialization ? `⚖️ Специализация: ${data.specialization}` : '';
-            
             return `
                 <section class="team-section">
                     <h3 class="section-title">Глава коллегии</h3>
@@ -459,7 +516,6 @@
 
         function createDeputyCard(deputy) {
             const initials = getInitials(deputy.name);
-            
             return `
                 <div class="profile-card">
                     <div class="profile-avatar ${deputy.avatar_url ? 'has-avatar' : ''}">
@@ -481,7 +537,6 @@
 
         function createSeniorCard(senior) {
             const initials = getInitials(senior.name);
-            
             return `
                 <div class="profile-card">
                     <div class="profile-avatar ${senior.avatar_url ? 'has-avatar' : ''}">
@@ -503,7 +558,6 @@
 
         function createFriendCard(friend) {
             const initials = getInitials(friend.name);
-            
             return `
                 <div class="profile-card">
                     <div class="profile-avatar ${friend.avatar_url ? 'has-avatar' : ''}">
@@ -522,56 +576,30 @@
         }
 
         function createInfoSection(info) {
-            if (!info || (!info.description_text && !info.years && !info.cases_total && !info.availability && !info.staff)) {
-                return '';
-            }
-            
+            if (!info || (!info.description_text && !info.years && !info.cases_total && !info.availability && !info.staff)) return '';
             return `
                 <section class="about-info">
                     <h3 class="section-title">О нашей коллегии</h3>
                     <div class="info-content">
                         ${info.description_text ? `<p>${info.description_text}</p>` : ''}
                         <div class="stats-grid">
-                            ${info.years ? `
-                                <div class="stat-item">
-                                    <div class="stat-number">${info.years}</div>
-                                    <div class="stat-label">Лет работы</div>
-                                </div>
-                            ` : ''}
-                            ${info.cases_total ? `
-                                <div class="stat-item">
-                                    <div class="stat-number">${info.cases_total}</div>
-                                    <div class="stat-label">Успешных дел</div>
-                                </div>
-                            ` : ''}
-                            ${info.availability ? `
-                                <div class="stat-item">
-                                    <div class="stat-number">${info.availability}</div>
-                                    <div class="stat-label">Доступность</div>
-                                </div>
-                            ` : ''}
-                            ${info.staff ? `
-                                <div class="stat-item">
-                                    <div class="stat-number">${info.staff}</div>
-                                    <div class="stat-label">Профессионалов</div>
-                                </div>
-                            ` : ''}
+                            ${info.years ? `<div class="stat-item"><div class="stat-number">${info.years}</div><div class="stat-label">Лет работы</div></div>` : ''}
+                            ${info.cases_total ? `<div class="stat-item"><div class="stat-number">${info.cases_total}</div><div class="stat-label">Успешных дел</div></div>` : ''}
+                            ${info.availability ? `<div class="stat-item"><div class="stat-number">${info.availability}</div><div class="stat-label">Доступность</div></div>` : ''}
+                            ${info.staff ? `<div class="stat-item"><div class="stat-number">${info.staff}</div><div class="stat-label">Профессионалов</div></div>` : ''}
                         </div>
                     </div>
                 </section>
             `;
         }
 
-        // ==================== ОСНОВНАЯ ФУНКЦИЯ ЗАГРУЗКИ ====================
+        // ==================== ОСНОВНАЯ ЗАГРУЗКА ====================
         async function loadAllData() {
             const transition = document.getElementById('pageTransition');
             if (transition) transition.classList.add('active');
-
             try {
                 let data;
-                
                 if (DEV_MODE) {
-                    console.log('Используются тестовые данные');
                     data = MOCK_DATA;
                 } else {
                     try {
@@ -579,113 +607,63 @@
                         if (!response.ok) throw new Error('Ошибка загрузки');
                         data = await response.json();
                     } catch (fetchError) {
-                        console.warn('Не удалось загрузить данные, используем тестовые:', fetchError);
+                        console.warn('Используем тестовые данные', fetchError);
                         data = MOCK_DATA;
                     }
                 }
-                
                 if (data.error) throw new Error(data.error);
-
-                // Очищаем контейнеры
+                
                 document.getElementById('leaderContainer').innerHTML = '';
                 document.getElementById('deputiesContainer').innerHTML = '';
                 document.getElementById('seniorsContainer').innerHTML = '';
                 document.getElementById('friendsContainer').innerHTML = '';
                 document.getElementById('infoContainer').innerHTML = '';
 
-                // Заполняем данными
-                if (data.leader && data.leader.name) {
-                    document.getElementById('leaderContainer').innerHTML = createLeaderCard(data.leader);
+                if (data.leader && data.leader.name) document.getElementById('leaderContainer').innerHTML = createLeaderCard(data.leader);
+                if (data.deputies && data.deputies.length) {
+                    document.getElementById('deputiesContainer').innerHTML = `<section class="team-section"><h3 class="section-title">Заместители коллегии</h3><div class="team-grid">${data.deputies.map(d => createDeputyCard(d)).join('')}</div></section>`;
                 }
-
-                if (data.deputies && data.deputies.length > 0) {
-                    const deputiesHtml = data.deputies.map(d => createDeputyCard(d)).join('');
-                    document.getElementById('deputiesContainer').innerHTML = `
-                        <section class="team-section">
-                            <h3 class="section-title">Заместители коллегии</h3>
-                            <div class="team-grid">${deputiesHtml}</div>
-                        </section>
-                    `;
+                if (data.seniors && data.seniors.length) {
+                    document.getElementById('seniorsContainer').innerHTML = `<section class="team-section"><h3 class="section-title">Старшие адвокаты</h3><div class="team-grid senior-grid">${data.seniors.map(s => createSeniorCard(s)).join('')}</div></section>`;
                 }
-
-                if (data.seniors && data.seniors.length > 0) {
-                    const seniorsHtml = data.seniors.map(s => createSeniorCard(s)).join('');
-                    document.getElementById('seniorsContainer').innerHTML = `
-                        <section class="team-section">
-                            <h3 class="section-title">Старшие адвокаты</h3>
-                            <div class="team-grid senior-grid">${seniorsHtml}</div>
-                        </section>
-                    `;
+                if (data.friends && data.friends.length) {
+                    document.getElementById('friendsContainer').innerHTML = `<section class="team-section"><h3 class="section-title">Почетные друзья коллегии</h3><div class="team-grid">${data.friends.map(f => createFriendCard(f)).join('')}</div></section>`;
                 }
-
-                if (data.friends && data.friends.length > 0) {
-                    const friendsHtml = data.friends.map(f => createFriendCard(f)).join('');
-                    document.getElementById('friendsContainer').innerHTML = `
-                        <section class="team-section">
-                            <h3 class="section-title">Почетные друзья коллегии</h3>
-                            <div class="team-grid">${friendsHtml}</div>
-                        </section>
-                    `;
-                }
-
-                if (data.info && (data.info.description_text || data.info.years || data.info.cases_total || data.info.availability || data.info.staff)) {
-                    document.getElementById('infoContainer').innerHTML = createInfoSection(data.info);
-                }
-
-                // Инициализируем аватарки
+                if (data.info) document.getElementById('infoContainer').innerHTML = createInfoSection(data.info);
                 initAvatars();
-
             } catch (e) {
-                console.error('Не удалось загрузить данные:', e);
+                console.error('Ошибка загрузки', e);
             } finally {
                 if (transition) transition.classList.remove('active');
             }
         }
 
         function initAvatars() {
-            const profileAvatars = document.querySelectorAll('.profile-avatar');
-            profileAvatars.forEach(avatar => {
+            document.querySelectorAll('.profile-avatar').forEach(avatar => {
                 const img = avatar.querySelector('.avatar-image');
                 if (img && img.src) {
-                    if (img.complete && img.naturalWidth > 0) {
-                        avatar.classList.add('has-avatar');
-                    } else {
-                        img.onload = () => avatar.classList.add('has-avatar');
-                        img.onerror = () => avatar.classList.remove('has-avatar');
-                    }
+                    if (img.complete && img.naturalWidth > 0) avatar.classList.add('has-avatar');
+                    else { img.onload = () => avatar.classList.add('has-avatar'); img.onerror = () => avatar.classList.remove('has-avatar'); }
                 }
             });
         }
 
-        // ==================== ИНИЦИАЛИЗАЦИЯ ЛОГОТИПА ====================
         function initLogo() {
             const logoContainer = document.getElementById('logoContainer');
             const logoImg = document.getElementById('main-logo');
-            
             if (logoImg) {
-                // Проверяем, загрузилось ли изображение
-                if (logoImg.complete && logoImg.naturalWidth > 0) {
-                    logoContainer.classList.add('has-logo');
-                } else {
-                    logoImg.onload = () => logoContainer.classList.add('has-logo');
-                    logoImg.onerror = () => logoContainer.classList.remove('has-logo');
-                }
+                if (logoImg.complete && logoImg.naturalWidth > 0) logoContainer.classList.add('has-logo');
+                else { logoImg.onload = () => logoContainer.classList.add('has-logo'); logoImg.onerror = () => logoContainer.classList.remove('has-logo'); }
             }
         }
 
         // ==================== ИНИЦИАЛИЗАЦИЯ ====================
         document.addEventListener('DOMContentLoaded', function() {
             loadAllData();
-            initLogo(); // Инициализируем логотип
-
-            // Мобильное меню
+            initLogo();
             const mobileMenuBtn = document.getElementById('mobileMenuBtn');
             const mobileNav = document.getElementById('mobileNav');
-            if (mobileMenuBtn && mobileNav) {
-                mobileMenuBtn.addEventListener('click', () => {
-                    mobileNav.classList.toggle('active');
-                });
-            }
+            if (mobileMenuBtn && mobileNav) mobileMenuBtn.addEventListener('click', () => mobileNav.classList.toggle('active'));
         });
     </script>
 </body>
