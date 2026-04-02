@@ -130,6 +130,17 @@
             color: #a0a8c0;
             text-align: left;
         }
+        
+        .teamwork-bonus {
+            font-size: 0.7rem;
+            color: #c084fc;
+            margin-left: 5px;
+        }
+        
+        .final-rating {
+            font-weight: bold;
+            color: #fbbf24;
+        }
     </style>
 </head>
 <body>
@@ -187,7 +198,7 @@
 
             <section class="page-header">
                 <h2 class="page-title">🏆 Лучшие работники недели</h2>
-                <p class="page-subtitle">Рейтинг адвокатов по проценту успешно освобождённых клиентов (с учётом количества дел)</p>
+                <p class="page-subtitle">Рейтинг адвокатов с учётом процента успеха, количества дел и командной работы</p>
             </section>
 
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;">
@@ -216,30 +227,31 @@
     <script src="../js/transitions.js"></script>
     
     <script>
-        // URL Google Apps Script (тот же, что и для страницы "О нас")
-        const GAS_DATA_URL = 'https://script.google.com/macros/s/AKfycbzI_hjQv0iNG81dnStgFA7mXqBxWgzJFN2EhP_o0yMTxEVOT2eGdEwGU7T2PMCyyu419Q/exec';
-        
-        // Тестовые данные (используются при недоступности сервера)
-        const MOCK_STATS = [
-            { name: "Conte Grande | 202027", discordId: "336864135906197505", calls: 4, released: 2, jailed: 2 },
-            { name: "Jeffrey Ward", discordId: "leman.52", calls: 45, released: 12, jailed: 33 },
-            { name: "Sievol Ahishkavich", discordId: "sievol.legal", calls: 42, released: 10, jailed: 32 },
-            { name: "Lui Volta", discordId: "lui.volta", calls: 29, released: 14, jailed: 15 },
-            { name: "Yashar Miles", discordId: "yashar.miles", calls: 31, released: 11, jailed: 20 },
-            { name: "Dean Bacardi", discordId: "dean.bacardi", calls: 24, released: 9, jailed: 15 }
-        ];
+        // URL Google Apps Script
+        const GAS_DATA_URL = 'https://script.google.com/macros/s/AKfycbwrh_ucDrgJADqy2waE7wk9Z-nQJKbAAB6TPGezPt1wlj57fno89ZwX1ZfYgbpKrBYOWA/exec';
         
         // ------------------------- НАСТРОЙКИ РЕЙТИНГА -------------------------
-        const MIN_CALLS_FOR_TOP = 0;      // Минимальное количество вызовов для участия в основном топе (0 = отключено)
-        const CONFIDENCE_Z = 1.96;        // 95% доверительный интервал
+        const MIN_CALLS_FOR_TOP = 0;           // Минимальное количество вызовов для участия в основном топе
+        const CONFIDENCE_Z = 1.96;             // 95% доверительный интервал
+        
+        // Коэффициенты влияния на рейтинг
+        const TEAMWORK_BONUS_MULTIPLIER = 0.15;  // Бонус за командную работу (15% от доли совместных дел)
+        const MAX_TEAMWORK_BONUS = 0.10;         // Максимальный бонус к рейтингу (+10%)
         
         let isDemoMode = false;
         
+        // Тестовые данные
+        const MOCK_STATS = [
+            { name: "Conte Grande | 202027", discordId: "336864135906197505", totalCalls: 4, released: 2, jailed: 2, callsWithLawyers: 1 },
+            { name: "Jeffrey Ward", discordId: "leman.52", totalCalls: 45, released: 12, jailed: 33, callsWithLawyers: 8 },
+            { name: "Sievol Ahishkavich", discordId: "sievol.legal", totalCalls: 42, released: 10, jailed: 32, callsWithLawyers: 5 },
+            { name: "Lui Volta", discordId: "lui.volta", totalCalls: 29, released: 14, jailed: 15, callsWithLawyers: 3 },
+            { name: "Yashar Miles", discordId: "yashar.miles", totalCalls: 31, released: 11, jailed: 20, callsWithLawyers: 6 },
+            { name: "Dean Bacardi", discordId: "dean.bacardi", totalCalls: 24, released: 9, jailed: 15, callsWithLawyers: 4 }
+        ];
+        
         /**
          * Нижняя граница доверительного интервала Вильсона (Wilson score)
-         * @param {number} released - количество успешных освобождений
-         * @param {number} total - общее количество вызовов
-         * @returns {number} значение от 0 до 1
          */
         function wilsonLowerBound(released, total) {
             if (total === 0) return 0;
@@ -252,8 +264,34 @@
         }
         
         /**
-         * Загрузка статистики с сервера (или подмена тестовыми данными)
+         * Расчёт бонуса за командную работу
+         * Чем больше совместных дел, тем выше бонус, но с убывающей отдачей
+         * @param {number} callsWithLawyers - количество вызовов с юристами
+         * @param {number} totalCalls - общее количество вызовов
+         * @returns {number} бонус к рейтингу (от 0 до MAX_TEAMWORK_BONUS)
          */
+        function calculateTeamworkBonus(callsWithLawyers, totalCalls) {
+            if (totalCalls === 0) return 0;
+            
+            // Доля совместных дел
+            const teamworkRatio = Math.min(1, callsWithLawyers / totalCalls);
+            
+            // Нелинейный бонус: sqrt даёт убывающую отдачу
+            // Чем больше совместных дел, тем выше бонус, но каждый следующий процент даёт меньше
+            const bonus = Math.sqrt(teamworkRatio) * TEAMWORK_BONUS_MULTIPLIER;
+            
+            // Ограничиваем максимальным бонусом
+            return Math.min(MAX_TEAMWORK_BONUS, bonus);
+        }
+        
+        /**
+         * Итоговый рейтинг = Wilson score + бонус за командную работу
+         */
+        function calculateFinalRating(wilsonScore, teamworkBonus) {
+            // Итоговый рейтинг не может превышать 1 (100%)
+            return Math.min(1, wilsonScore + teamworkBonus);
+        }
+        
         async function loadStatistics() {
             const tableContainer = document.getElementById('tableContent');
             tableContainer.innerHTML = '<div class="loading-spinner"><div class="loader" style="margin: 0 auto 15px;"></div><p>Загрузка статистики...</p></div>';
@@ -277,10 +315,10 @@
                 
                 if (data && Array.isArray(data) && data.length > 0) {
                     isDemoMode = false;
-                    renderTable(data);
+                    const transformedData = transformSheetData(data);
+                    renderTable(transformedData);
                     document.getElementById('lastUpdated').innerHTML = `✅ Данные загружены | ${new Date().toLocaleString('ru-RU')}`;
                 } else {
-                    // Нет данных — используем тестовые
                     isDemoMode = true;
                     renderTable(MOCK_STATS);
                     document.getElementById('lastUpdated').innerHTML = `⚠️ Демо-режим (нет данных от сервера) | ${new Date().toLocaleString('ru-RU')}`;
@@ -299,10 +337,31 @@
             }
         }
         
-        /**
-         * Отрисовка таблицы рейтинга с сортировкой по Wilson score
-         * @param {Array} lawyersData - массив объектов с полями name, calls, released, jailed
-         */
+        function transformSheetData(sheetData) {
+            return sheetData.map(row => {
+                if (Array.isArray(row)) {
+                    return {
+                        name: row[0] || 'Неизвестно',
+                        discordId: row[1] || '',
+                        totalCalls: Number(row[2]) || 0,
+                        released: Number(row[3]) || 0,
+                        jailed: Number(row[4]) || 0,
+                        callsWithLawyers: row[5] ? Number(row[5]) : 0
+                    };
+                } else if (typeof row === 'object') {
+                    return {
+                        name: row.name || row.lawyerName || 'Неизвестно',
+                        discordId: row.discordId || '',
+                        totalCalls: Number(row.calls || row.totalCalls || 0),
+                        released: Number(row.released || 0),
+                        jailed: Number(row.jailed || 0),
+                        callsWithLawyers: Number(row.callsWithLawyers || row.calls_with_lawyers || 0)
+                    };
+                }
+                return null;
+            }).filter(item => item !== null && item.name !== 'Неизвестно');
+        }
+        
         function renderTable(lawyersData) {
             const tableContainer = document.getElementById('tableContent');
             
@@ -311,34 +370,34 @@
                 demoBadge = '<div class="demo-badge">📊 Демонстрационные данные (нет связи с сервером)</div>';
             }
             
-            // Рассчитываем метрики для каждого адвоката
+            // Рассчитываем все метрики для каждого адвоката
             const lawyersWithMetrics = lawyersData.map(lawyer => {
-                const calls = lawyer.calls || 0;
+                const totalCalls = lawyer.totalCalls || 0;
                 const released = lawyer.released || 0;
                 const jailed = lawyer.jailed || 0;
-                const successRate = calls > 0 ? (released / calls * 100) : 0;
-                const wilson = wilsonLowerBound(released, calls);
+                const callsWithLawyers = lawyer.callsWithLawyers || 0;
+                const successRate = totalCalls > 0 ? (released / totalCalls * 100) : 0;
+                const wilsonScore = wilsonLowerBound(released, totalCalls);
+                const teamworkBonus = calculateTeamworkBonus(callsWithLawyers, totalCalls);
+                const finalRating = calculateFinalRating(wilsonScore, teamworkBonus);
+                const teamworkPercentage = totalCalls > 0 ? (callsWithLawyers / totalCalls * 100) : 0;
+                
                 return {
                     ...lawyer,
-                    totalCalls: calls,
+                    totalCalls: totalCalls,
                     totalReleased: released,
                     totalJailed: jailed,
+                    callsWithLawyers: callsWithLawyers,
                     successRate: successRate,
-                    wilsonScore: wilson
+                    wilsonScore: wilsonScore,
+                    teamworkBonus: teamworkBonus,
+                    finalRating: finalRating,
+                    teamworkPercentage: teamworkPercentage
                 };
             });
             
-            // Разделяем на "основных" (достигших MIN_CALLS_FOR_TOP) и "новичков"
-            let mainLawyers = lawyersWithMetrics.filter(l => l.totalCalls >= MIN_CALLS_FOR_TOP);
-            let lowCallsLawyers = lawyersWithMetrics.filter(l => l.totalCalls < MIN_CALLS_FOR_TOP);
-            
-            // Сортируем основных по убыванию Wilson score
-            mainLawyers.sort((a, b) => b.wilsonScore - a.wilsonScore);
-            // Новичков сортируем просто по проценту успеха (или можно тоже по Wilson, но они уже отдельно)
-            lowCallsLawyers.sort((a, b) => b.successRate - a.successRate);
-            
-            // Объединяем: сначала топ, потом новички
-            const sortedLawyers = [...mainLawyers, ...lowCallsLawyers];
+            // Сортируем по итоговому рейтингу (убывание)
+            const sortedLawyers = [...lawyersWithMetrics].sort((a, b) => b.finalRating - a.finalRating);
             
             // Формируем HTML таблицы
             let html = demoBadge + `
@@ -347,11 +406,14 @@
                         <tr>
                             <th class="rank-column">#</th>
                             <th>Имя адвоката</th>
-                            <th>Кол-во вызовов</th>
+                            <th>Всего вызовов</th>
+                            <th>Вызовы с юристами</th>
+                            <th>% командной работы</th>
                             <th>Отпущено</th>
                             <th>Посажено</th>
-                            <th>Успешность (освобождений)</th>
-                            <th>Рейтинг Wilson</th>
+                            <th>Успешность</th>
+                            <th>Базовый рейтинг</th>
+                            <th>Итоговый рейтинг</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -363,25 +425,40 @@
                 if (lawyer.successRate < 30) rateClass += ' low';
                 else if (lawyer.successRate < 70) rateClass += ' medium';
                 
-                // Отметка для новичков
-                const isLowCalls = lawyer.totalCalls < MIN_CALLS_FOR_TOP;
-                const lowCallsMark = isLowCalls ? ' *' : '';
-                const lowCallsBadge = isLowCalls ? ' <span style="font-size:0.7rem; background:rgba(212,175,55,0.2); padding:2px 6px; border-radius:12px;">мало дел</span>' : '';
+                // Корона для первого места
+                let crown = rank === 1 ? ' 👑' : '';
                 
-                // Корона только для первого места среди основных (если есть хоть один основной)
-                let crown = '';
-                if (rank === 1 && !isLowCalls && mainLawyers.length > 0) crown = ' 👑';
-                else if (rank === 1 && mainLawyers.length === 0 && !isLowCalls) crown = ' 👑';
+                // Отображение бонуса
+                const teamworkBonusPercent = (lawyer.teamworkBonus * 100).toFixed(1);
+                const teamworkBonusDisplay = lawyer.teamworkBonus > 0 
+                    ? `<span class="teamwork-bonus">(+${teamworkBonusPercent}%)</span>` 
+                    : '';
+                
+                // Отображение вызовов с юристами
+                const callsWithLawyersDisplay = lawyer.callsWithLawyers > 0 ? lawyer.callsWithLawyers : '—';
+                const teamworkPercentageDisplay = lawyer.teamworkPercentage > 0 
+                    ? `${lawyer.teamworkPercentage.toFixed(1)}%` 
+                    : '—';
+                
+                // Цвет для итогового рейтинга
+                const finalRatingPercent = (lawyer.finalRating * 100).toFixed(1);
+                let finalRatingClass = 'final-rating';
+                if (lawyer.finalRating >= 0.7) finalRatingClass += ' success-rate';
+                else if (lawyer.finalRating >= 0.4) finalRatingClass += ' medium';
+                else finalRatingClass += ' low';
                 
                 html += `
                     <tr>
-                        <td class="rank-column">${rank}${crown}${lowCallsMark}</td>
-                        <td>${escapeHtml(lawyer.name)}${lowCallsBadge}</td>
-                        <td>${lawyer.totalCalls}</td>
+                        <td class="rank-column">${rank}${crown}</td>
+                        <td>${escapeHtml(lawyer.name)}</td>
+                        <td><strong>${lawyer.totalCalls}</strong></td>
+                        <td style="color: ${lawyer.callsWithLawyers > 0 ? '#86efac' : '#a0a8c0'};">${callsWithLawyersDisplay}</td>
+                        <td style="color: #c084fc;">${teamworkPercentageDisplay} ${teamworkBonusDisplay}</td>
                         <td>${lawyer.totalReleased}</td>
                         <td>${lawyer.totalJailed}</td>
                         <td class="${rateClass}">${lawyer.successRate.toFixed(1)}%</td>
-                        <td style="font-size:0.85rem; color:#a0a8c0;">${lawyer.wilsonScore.toFixed(4)}</td>
+                        <td style="font-size:0.85rem; color:#a0a8c0;">${(lawyer.wilsonScore * 100).toFixed(1)}%</td>
+                        <td class="${finalRatingClass}">${finalRatingPercent}%</td>
                     </tr>
                 `;
             });
@@ -391,18 +468,21 @@
                 </table>
             `;
             
-            // Добавляем пояснение, если включен порог MIN_CALLS_FOR_TOP
-            if (MIN_CALLS_FOR_TOP > 0) {
-                html += `<div class="info-note">* — адвокаты с числом вызовов меньше ${MIN_CALLS_FOR_TOP} не участвуют в основном рейтинге и помещены в конец списка.</div>`;
-            }
-            html += `<div class="info-note">📊 Рейтинг Wilson учитывает как процент успеха, так и количество дел, обеспечивая честное распределение мест.</div>`;
+            // Добавляем пояснения
+            html += `
+                <div class="info-note">
+                    📊 <strong>Как рассчитывается рейтинг:</strong><br>
+                    • <strong>Базовый рейтинг (Wilson score)</strong> — учитывает процент успеха и количество дел.<br>
+                    • <strong>Бонус за командную работу</strong> — до +${(MAX_TEAMWORK_BONUS * 100).toFixed(0)}% к рейтингу в зависимости от доли совместных дел.<br>
+                    • <strong>Итоговый рейтинг</strong> = Базовый рейтинг + Бонус за командную работу.<br>
+                    • Совместные дела поощряются, так как способствуют обмену опытом и развитию адвокатуры в целом.
+                </div>
+                <div class="info-note">⚖️ "Вызовы с юристами" — количество дел, где адвокат работал совместно с другими юристами. Чем выше доля таких дел, тем больше бонус к рейтингу.</div>
+            `;
             
             tableContainer.innerHTML = html;
         }
         
-        /**
-         * Простейшая защита от XSS
-         */
         function escapeHtml(str) {
             if (!str) return '';
             return String(str).replace(/[&<>]/g, function(m) {
@@ -413,9 +493,6 @@
             });
         }
         
-        /**
-         * Инициализация логотипа (замена на картинку, если доступна)
-         */
         function initLogo() {
             const logoImg = document.getElementById('main-logo');
             const logoContainer = document.querySelector('.logo-image');
@@ -440,7 +517,6 @@
                 });
             }
             
-            // Мобильное меню
             const mobileMenuBtn = document.getElementById('mobileMenuBtn');
             const mobileNav = document.getElementById('mobileNav');
             if (mobileMenuBtn && mobileNav) {
