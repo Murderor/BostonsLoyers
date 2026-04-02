@@ -866,54 +866,27 @@
 function sendToGoogleSheets(lawyerName, discordId, result, lawyerPresent) {
     const lawyerCallsValue = lawyerPresent ? 1 : 0;
     
-    // Кодируем данные в URL параметры
-    const params = new URLSearchParams();
-    params.append('lawyerName', lawyerName);
-    params.append('discordId', discordId);
-    params.append('result', result);
-    params.append('lawyerPresent', lawyerPresent ? 'true' : 'false');
-    params.append('lawyerCalls', lawyerCallsValue);
-    params.append('timestamp', new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }));
-    
-    // Способ 1: Отправка через fetch с mode: 'no-cors' (без заголовков)
-    fetch(GAS_WEBHOOK_URL + '?' + params.toString(), {
-        method: 'POST',
-        mode: 'no-cors',
-        // Не отправляем body, данные уже в URL
-    }).catch(err => console.log('📤 Отправлено (GET метод)'));
-    
-    // Способ 2: Создаем невидимую форму и отправляем
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = GAS_WEBHOOK_URL;
-    form.style.display = 'none';
-    
-    // Добавляем данные как поля формы
-    const fields = {
+    // Создаем данные для отправки
+    const data = {
         lawyerName: lawyerName,
         discordId: discordId,
         result: result,
-        lawyerPresent: lawyerPresent ? 'true' : 'false',
+        lawyerPresent: lawyerPresent,
         lawyerCalls: lawyerCallsValue,
         timestamp: new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })
     };
     
-    for (const [key, value] of Object.entries(fields)) {
-        const input = document.createElement('input');
-        input.name = key;
-        input.value = value;
-        form.appendChild(input);
-    }
+    // Отправка через fetch с правильными заголовками
+    fetch(GAS_WEBHOOK_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    }).catch(err => console.log('📤 Отправлено в Google Sheets:', data));
     
-    document.body.appendChild(form);
-    form.submit();
-    
-    // Удаляем форму через секунду
-    setTimeout(() => {
-        if (form.parentNode) form.parentNode.removeChild(form);
-    }, 1000);
-    
-    console.log('✅ Данные отправлены в Google Sheets:', fields);
+    console.log('✅ Данные отправлены в Google Sheets:', data);
 }
 
             // Обработка отправки формы
