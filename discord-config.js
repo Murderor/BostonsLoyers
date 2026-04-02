@@ -10,9 +10,9 @@ var DISCORD_CONFIG = {
     webhook: "https://discord.com/api/webhooks/1467445185297387723/TGBXdJ1zQwVn5UKjM0CRvKj0xnTTIeWcAyCDlMsp87AALfcm0NN7XItbblI10FE4bDYW",
     clientId: "1472490639445852201",
     version: "1.2",
-    buildDate: "2026-04-02 19:01:37",
-    buildId: "23917076773",
-    commitHash: "95cb02d97dfd9e284484ace7e3e1b55c95624f26",
+    buildDate: "2026-04-02 19:05:08",
+    buildId: "23917223578",
+    commitHash: "c251ce79fb669fd4de51576e98aa175fe3c9ac9c",
     roles: {
         main: "<@&1321503127987421316>",
         secondary: "<@&1321503135302291516>",
