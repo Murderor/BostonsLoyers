@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лучшие работники недели | Коллегия государственных адвокатов | Majestic RP | Boston</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="icon" type="image/x-icon" href="../favicon.ico">
+    <style>
+        .stats-table-container {
+            overflow-x: auto;
+            margin-top: 30px;
+            background: rgba(5, 8, 17, 0.6);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            border: 1px solid var(--color-gray-light);
+        }
+        
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            color: var(--color-light);
+        }
+        
+        .stats-table th,
+        .stats-table td {
+            padding: 15px 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+        }
+        
+        .stats-table th {
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(0, 0, 0, 0.3));
+            color: var(--color-accent);
+            font-weight: 700;
+            font-size: 1rem;
+            letter-spacing: 0.5px;
+        }
+        
+        .stats-table tr:hover {
+            background-color: rgba(212, 175, 55, 0.05);
+        }
+        
+        .stats-table td {
+            font-size: 0.95rem;
+        }
+        
+        .rank-column {
+            width: 70px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .success-rate {
+            font-weight: bold;
+            color: #86efac;
+        }
+        
+        .success-rate.low {
+            color: #f87171;
+        }
+        
+        .success-rate.medium {
+            color: #fbbf24;
+        }
+        
+        .loading-spinner {
+            text-align: center;
+            padding: 50px;
+            color: var(--color-gray-light);
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: var(--color-gray-light);
+            font-style: italic;
+        }
+        
+        .refresh-btn {
+            background: var(--color-primary);
+            border: 1px solid var(--color-accent);
+            color: var(--color-accent);
+            padding: 8px 20px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .refresh-btn:hover {
+            background: var(--color-accent);
+            color: var(--color-dark);
+        }
+        
+        .last-updated {
+            font-size: 0.85rem;
+            color: #a0a8c0;
+            margin-top: 15px;
+            text-align: right;
+        }
+        
+        .error-message {
+            background: rgba(248, 113, 113, 0.1);
+            border: 1px solid #f87171;
+            border-radius: var(--border-radius);
+            padding: 15px;
+            color: #f87171;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .demo-badge {
+            background: rgba(212, 175, 55, 0.2);
+            border: 1px solid var(--color-accent);
+            border-radius: var(--border-radius);
+            padding: 8px 15px;
+            font-size: 0.85rem;
+            color: var(--color-accent);
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-transition" id="pageTransition">
+        <div class="loader"></div>
+        <div class="loader-text">ЛУЧШИЕ РАБОТНИКИ</div>
+    </div>
+
+    <header class="header">
+        <div class="container header-container">
+            <div class="logo">
+                <div class="logo-image">
+                    <img src="../assets/logo.png" alt="Логотип адвокатского бюро" id="main-logo">
+                    <div class="logo-placeholder" id="logo-placeholder">AB</div>
+                </div>
+                <div class="logo-text">
+                    <h1 class="logo-title">Коллегия государственных адвокатов</h1>
+                    <p class="logo-subtitle">Majestic RP | Boston</p>
+                </div>
+            </div>
+
+            <nav class="main-nav">
+                <ul class="nav-list">
+                    <li><a href="../index.html" class="nav-button">Главная</a></li>
+                    <li><a href="about.html" class="nav-button">О нас</a></li>
+                    <li><a href="appeal.html" class="nav-button">Обращение</a></li>
+                    <li><a href="law.html" class="nav-button">Законы</a></li>
+                    <li><a href="blacklist.html" class="nav-button">ЧС адвокатуры</a></li>
+                </ul>
+            </nav>
+
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </header>
+
+    <nav class="mobile-nav" id="mobileNav">
+        <ul class="mobile-nav-list">
+            <li><a href="../index.html" class="mobile-nav-button">Главная</a></li>
+            <li><a href="about.html" class="mobile-nav-button">О нас</a></li>
+            <li><a href="appeal.html" class="mobile-nav-button">Обращение</a></li>
+            <li><a href="law.html" class="mobile-nav-button">Законы</a></li>
+            <li><a href="blacklist.html" class="mobile-nav-button">ЧС адвокатуры</a></li>
+        </ul>
+    </nav>
+
+    <main class="main">
+        <div class="container">
+            <nav class="breadcrumbs">
+                <a href="../index.html">Главная</a> 
+                <span> / </span>
+                <span>Лучшие работники недели</span>
+            </nav>
+
+            <section class="page-header">
+                <h2 class="page-title">🏆 Лучшие работники недели</h2>
+                <p class="page-subtitle">Рейтинг адвокатов по проценту успешно освобождённых клиентов</p>
+            </section>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;">
+                <button class="refresh-btn" id="refreshBtn">🔄 Обновить данные</button>
+                <div class="last-updated" id="lastUpdated">Загрузка...</div>
+            </div>
+
+            <div class="stats-table-container">
+                <div id="tableContent">
+                    <div class="loading-spinner">
+                        <div class="loader" style="margin: 0 auto 15px;"></div>
+                        <p>Загрузка статистики...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>© Коллегия государственных адвокатов, Majestic RP | Boston</p>
+        </div>
+    </footer>
+
+    <script src="../js/script.js"></script>
+    <script src="../js/transitions.js"></script>
+    
+    <script>
+        // URL вашего GAS (тот же, что и для "О нас", но с другим endpoint)
+        const GAS_DATA_URL = 'https://script.google.com/macros/s/AKfycbzI_hjQv0iNG81dnStgFA7mXqBxWgzJFN2EhP_o0yMTxEVOT2eGdEwGU7T2PMCyyu419Q/exec';
+        
+        // ТЕСТОВЫЕ ДАННЫЕ (как в MOCK_DATA из "О нас")
+        const MOCK_STATS = [
+            { name: "Conte Grande | 202027", discordId: "336864135906197505", calls: 4, released: 2, jailed: 2 },
+            { name: "Jeffrey Ward", discordId: "leman.52", calls: 45, released: 12, jailed: 33 },
+            { name: "Sievol Ahishkavich", discordId: "sievol.legal", calls: 42, released: 10, jailed: 32 },
+            { name: "Lui Volta", discordId: "lui.volta", calls: 29, released: 14, jailed: 15 },
+            { name: "Yashar Miles", discordId: "yashar.miles", calls: 31, released: 11, jailed: 20 },
+            { name: "Dean Bacardi", discordId: "dean.bacardi", calls: 24, released: 9, jailed: 15 }
+        ];
+        
+        let isDemoMode = false;
+        
+        async function loadStatistics() {
+            const tableContainer = document.getElementById('tableContent');
+            tableContainer.innerHTML = '<div class="loading-spinner"><div class="loader" style="margin: 0 auto 15px;"></div><p>Загрузка статистики...</p></div>';
+            
+            try {
+                const response = await fetch(GAS_DATA_URL + '?t=' + Date.now(), {
+                    method: 'GET',
+                    mode: 'cors',
+                    cache: 'no-cache'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                if (data && data.length > 0) {
+                    // Успешно загрузили реальные данные
+                    isDemoMode = false;
+                    renderTable(data);
+                    document.getElementById('lastUpdated').innerHTML = `✅ Данные загружены | ${new Date().toLocaleString('ru-RU')}`;
+                } else {
+                    // Нет данных - показываем тестовые
+                    isDemoMode = true;
+                    renderTable(MOCK_STATS);
+                    document.getElementById('lastUpdated').innerHTML = `⚠️ Демо-режим (нет данных от сервера) | ${new Date().toLocaleString('ru-RU')}`;
+                }
+                
+            } catch (error) {
+                console.error('Ошибка загрузки:', error);
+                // При любой ошибке показываем тестовые данные (как в "О нас")
+                isDemoMode = true;
+                renderTable(MOCK_STATS);
+                let errorText = '';
+                if (error.message.includes('Failed to fetch') || error.message.includes('CORS')) {
+                    errorText = 'Нет соединения с сервером';
+                } else {
+                    errorText = error.message;
+                }
+                document.getElementById('lastUpdated').innerHTML = `⚠️ Демо-режим (${errorText}) | ${new Date().toLocaleString('ru-RU')}`;
+            }
+        }
+        
+        function renderTable(lawyersData) {
+            const tableContainer = document.getElementById('tableContent');
+            
+            // Добавляем пометку о демо-режиме если нужно
+            let demoBadge = '';
+            if (isDemoMode) {
+                demoBadge = '<div class="demo-badge">📊 Демонстрационные данные (нет связи с сервером)</div>';
+            }
+            
+            // Рассчитываем процент успеха на основе ОТПУЩЕННЫХ (released) клиентов
+            const lawyersWithRate = lawyersData.map(lawyer => {
+                const calls = lawyer.calls || 0;
+                const released = lawyer.released || 0;
+                // Успешность = (отпущено / всего вызовов) * 100%
+                const successRate = calls > 0 ? (released / calls * 100) : 0;
+                return {
+                    ...lawyer,
+                    successRate: successRate,
+                    totalCalls: calls,
+                    totalReleased: released,
+                    totalJailed: lawyer.jailed || 0
+                };
+            });
+            
+            // Сортируем по проценту успеха (по убыванию: чем больше отпущено, тем выше место)
+            lawyersWithRate.sort((a, b) => b.successRate - a.successRate);
+            
+            // Генерируем таблицу
+            let html = demoBadge + `
+                <table class="stats-table">
+                    <thead>
+                        <tr>
+                            <th class="rank-column">#</th>
+                            <th>Имя адвоката</th>
+                            <th>Кол-во вызовов</th>
+                            <th>Отпущено</th>
+                            <th>Посажено</th>
+                            <th>Успешность (освобождений)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            lawyersWithRate.forEach((lawyer, index) => {
+                const rank = index + 1;
+                let rateClass = 'success-rate';
+                if (lawyer.successRate < 30) rateClass += ' low';
+                else if (lawyer.successRate < 70) rateClass += ' medium';
+                
+                html += `
+                    <tr>
+                        <td class="rank-column">${rank}${rank === 1 ? ' 👑' : ''}</td>
+                        <td>${escapeHtml(lawyer.name)}</td>
+                        <td>${lawyer.totalCalls}</td>
+                        <td>${lawyer.totalReleased}</td>
+                        <td>${lawyer.totalJailed}</td>
+                        <td class="${rateClass}">${lawyer.successRate.toFixed(1)}%</td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                    </tbody>
+                </table>
+            `;
+            
+            tableContainer.innerHTML = html;
+        }
+        
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+        
+        // Инициализация логотипа
+        function initLogo() {
+            const logoImg = document.getElementById('main-logo');
+            const logoContainer = document.querySelector('.logo-image');
+            if (logoImg) {
+                if (logoImg.complete && logoImg.naturalWidth > 0) {
+                    logoContainer.classList.add('has-logo');
+                } else {
+                    logoImg.onload = () => logoContainer.classList.add('has-logo');
+                    logoImg.onerror = () => logoContainer.classList.remove('has-logo');
+                }
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStatistics();
+            initLogo();
+            
+            const refreshBtn = document.getElementById('refreshBtn');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', function() {
+                    loadStatistics();
+                });
+            }
+            
+            // Мобильное меню
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const mobileNav = document.getElementById('mobileNav');
+            if (mobileMenuBtn && mobileNav) {
+                mobileMenuBtn.addEventListener('click', () => mobileNav.classList.toggle('active'));
+            }
+        });
+    </script>
+</body>
+</html>
