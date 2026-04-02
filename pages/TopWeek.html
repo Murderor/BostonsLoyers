@@ -234,13 +234,13 @@
         const MIN_CALLS_FOR_TOP = 0;           // Минимальное количество вызовов для участия в основном топе
         const CONFIDENCE_Z = 1.96;             // 95% доверительный интервал
         
-        // Коэффициенты влияния на рейтинг
-        const TEAMWORK_BONUS_MULTIPLIER = 0.15;  // Бонус за командную работу (15% от доли совместных дел)
-        const MAX_TEAMWORK_BONUS = 0.10;         // Максимальный бонус к рейтингу (+10%)
+        // Коэффициенты влияния на рейтинг (ЛИНЕЙНЫЙ бонус)
+        const TEAMWORK_BONUS_MULTIPLIER = 0.15;  // Максимальный бонус 15% при 100% совместных дел
+        const MAX_TEAMWORK_BONUS = 0.15;         // Ограничение бонуса (15%)
         
         let isDemoMode = false;
         
-        // Тестовые данные
+        // Тестовые данные (демо-режим)
         const MOCK_STATS = [
             { name: "Conte Grande | 202027", discordId: "336864135906197505", totalCalls: 4, released: 2, jailed: 2, callsWithLawyers: 1 },
             { name: "Jeffrey Ward", discordId: "leman.52", totalCalls: 45, released: 12, jailed: 33, callsWithLawyers: 8 },
@@ -264,23 +264,19 @@
         }
         
         /**
-         * Расчёт бонуса за командную работу
-         * Чем больше совместных дел, тем выше бонус, но с убывающей отдачей
+         * Расчёт бонуса за командную работу (ЛИНЕЙНАЯ ЗАВИСИМОСТЬ)
+         * Чем больше доля совместных дел, тем выше бонус (пропорционально)
          * @param {number} callsWithLawyers - количество вызовов с юристами
          * @param {number} totalCalls - общее количество вызовов
          * @returns {number} бонус к рейтингу (от 0 до MAX_TEAMWORK_BONUS)
          */
         function calculateTeamworkBonus(callsWithLawyers, totalCalls) {
             if (totalCalls === 0) return 0;
-            
-            // Доля совместных дел
+            // Доля совместных дел (от 0 до 1)
             const teamworkRatio = Math.min(1, callsWithLawyers / totalCalls);
-            
-            // Нелинейный бонус: sqrt даёт убывающую отдачу
-            // Чем больше совместных дел, тем выше бонус, но каждый следующий процент даёт меньше
-            const bonus = Math.sqrt(teamworkRatio) * TEAMWORK_BONUS_MULTIPLIER;
-            
-            // Ограничиваем максимальным бонусом
+            // Линейный бонус: 0% при 0% совместных дел, 15% при 100% совместных дел
+            let bonus = teamworkRatio * TEAMWORK_BONUS_MULTIPLIER;
+            // Ограничиваем максимальным бонусом (на случай, если множитель больше MAX)
             return Math.min(MAX_TEAMWORK_BONUS, bonus);
         }
         
@@ -428,7 +424,7 @@
                 // Корона для первого места
                 let crown = rank === 1 ? ' 👑' : '';
                 
-                // Отображение бонуса
+                // Отображение бонуса (в процентах)
                 const teamworkBonusPercent = (lawyer.teamworkBonus * 100).toFixed(1);
                 const teamworkBonusDisplay = lawyer.teamworkBonus > 0 
                     ? `<span class="teamwork-bonus">(+${teamworkBonusPercent}%)</span>` 
@@ -468,16 +464,17 @@
                 </table>
             `;
             
-            // Добавляем пояснения
+            // Добавляем пояснения с актуальной формулой
             html += `
                 <div class="info-note">
-                    📊 <strong>Как рассчитывается рейтинг:</strong><br>
-                    • <strong>Базовый рейтинг (Wilson score)</strong> — учитывает процент успеха и количество дел.<br>
-                    • <strong>Бонус за командную работу</strong> — до +${(MAX_TEAMWORK_BONUS * 100).toFixed(0)}% к рейтингу в зависимости от доли совместных дел.<br>
+                    📊 <strong>Как рассчитывается рейтинг (новая линейная формула):</strong><br>
+                    • <strong>Базовый рейтинг (Wilson score)</strong> — статистически взвешенный процент успеха с учётом количества дел.<br>
+                    • <strong>Бонус за командную работу</strong> — <strong>ЛИНЕЙНЫЙ</strong>: (доля совместных дел) × ${(TEAMWORK_BONUS_MULTIPLIER * 100).toFixed(0)}%<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;Пример: при 20% совместных дел → бонус 3%, при 50% → 7.5%, при 100% → ${(MAX_TEAMWORK_BONUS * 100).toFixed(0)}%.<br>
                     • <strong>Итоговый рейтинг</strong> = Базовый рейтинг + Бонус за командную работу.<br>
-                    • Совместные дела поощряются, так как способствуют обмену опытом и развитию адвокатуры в целом.
+                    • Совместные дела поощряются пропорционально — честно и прозрачно.
                 </div>
-                <div class="info-note">⚖️ "Вызовы с юристами" — количество дел, где адвокат работал совместно с другими юристами. Чем выше доля таких дел, тем больше бонус к рейтингу.</div>
+                <div class="info-note">⚖️ "Вызовы с юристами" — количество дел, где адвокат работал совместно с другими юристами. Чем выше доля таких дел, тем выше бонус (линейно до +${(MAX_TEAMWORK_BONUS * 100).toFixed(0)}%).</div>
             `;
             
             tableContainer.innerHTML = html;
