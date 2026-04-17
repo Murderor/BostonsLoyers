@@ -51,16 +51,13 @@
             font-weight: bold;
         }
         
-        .success-rate {
+        .total-score {
             font-weight: bold;
             color: #86efac;
         }
         
-        .success-rate.low {
-            color: #f87171;
-        }
-        
-        .success-rate.medium {
+        .average-score {
+            font-weight: 500;
             color: #fbbf24;
         }
         
@@ -135,18 +132,7 @@
             line-height: 1.4;
         }
         
-        .teamwork-bonus {
-            font-size: 0.7rem;
-            color: #c084fc;
-            margin-left: 5px;
-        }
-        
-        .final-rating {
-            font-weight: bold;
-            color: #fbbf24;
-        }
-
-        .weighted-badge {
+        .point-badge {
             font-size: 0.7rem;
             background: rgba(212, 175, 55, 0.15);
             border-radius: 12px;
@@ -211,7 +197,7 @@
 
             <section class="page-header">
                 <h2 class="page-title">🏆 Лучшие работники недели</h2>
-                <p class="page-subtitle">Новая система рейтинга: победы дают больше очков, но поражения тоже приносят пользу — 0.5 балла за каждое посадку</p>
+                <p class="page-subtitle">Простая и справедливая система: отпущен — 1 очко, посажен — 0.5, юрист на вызове — +0.5 очка</p>
             </section>
 
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;">
@@ -240,23 +226,18 @@
     <script src="../js/transitions.js"></script>
     
     <script>
-        // ======================== НАСТРОЙКИ РЕЙТИНГА (НОВАЯ ВЕРСИЯ) ========================
-        // URL Google Apps Script
+        // ======================== НОВАЯ ПРОСТАЯ СИСТЕМА ОЧКОВ ========================
+        // URL Google Apps Script (если используется, иначе демо)
         const GAS_DATA_URL = 'https://script.google.com/macros/s/AKfycbwrh_ucDrgJADqy2waE7wk9Z-nQJKbAAB6TPGezPt1wlj57fno89ZwX1ZfYgbpKrBYOWA/exec';
         
-        // Вес за ПОСАЖЕННОЕ дело (меньше, чем за отпущенное) – теперь адвокаты получают очки даже при проигрыше
-        const JAILED_WEIGHT = 0.5;        // Посадка = 0.5 балла (было 0), отпущен = 1 балл
-        
-        // Коэффициент для доверительного интервала (95% уверенности)
-        const CONFIDENCE_Z = 1.96;
-        
-        // Коэффициенты бонуса за командную работу (линейный)
-        const TEAMWORK_BONUS_MULTIPLIER = 0.15;  // до 15% бонуса при 100% совместных дел
-        const MAX_TEAMWORK_BONUS = 0.15;
+        // Коэффициенты начисления очков
+        const RELEASED_POINTS = 1.0;      // отпущен — 1 очко
+        const JAILED_POINTS = 0.5;        // посажен — 0.5 очка
+        const LAWYER_BONUS = 0.5;         // дополнительно если на вызове был юрист
         
         let isDemoMode = false;
         
-        // Демо-данные с реалистичными показателями (показывают эффект нового веса)
+        // Демо-данные для наглядности (будут пересчитаны по новой формуле)
         const MOCK_STATS = [
             { name: "Conte Grande | 202027", discordId: "336864135906197505", totalCalls: 4, released: 2, jailed: 2, callsWithLawyers: 1 },
             { name: "Jeffrey Ward", discordId: "leman.52", totalCalls: 45, released: 12, jailed: 33, callsWithLawyers: 8 },
@@ -267,46 +248,17 @@
         ];
         
         /**
-         * Нижняя граница доверительного интервала Вильсона (Wilson score)
-         * Работает для дробных "успехов" (взвешенные очки)
-         * @param {number} weightedSuccesses - сумма очков (освобождение*1 + посадка*JAILED_WEIGHT)
-         * @param {number} total - общее количество дел
-         * @returns {number} Нижняя граница (от 0 до 1)
+         * Подсчёт общего количества очков по новой простой формуле
+         * @param {number} released - количество отпущенных
+         * @param {number} jailed - количество посаженных
+         * @param {number} callsWithLawyers - вызовы с юристами
+         * @returns {number} сумма очков
          */
-        function wilsonLowerBound(weightedSuccesses, total) {
-            if (total === 0) return 0;
-            // Ограничиваем p, чтобы не выходить за пределы [0,1]
-            let p = weightedSuccesses / total;
-            p = Math.min(1.0, Math.max(0.0, p));
-            const z = CONFIDENCE_Z;
-            const z2 = z * z;
-            const numerator = p + (z2 / (2 * total)) - z * Math.sqrt((p * (1 - p) + z2 / (4 * total)) / total);
-            const denominator = 1 + (z2 / total);
-            let bound = numerator / denominator;
-            return Math.min(1.0, Math.max(0.0, bound));
+        function calculateTotalScore(released, jailed, callsWithLawyers) {
+            return (released * RELEASED_POINTS) + (jailed * JAILED_POINTS) + (callsWithLawyers * LAWYER_BONUS);
         }
         
-        /**
-         * Бонус за командную работу (линейный)
-         * @param {number} callsWithLawyers 
-         * @param {number} totalCalls 
-         * @returns {number}
-         */
-        function calculateTeamworkBonus(callsWithLawyers, totalCalls) {
-            if (totalCalls === 0) return 0;
-            const teamworkRatio = Math.min(1, callsWithLawyers / totalCalls);
-            let bonus = teamworkRatio * TEAMWORK_BONUS_MULTIPLIER;
-            return Math.min(MAX_TEAMWORK_BONUS, bonus);
-        }
-        
-        /**
-         * Итоговый рейтинг = взвешенный Wilson Score + бонус за командную работу
-         */
-        function calculateFinalRating(wilsonScore, teamworkBonus) {
-            return Math.min(1, wilsonScore + teamworkBonus);
-        }
-        
-        // ========== ОСНОВНАЯ ЛОГИКА ЗАГРУЗКИ ==========
+        // ========== ЗАГРУЗКА ДАННЫХ ==========
         async function loadStatistics() {
             const tableContainer = document.getElementById('tableContent');
             tableContainer.innerHTML = '<div class="loading-spinner"><div class="loader" style="margin: 0 auto 15px;"></div><p>Загрузка статистики...</p></div>';
@@ -382,52 +334,32 @@
             
             let demoBadge = '';
             if (isDemoMode) {
-                demoBadge = '<div class="demo-badge">📊 Демонстрационные данные (симуляция нового рейтинга)</div>';
+                demoBadge = '<div class="demo-badge">📊 Демонстрационные данные (новая система подсчёта)</div>';
             }
             
-            // ========== РАСЧЁТ ПО НОВОЙ СИСТЕМЕ (с весом за посадки) ==========
-            const lawyersWithMetrics = lawyersData.map(lawyer => {
+            // ========== РАСЧЁТ ПО НОВОЙ ПРОСТОЙ ФОРМУЛЕ ==========
+            const lawyersWithScores = lawyersData.map(lawyer => {
                 const totalCalls = lawyer.totalCalls || 0;
                 const released = lawyer.released || 0;
                 const jailed = lawyer.jailed || 0;
                 const callsWithLawyers = lawyer.callsWithLawyers || 0;
                 
-                // 1. Взвешенный "успех" (очки за каждое дело)
-                const weightedPoints = released * 1.0 + jailed * JAILED_WEIGHT;
-                // Взвешенная эффективность в процентах (для наглядности)
-                const weightedSuccessPercent = totalCalls > 0 ? (weightedPoints / totalCalls) * 100 : 0;
-                
-                // 2. Wilson Score на основе взвешенных очков (дробное значение)
-                const wilsonScore = wilsonLowerBound(weightedPoints, totalCalls);
-                
-                // 3. Бонус за командную работу (линейный, от доли совместных дел)
-                const teamworkBonus = calculateTeamworkBonus(callsWithLawyers, totalCalls);
-                const teamworkPercentage = totalCalls > 0 ? (callsWithLawyers / totalCalls * 100) : 0;
-                
-                // 4. Итоговый рейтинг (Wilson + бонус)
-                const finalRating = calculateFinalRating(wilsonScore, teamworkBonus);
-                
-                // Доп. показатели: "классическая успешность" (без весов) для справки
-                const classicSuccessRate = totalCalls > 0 ? (released / totalCalls * 100) : 0;
+                const totalScore = calculateTotalScore(released, jailed, callsWithLawyers);
+                const averageScore = totalCalls > 0 ? (totalScore / totalCalls) : 0;
                 
                 return {
                     ...lawyer,
                     totalCalls,
-                    totalReleased: released,
-                    totalJailed: jailed,
+                    released,
+                    jailed,
                     callsWithLawyers,
-                    weightedSuccessPercent,    // Новая метрика: очки за дело (освобождение=100%, посадка=50%)
-                    classicSuccessRate,         // для информации
-                    wilsonScore,
-                    teamworkBonus,
-                    finalRating,
-                    teamworkPercentage,
-                    weightedPoints
+                    totalScore,
+                    averageScore
                 };
             });
             
-            // Сортировка по итоговому рейтингу (убывание)
-            const sortedLawyers = [...lawyersWithMetrics].sort((a, b) => b.finalRating - a.finalRating);
+            // Сортировка по убыванию общего количества очков
+            const sortedLawyers = [...lawyersWithScores].sort((a, b) => b.totalScore - a.totalScore);
             
             // Формируем таблицу
             let html = demoBadge + `
@@ -437,13 +369,11 @@
                             <th class="rank-column">#</th>
                             <th>Имя адвоката</th>
                             <th>Всего вызовов</th>
-                            <th>Вызовы с юристами</th>
-                            <th>% командной работы</th>
-                            <th>Отпущено</th>
-                            <th>Посажено</th>
-                            <th>Взвеш. эффективность <span class="weighted-badge">посадка = ${JAILED_WEIGHT*100}%</span></th>
-                            <th>Базовый рейтинг (Wilson)</th>
-                            <th>Итоговый рейтинг</th>
+                            <th>Отпущено (1.0)</th>
+                            <th>Посажено (0.5)</th>
+                            <th>С юристом (+0.5)</th>
+                            <th>Общие очки</th>
+                            <th>Средний балл</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -451,49 +381,26 @@
             
             sortedLawyers.forEach((lawyer, index) => {
                 const rank = index + 1;
-                let weightedClass = 'success-rate';
-                if (lawyer.weightedSuccessPercent < 30) weightedClass += ' low';
-                else if (lawyer.weightedSuccessPercent < 70) weightedClass += ' medium';
-                
-                // Корона для первого места
                 let crown = rank === 1 ? ' 👑' : '';
                 
-                // Бонус за командную работу в процентах
-                const teamworkBonusPercent = (lawyer.teamworkBonus * 100).toFixed(1);
-                const teamworkBonusDisplay = lawyer.teamworkBonus > 0 
-                    ? `<span class="teamwork-bonus">(+${teamworkBonusPercent}%)</span>` 
-                    : '';
+                // Форматирование чисел
+                const totalScoreFormatted = lawyer.totalScore.toFixed(1);
+                const avgScoreFormatted = lawyer.averageScore.toFixed(2);
                 
-                // Отображение вызовов с юристами
-                const callsWithLawyersDisplay = lawyer.callsWithLawyers > 0 ? lawyer.callsWithLawyers : '—';
-                const teamworkPercentageDisplay = lawyer.teamworkPercentage > 0 
-                    ? `${lawyer.teamworkPercentage.toFixed(1)}%` 
-                    : '—';
-                
-                // Итоговый рейтинг %
-                const finalRatingPercent = (lawyer.finalRating * 100).toFixed(1);
-                let finalRatingClass = 'final-rating';
-                if (lawyer.finalRating >= 0.7) finalRatingClass += ' success-rate';
-                else if (lawyer.finalRating >= 0.4) finalRatingClass += ' medium';
-                else finalRatingClass += ' low';
-                
-                // Взвешенная эффективность с пояснением
-                const weightedDisplay = `${lawyer.weightedSuccessPercent.toFixed(1)}%`;
-                // Подсказка: сколько очков набрал
-                const pointsHint = ` (${lawyer.weightedPoints.toFixed(1)}/${lawyer.totalCalls} очков)`;
+                // Цветовое выделение высоких/низких показателей
+                const avgScoreClass = lawyer.averageScore >= 1.0 ? 'success-rate' : (lawyer.averageScore >= 0.5 ? 'average-score' : '');
+                const totalScoreClass = lawyer.totalScore > 10 ? 'total-score' : '';
                 
                 html += `
                     <tr>
                         <td class="rank-column">${rank}${crown}</td>
                         <td>${escapeHtml(lawyer.name)}</td>
                         <td><strong>${lawyer.totalCalls}</strong></td>
-                        <td style="color: ${lawyer.callsWithLawyers > 0 ? '#86efac' : '#a0a8c0'};">${callsWithLawyersDisplay}</td>
-                        <td style="color: #c084fc;">${teamworkPercentageDisplay} ${teamworkBonusDisplay}</td>
-                        <td>${lawyer.totalReleased}</td>
-                        <td>${lawyer.totalJailed}</td>
-                        <td class="${weightedClass}">${weightedDisplay}<span style="font-size:0.7rem; opacity:0.7;">${pointsHint}</span></td>
-                        <td style="font-size:0.85rem; color:#a0a8c0;">${(lawyer.wilsonScore * 100).toFixed(1)}%</td>
-                        <td class="${finalRatingClass}">${finalRatingPercent}%</td>
+                        <td style="color: #86efac;">${lawyer.released}</td>
+                        <td style="color: #fbbf24;">${lawyer.jailed}</td>
+                        <td style="color: #c084fc;">${lawyer.callsWithLawyers || '—'}</td>
+                        <td class="${totalScoreClass}" style="font-weight: bold; color: #86efac;">${totalScoreFormatted}</td>
+                        <td class="${avgScoreClass}">${avgScoreFormatted}</td>
                     </tr>
                 `;
             });
@@ -503,20 +410,18 @@
                 </table>
             `;
             
-            // Детальное пояснение с формулой и новым весом
+            // Пояснительная записка с новой формулой
             html += `
                 <div class="info-note">
-                    ⚖️ <strong>НОВАЯ СИСТЕМА РЕЙТИНГА (справедливое поощрение)</strong><br>
-                    • Теперь <strong>каждое дело приносит очки</strong>:<br>
-                    &nbsp;&nbsp;✅ <strong style="color:#86efac">Освобождение</strong> = <strong>1.0 балл</strong><br>
-                    &nbsp;&nbsp;❌ <strong style="color:#fbbf24">Посадка</strong> = <strong>${JAILED_WEIGHT} балла</strong> (тоже ценится, но меньше)<br>
-                    • <strong>Взвешенная эффективность</strong> = (очки / всего дел) × 100% — показывает реальный вклад.<br>
-                    • <strong>Базовый рейтинг (Wilson)</strong> — статистически скорректированный процент с учётом количества дел (нижняя граница доверия 95%).<br>
-                    • <strong>Бонус за командную работу</strong> — линейный: доля совместных дел × ${(TEAMWORK_BONUS_MULTIPLIER*100).toFixed(0)}% (до +${(MAX_TEAMWORK_BONUS*100).toFixed(0)}%).<br>
-                    • <strong>Итоговый рейтинг</strong> = Базовый Wilson + Бонус.<br>
-                </div>
-                <div class="info-note">
-                    📌 <strong>Почему это лучше?</strong> Раньше проигранные дела не давали ничего, и адвокаты избегали сложных клиентов. Теперь <strong>каждый процесс имеет значение</strong>, а победа остаётся приоритетной.
+                    ⚖️ <strong>НОВАЯ СИСТЕМА ПОДСЧЁТА ОЧКОВ (ПРОСТО И ПОНЯТНО)</strong><br>
+                    • <strong style="color:#86efac">Отпущен</strong> = <strong>${RELEASED_POINTS} очко</strong><br>
+                    • <strong style="color:#fbbf24">Посажен</strong> = <strong>${JAILED_POINTS} очка</strong> (дело всё равно доведено до конца)<br>
+                    • <strong style="color:#c084fc">Присутствие юриста</strong> = дополнительно <strong>+${LAWYER_BONUS} очка</strong> за каждый такой вызов<br>
+                    • <strong>Общие очки</strong> — сумма всех заработанных баллов. По этому показателю строится рейтинг.<br>
+                    • <strong>Средний балл</strong> = общие очки / количество вызовов (показывает эффективность в среднем за вызов).<br>
+                    <br>
+                    📌 <strong>Преимущества:</strong> Каждое дело приносит очки. Отпустить клиента выгоднее, но и посадка не обесценивается. 
+                    Работа в паре с юристом поощряется бонусом — это стимулирует командное взаимодействие.
                 </div>
             `;
             
