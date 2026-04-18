@@ -95,7 +95,7 @@
                     
                     <div class="form-group">
                         <label for="articles">Статьи закона *</label>
-                        <textarea id="articles" rows="4" placeholder="Пример: ст. 228 УК РФ - Незаконные приобретение, хранение, перевозка, изготовление, переработка наркотических средств..."></textarea>
+                        <textarea id="articles" rows="4" placeholder="Пример: ст. 17.1"></textarea>
                         <small>Перечислите все статьи, по которым проходило задержание</small>
                     </div>
                     
@@ -114,7 +114,7 @@
                             <input type="file" accept="image/*" class="photo-input" data-type="arrival" style="display: none;">
                             <div class="upload-placeholder">
                                 <span class="upload-icon">📷</span>
-                                <span>Нажмите для выбора фото</span>
+                                <span>Нажмите для выбора фото или вставьте из буфера (Ctrl+V)</span>
                                 <small>JPG, PNG до 5MB</small>
                             </div>
                             <div class="photo-preview" style="display: none;">
@@ -130,7 +130,7 @@
                             <input type="file" accept="image/*" class="photo-input" data-type="result" style="display: none;">
                             <div class="upload-placeholder">
                                 <span class="upload-icon">📷</span>
-                                <span>Нажмите для выбора фото</span>
+                                <span>Нажмите для выбора фото или вставьте из буфера (Ctrl+V)</span>
                                 <small>Если отпустили - фото на свободе, если посадили - можно дублировать первое</small>
                             </div>
                             <div class="photo-preview" style="display: none;">
@@ -155,7 +155,7 @@
                                 <input type="file" accept="image/*" class="photo-input" data-type="lawyer" style="display: none;">
                                 <div class="upload-placeholder">
                                     <span class="upload-icon">📷</span>
-                                    <span>Нажмите для выбора фото</span>
+                                    <span>Нажмите для выбора фото или вставьте из буфера (Ctrl+V)</span>
                                     <small>Скриншот с юристом на вызове</small>
                                 </div>
                                 <div class="photo-preview" style="display: none;">
@@ -188,9 +188,57 @@
                 const previewImg = preview.querySelector('img');
                 const removeBtn = preview.querySelector('.remove-photo');
                 
+                // Клик для выбора файла
                 area.addEventListener('click', (e) => {
                     if (e.target === removeBtn || removeBtn?.contains(e.target)) return;
                     fileInput.click();
+                });
+                
+                // Обработка вставки из буфера обмена
+                area.addEventListener('paste', async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const items = e.clipboardData?.items;
+                    if (!items) return;
+                    
+                    let imageBlob = null;
+                    
+                    for (let i = 0; i < items.length; i++) {
+                        if (items[i].type.indexOf('image') !== -1) {
+                            imageBlob = items[i].getAsFile();
+                            break;
+                        }
+                    }
+                    
+                    if (imageBlob) {
+                        // Создаем файл из blob
+                        const file = new File([imageBlob], `pasted-image-${Date.now()}.png`, { type: imageBlob.type });
+                        
+                        if (file.size > 5 * 1024 * 1024) {
+                            this.showNotification('Файл слишком большой. Максимум 5MB', 'error');
+                            return;
+                        }
+                        
+                        selectedFiles[type] = file;
+                        
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            previewImg.src = e.target.result;
+                            placeholder.style.display = 'none';
+                            preview.style.display = 'flex';
+                        };
+                        reader.readAsDataURL(file);
+                        
+                        // Обновляем fileInput для совместимости
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(file);
+                        fileInput.files = dataTransfer.files;
+                        
+                        this.showNotification('Изображение вставлено из буфера обмена', 'success');
+                    } else {
+                        this.showNotification('Не удалось найти изображение в буфере обмена', 'error');
+                    }
                 });
                 
                 fileInput.addEventListener('change', (e) => {
@@ -403,489 +451,488 @@
         },
         
         async renderMyReports(container) {
-    container.innerHTML = '<div class="loader">Загрузка отчетов...</div>';
-    
-    try {
-        let token = sessionStorage.getItem('auth_token');
-        if (!token && window.Auth && window.Auth.token) {
-            token = window.Auth.token;
-        }
-        
-        if (!token) {
-            container.innerHTML = '<div class="error">Ошибка авторизации. <button onclick="window.Auth.showAuthModal()" class="btn btn-primary">Войти</button></div>';
-            return;
-        }
-        
-        const response = await fetch('https://rfjmdevsnvirrxonhsny.supabase.co/functions/v1/lawyer-reports', {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        const result = await response.json();
-        
-        if (result.success && result.reports) {
-            const reports = result.reports;
+            container.innerHTML = '<div class="loader">Загрузка отчетов...</div>';
             
-            const total = reports.length;
-            const released = reports.filter(r => r.call_result === 'Отпустили').length;
-            const jailed = reports.filter(r => r.call_result === 'Посадили').length;
-            const withJurist = reports.filter(r => r.had_jurist).length;
-            
-            container.innerHTML = `
-                <div class="my-reports-container">
-                    <div class="stats-container-modern">
-                        <div class="stat-card-modern">
-                            <div class="stat-icon">📊</div>
-                            <div class="stat-info">
-                                <div class="stat-value">${total}</div>
-                                <div class="stat-label">Всего отчетов</div>
-                            </div>
-                        </div>
-                        <div class="stat-card-modern stat-released">
-                            <div class="stat-icon">✅</div>
-                            <div class="stat-info">
-                                <div class="stat-value" style="color: #4caf50">${released}</div>
-                                <div class="stat-label">Отпустили</div>
-                            </div>
-                        </div>
-                        <div class="stat-card-modern stat-jailed">
-                            <div class="stat-icon">🔒</div>
-                            <div class="stat-info">
-                                <div class="stat-value" style="color: #f44336">${jailed}</div>
-                                <div class="stat-label">Посадили</div>
-                            </div>
-                        </div>
-                        <div class="stat-card-modern stat-jurist">
-                            <div class="stat-icon">👨‍⚖️</div>
-                            <div class="stat-info">
-                                <div class="stat-value" style="color: #ff9800">${withJurist}</div>
-                                <div class="stat-label">С юристом</div>
-                            </div>
-                        </div>
-                    </div>
+            try {
+                let token = sessionStorage.getItem('auth_token');
+                if (!token && window.Auth && window.Auth.token) {
+                    token = window.Auth.token;
+                }
+                
+                if (!token) {
+                    container.innerHTML = '<div class="error">Ошибка авторизации. <button onclick="window.Auth.showAuthModal()" class="btn btn-primary">Войти</button></div>';
+                    return;
+                }
+                
+                const response = await fetch('https://rfjmdevsnvirrxonhsny.supabase.co/functions/v1/lawyer-reports', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success && result.reports) {
+                    const reports = result.reports;
                     
-                    <div class="reports-list-modern">
-                        <div class="reports-header-modern">
-                            <h4>📋 История отчетов</h4>
-                            <span class="reports-count">${reports.length} записей</span>
-                        </div>
-                        
-                        ${reports.length === 0 ? 
-                            '<div class="empty-state-modern">📭 У вас пока нет отчетов</div>' : 
-                            reports.map(report => `
-                                <div class="report-card-modern">
-                                    <div class="report-card-header">
-                                        <div class="report-date-badge">
-                                            <span class="date-day">${new Date(report.created_at).getDate()}</span>
-                                            <span class="date-month">${new Date(report.created_at).toLocaleString('ru-RU', { month: 'short' })}</span>
-                                        </div>
-                                        <div class="report-result-badge ${report.call_result === 'Отпустили' ? 'badge-released' : 'badge-jailed'}">
-                                            ${report.call_result === 'Отпустили' ? '✅ Отпустили' : '🔒 Посадили'}
-                                        </div>
-                                    </div>
-                                    <div class="report-card-body">
-                                        <div class="report-articles-section">
-                                            <div class="section-label">📜 Статьи закона</div>
-                                            <div class="articles-content">${this.escapeHtml(report.articles)}</div>
-                                        </div>
-                                        <div class="report-footer">
-                                            <div class="report-jurist-info">
-                                                <span class="jurist-icon">${report.had_jurist ? '👨‍⚖️' : '👤'}</span>
-                                                <span>${report.had_jurist ? 'Был юрист на вызове' : 'Юрист отсутствовал'}</span>
-                                            </div>
-                                            <div class="report-time">
-                                                🕐 ${new Date(report.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
-                                            </div>
-                                        </div>
+                    const total = reports.length;
+                    const released = reports.filter(r => r.call_result === 'Отпустили').length;
+                    const jailed = reports.filter(r => r.call_result === 'Посадили').length;
+                    const withJurist = reports.filter(r => r.had_jurist).length;
+                    
+                    container.innerHTML = `
+                        <div class="my-reports-container">
+                            <div class="stats-container-modern">
+                                <div class="stat-card-modern">
+                                    <div class="stat-icon">📊</div>
+                                    <div class="stat-info">
+                                        <div class="stat-value">${total}</div>
+                                        <div class="stat-label">Всего отчетов</div>
                                     </div>
                                 </div>
-                            `).join('')
-                        }
-                    </div>
-                </div>
-            `;
-        } else {
-            container.innerHTML = `<div class="error">❌ Ошибка загрузки отчетов: ${result.error || 'Неизвестная ошибка'}</div>`;
-        }
-    } catch (error) {
-        console.error('Error loading reports:', error);
-        container.innerHTML = `<div class="error">❌ Ошибка загрузки отчетов: ${error.message}</div>`;
-    }
-},
-        
-        async renderRating(container) {
-    container.innerHTML = '<div class="loader">Загрузка рейтинга...</div>';
-    
-    try {
-        let token = sessionStorage.getItem('auth_token');
-        if (!token && window.Auth && window.Auth.token) {
-            token = window.Auth.token;
-        }
-        
-        if (!token) {
-            container.innerHTML = '<div class="error">Ошибка авторизации</div>';
-            return;
-        }
-        
-        // Получаем рейтинг за выбранную неделю
-        const response = await fetch(`https://rfjmdevsnvirrxonhsny.supabase.co/functions/v1/lawyer-reports?rating=true&offset=${this.currentWeekOffset}`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        const result = await response.json();
-        
-        if (result.success && result.rating) {
-            const rating = result.rating;
-            const weekStart = new Date(result.week_start).toLocaleDateString('ru-RU');
-            const weekEnd = new Date(result.week_end).toLocaleDateString('ru-RU');
-            
-            // Определяем, есть ли доступные недели для навигации
-            // Обычно можно смотреть только прошлые недели, будущие недоступны
-            const hasPrevWeek = true; // Всегда можно посмотреть прошлую неделю
-            const hasNextWeek = this.currentWeekOffset < 0; // Можно вернуться к текущей или будущим только если мы в прошлом
-            
-            container.innerHTML = `
-                <div class="rating-container-modern">
-                    <div class="rating-header-modern">
-                        <div class="rating-title-section">
-                            <div class="rating-icon">🏆</div>
-                            <div>
-                                <h2>Рейтинг адвокатов</h2>
-                                <p class="rating-subtitle">Недельная статистика и достижения</p>
-                            </div>
-                        </div>
-                        
-                        <div class="week-navigation">
-                            <button class="week-nav-btn prev-week" id="prev-week-btn">
-                                ← Предыдущая неделя
-                            </button>
-                            <div class="week-info">
-                                <span class="week-date">${weekStart} - ${weekEnd}</span>
-                                <span class="week-badge ${this.currentWeekOffset === 0 ? 'current-week' : 'other-week'}">
-                                    ${this.currentWeekOffset === 0 ? 'Текущая неделя' : this.currentWeekOffset === -1 ? 'Прошлая неделя' : `${Math.abs(this.currentWeekOffset)} недели назад`}
-                                </span>
-                            </div>
-                            <button class="week-nav-btn next-week" id="next-week-btn">
-                                Следующая неделя →
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="rating-rules-modern">
-                        <div class="rule-item">
-                            <span class="rule-icon">✅</span>
-                            <span>Освободил человека</span>
-                            <span class="rule-points">+1 балл</span>
-                        </div>
-                        <div class="rule-item">
-                            <span class="rule-icon">🔒</span>
-                            <span>Посадил человека</span>
-                            <span class="rule-points">+0.5 балла</span>
-                        </div>
-                        <div class="rule-item">
-                            <span class="rule-icon">👨‍⚖️</span>
-                            <span>На вызове был юрист</span>
-                            <span class="rule-points">+0.5 балла</span>
-                        </div>
-                    </div>
-                    
-                    ${rating.length === 0 ? `
-                        <div class="empty-state-modern">
-                            <div class="empty-icon">📊</div>
-                            <h3>Нет данных за этот период</h3>
-                            <p>За выбранную неделю нет отчетов адвокатов</p>
-                        </div>
-                    ` : `
-                        <div class="rating-list-modern">
-                            <!-- Топ-3 -->
-                            <div class="top-three">
-                                ${rating.slice(0, 3).map((lawyer, index) => `
-                                    <div class="top-card ${index === 0 ? 'first' : index === 1 ? 'second' : 'third'}">
-                                        <div class="top-rank">${index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}</div>
-                                        <div class="top-avatar">
-                                            ${lawyer.avatar_url ? 
-                                                `<img src="${lawyer.avatar_url}" alt="${this.escapeHtml(lawyer.lawyer_name)}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'80\' height=\'80\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23d4af37\' stroke-width=\'1\'%3E%3Cpath d=\'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2\'/%3E%3Ccircle cx=\'12\' cy=\'7\' r=\'4\'/%3E%3C/svg%3E'">` : 
-                                                `<div class="top-avatar-placeholder">${index === 0 ? '👑' : index === 1 ? '⭐' : '🌟'}</div>`
-                                            }
-                                        </div>
-                                        <div class="top-name">${this.escapeHtml(lawyer.lawyer_name)}</div>
-                                        <div class="top-id">${this.escapeHtml(lawyer.lawyer_static_id)}</div>
-                                        <div class="top-score">${lawyer.score.toFixed(1)}</div>
-                                        <div class="top-stats">
-                                            <span>📞 ${lawyer.total_calls}</span>
-                                            <span>✅ ${lawyer.released_count}</span>
-                                            <span>🔒 ${lawyer.jailed_count}</span>
-                                            <span>👨‍⚖️ ${lawyer.with_jurist_count}</span>
-                                        </div>
+                                <div class="stat-card-modern stat-released">
+                                    <div class="stat-icon">✅</div>
+                                    <div class="stat-info">
+                                        <div class="stat-value" style="color: #4caf50">${released}</div>
+                                        <div class="stat-label">Отпустили</div>
                                     </div>
-                                `).join('')}
+                                </div>
+                                <div class="stat-card-modern stat-jailed">
+                                    <div class="stat-icon">🔒</div>
+                                    <div class="stat-info">
+                                        <div class="stat-value" style="color: #f44336">${jailed}</div>
+                                        <div class="stat-label">Посадили</div>
+                                    </div>
+                                </div>
+                                <div class="stat-card-modern stat-jurist">
+                                    <div class="stat-icon">👨‍⚖️</div>
+                                    <div class="stat-info">
+                                        <div class="stat-value" style="color: #ff9800">${withJurist}</div>
+                                        <div class="stat-label">С юристом</div>
+                                    </div>
+                                </div>
                             </div>
                             
-                            <!-- Остальные участники -->
-                            ${rating.length > 3 ? `
-                                <div class="rating-table-modern">
-                                    <div class="table-header">
-                                        <div class="col-rank">#</div>
-                                        <div class="col-lawyer">Адвокат</div>
-                                        <div class="col-id">Static ID</div>
-                                        <div class="col-calls">Вызовы</div>
-                                        <div class="col-released">Освободил</div>
-                                        <div class="col-jailed">Посадил</div>
-                                        <div class="col-jurist">С юристом</div>
-                                        <div class="col-score">Баллы</div>
+                            <div class="reports-list-modern">
+                                <div class="reports-header-modern">
+                                    <h4>📋 История отчетов</h4>
+                                    <span class="reports-count">${reports.length} записей</span>
+                                </div>
+                                
+                                ${reports.length === 0 ? 
+                                    '<div class="empty-state-modern">📭 У вас пока нет отчетов</div>' : 
+                                    reports.map(report => `
+                                        <div class="report-card-modern">
+                                            <div class="report-card-header">
+                                                <div class="report-date-badge">
+                                                    <span class="date-day">${new Date(report.created_at).getDate()}</span>
+                                                    <span class="date-month">${new Date(report.created_at).toLocaleString('ru-RU', { month: 'short' })}</span>
+                                                </div>
+                                                <div class="report-result-badge ${report.call_result === 'Отпустили' ? 'badge-released' : 'badge-jailed'}">
+                                                    ${report.call_result === 'Отпустили' ? '✅ Отпустили' : '🔒 Посадили'}
+                                                </div>
+                                            </div>
+                                            <div class="report-card-body">
+                                                <div class="report-articles-section">
+                                                    <div class="section-label">📜 Статьи закона</div>
+                                                    <div class="articles-content">${this.escapeHtml(report.articles)}</div>
+                                                </div>
+                                                <div class="report-footer">
+                                                    <div class="report-jurist-info">
+                                                        <span class="jurist-icon">${report.had_jurist ? '👨‍⚖️' : '👤'}</span>
+                                                        <span>${report.had_jurist ? 'Был юрист на вызове' : 'Юрист отсутствовал'}</span>
+                                                    </div>
+                                                    <div class="report-time">
+                                                        🕐 ${new Date(report.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `).join('')
+                                }
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = `<div class="error">❌ Ошибка загрузки отчетов: ${result.error || 'Неизвестная ошибка'}</div>`;
+                }
+            } catch (error) {
+                console.error('Error loading reports:', error);
+                container.innerHTML = `<div class="error">❌ Ошибка загрузки отчетов: ${error.message}</div>`;
+            }
+        },
+        
+        async renderRating(container) {
+            container.innerHTML = '<div class="loader">Загрузка рейтинга...</div>';
+            
+            try {
+                let token = sessionStorage.getItem('auth_token');
+                if (!token && window.Auth && window.Auth.token) {
+                    token = window.Auth.token;
+                }
+                
+                if (!token) {
+                    container.innerHTML = '<div class="error">Ошибка авторизации</div>';
+                    return;
+                }
+                
+                // Получаем рейтинг за выбранную неделю
+                const response = await fetch(`https://rfjmdevsnvirrxonhsny.supabase.co/functions/v1/lawyer-reports?rating=true&offset=${this.currentWeekOffset}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success && result.rating) {
+                    const rating = result.rating;
+                    const weekStart = new Date(result.week_start).toLocaleDateString('ru-RU');
+                    const weekEnd = new Date(result.week_end).toLocaleDateString('ru-RU');
+                    
+                    // Определяем, есть ли доступные недели для навигации
+                    const hasPrevWeek = true; // Всегда можно посмотреть прошлую неделю
+                    const hasNextWeek = this.currentWeekOffset < 0; // Можно вернуться к текущей или будущим только если мы в прошлом
+                    
+                    container.innerHTML = `
+                        <div class="rating-container-modern">
+                            <div class="rating-header-modern">
+                                <div class="rating-title-section">
+                                    <div class="rating-icon">🏆</div>
+                                    <div>
+                                        <h2>Рейтинг адвокатов</h2>
+                                        <p class="rating-subtitle">Недельная статистика и достижения</p>
                                     </div>
-                                    ${rating.slice(3).map((lawyer, index) => `
-                                        <div class="table-row">
-                                            <div class="col-rank">${index + 4}</div>
-                                            <div class="col-lawyer">
-                                                <div class="lawyer-avatar-small">
+                                </div>
+                                
+                                <div class="week-navigation">
+                                    <button class="week-nav-btn prev-week" id="prev-week-btn">
+                                        ← Предыдущая неделя
+                                    </button>
+                                    <div class="week-info">
+                                        <span class="week-date">${weekStart} - ${weekEnd}</span>
+                                        <span class="week-badge ${this.currentWeekOffset === 0 ? 'current-week' : 'other-week'}">
+                                            ${this.currentWeekOffset === 0 ? 'Текущая неделя' : this.currentWeekOffset === -1 ? 'Прошлая неделя' : `${Math.abs(this.currentWeekOffset)} недели назад`}
+                                        </span>
+                                    </div>
+                                    <button class="week-nav-btn next-week" id="next-week-btn">
+                                        Следующая неделя →
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="rating-rules-modern">
+                                <div class="rule-item">
+                                    <span class="rule-icon">✅</span>
+                                    <span>Освободил человека</span>
+                                    <span class="rule-points">+1 балл</span>
+                                </div>
+                                <div class="rule-item">
+                                    <span class="rule-icon">🔒</span>
+                                    <span>Посадил человека</span>
+                                    <span class="rule-points">+0.5 балла</span>
+                                </div>
+                                <div class="rule-item">
+                                    <span class="rule-icon">👨‍⚖️</span>
+                                    <span>На вызове был юрист</span>
+                                    <span class="rule-points">+0.5 балла</span>
+                                </div>
+                            </div>
+                            
+                            ${rating.length === 0 ? `
+                                <div class="empty-state-modern">
+                                    <div class="empty-icon">📊</div>
+                                    <h3>Нет данных за этот период</h3>
+                                    <p>За выбранную неделю нет отчетов адвокатов</p>
+                                </div>
+                            ` : `
+                                <div class="rating-list-modern">
+                                    <!-- Топ-3 -->
+                                    <div class="top-three">
+                                        ${rating.slice(0, 3).map((lawyer, index) => `
+                                            <div class="top-card ${index === 0 ? 'first' : index === 1 ? 'second' : 'third'}">
+                                                <div class="top-rank">${index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}</div>
+                                                <div class="top-avatar">
                                                     ${lawyer.avatar_url ? 
-                                                        `<img src="${lawyer.avatar_url}" alt="${this.escapeHtml(lawyer.lawyer_name)}" onerror="this.style.display='none'">` : 
-                                                        '<span>👤</span>'
+                                                        `<img src="${lawyer.avatar_url}" alt="${this.escapeHtml(lawyer.lawyer_name)}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'80\' height=\'80\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23d4af37\' stroke-width=\'1\'%3E%3Cpath d=\'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2\'/%3E%3Ccircle cx=\'12\' cy=\'7\' r=\'4\'/%3E%3C/svg%3E'">` : 
+                                                        `<div class="top-avatar-placeholder">${index === 0 ? '👑' : index === 1 ? '⭐' : '🌟'}</div>`
                                                     }
                                                 </div>
-                                                <strong>${this.escapeHtml(lawyer.lawyer_name)}</strong>
+                                                <div class="top-name">${this.escapeHtml(lawyer.lawyer_name)}</div>
+                                                <div class="top-id">${this.escapeHtml(lawyer.lawyer_static_id)}</div>
+                                                <div class="top-score">${lawyer.score.toFixed(1)}</div>
+                                                <div class="top-stats">
+                                                    <span>📞 ${lawyer.total_calls}</span>
+                                                    <span>✅ ${lawyer.released_count}</span>
+                                                    <span>🔒 ${lawyer.jailed_count}</span>
+                                                    <span>👨‍⚖️ ${lawyer.with_jurist_count}</span>
+                                                </div>
                                             </div>
-                                            <div class="col-id">${this.escapeHtml(lawyer.lawyer_static_id)}</div>
-                                            <div class="col-calls">${lawyer.total_calls}</div>
-                                            <div class="col-released">${lawyer.released_count}</div>
-                                            <div class="col-jailed">${lawyer.jailed_count}</div>
-                                            <div class="col-jurist">${lawyer.with_jurist_count}</div>
-                                            <div class="col-score">${lawyer.score.toFixed(1)}</div>
+                                        `).join('')}
+                                    </div>
+                                    
+                                    <!-- Остальные участники -->
+                                    ${rating.length > 3 ? `
+                                        <div class="rating-table-modern">
+                                            <div class="table-header">
+                                                <div class="col-rank">#</div>
+                                                <div class="col-lawyer">Адвокат</div>
+                                                <div class="col-id">Static ID</div>
+                                                <div class="col-calls">Вызовы</div>
+                                                <div class="col-released">Освободил</div>
+                                                <div class="col-jailed">Посадил</div>
+                                                <div class="col-jurist">С юристом</div>
+                                                <div class="col-score">Баллы</div>
+                                            </div>
+                                            ${rating.slice(3).map((lawyer, index) => `
+                                                <div class="table-row">
+                                                    <div class="col-rank">${index + 4}</div>
+                                                    <div class="col-lawyer">
+                                                        <div class="lawyer-avatar-small">
+                                                            ${lawyer.avatar_url ? 
+                                                                `<img src="${lawyer.avatar_url}" alt="${this.escapeHtml(lawyer.lawyer_name)}" onerror="this.style.display='none'">` : 
+                                                                '<span>👤</span>'
+                                                            }
+                                                        </div>
+                                                        <strong>${this.escapeHtml(lawyer.lawyer_name)}</strong>
+                                                    </div>
+                                                    <div class="col-id">${this.escapeHtml(lawyer.lawyer_static_id)}</div>
+                                                    <div class="col-calls">${lawyer.total_calls}</div>
+                                                    <div class="col-released">${lawyer.released_count}</div>
+                                                    <div class="col-jailed">${lawyer.jailed_count}</div>
+                                                    <div class="col-jurist">${lawyer.with_jurist_count}</div>
+                                                    <div class="col-score">${lawyer.score.toFixed(1)}</div>
+                                                </div>
+                                            `).join('')}
                                         </div>
-                                    `).join('')}
+                                    ` : ''}
                                 </div>
-                            ` : ''}
+                            `}
                         </div>
-                    `}
-                </div>
-            `;
-            
-            // Добавляем обработчики для кнопок навигации
-            const prevBtn = document.getElementById('prev-week-btn');
-            const nextBtn = document.getElementById('next-week-btn');
-            
-            if (prevBtn) {
-                prevBtn.addEventListener('click', () => {
-                    this.currentWeekOffset--;
-                    this.renderRating(container);
-                });
-            }
-            
-            if (nextBtn) {
-                nextBtn.addEventListener('click', () => {
-                    this.currentWeekOffset++;
-                    this.renderRating(container);
-                });
-            }
-            
-            // Стилизуем кнопки в зависимости от доступности
-            if (prevBtn) {
-                prevBtn.style.opacity = '1';
-                prevBtn.style.cursor = 'pointer';
-                prevBtn.disabled = false;
-            }
-            
-            if (nextBtn) {
-                // Блокируем кнопку "Следующая", если мы на текущей неделе
-                if (this.currentWeekOffset === 0) {
-                    nextBtn.style.opacity = '0.5';
-                    nextBtn.style.cursor = 'not-allowed';
-                    nextBtn.disabled = true;
+                    `;
+                    
+                    // Добавляем обработчики для кнопок навигации
+                    const prevBtn = document.getElementById('prev-week-btn');
+                    const nextBtn = document.getElementById('next-week-btn');
+                    
+                    if (prevBtn) {
+                        prevBtn.addEventListener('click', () => {
+                            this.currentWeekOffset--;
+                            this.renderRating(container);
+                        });
+                    }
+                    
+                    if (nextBtn) {
+                        nextBtn.addEventListener('click', () => {
+                            this.currentWeekOffset++;
+                            this.renderRating(container);
+                        });
+                    }
+                    
+                    // Стилизуем кнопки в зависимости от доступности
+                    if (prevBtn) {
+                        prevBtn.style.opacity = '1';
+                        prevBtn.style.cursor = 'pointer';
+                        prevBtn.disabled = false;
+                    }
+                    
+                    if (nextBtn) {
+                        // Блокируем кнопку "Следующая", если мы на текущей неделе
+                        if (this.currentWeekOffset === 0) {
+                            nextBtn.style.opacity = '0.5';
+                            nextBtn.style.cursor = 'not-allowed';
+                            nextBtn.disabled = true;
+                        } else {
+                            nextBtn.style.opacity = '1';
+                            nextBtn.style.cursor = 'pointer';
+                            nextBtn.disabled = false;
+                        }
+                    }
                 } else {
-                    nextBtn.style.opacity = '1';
-                    nextBtn.style.cursor = 'pointer';
-                    nextBtn.disabled = false;
+                    container.innerHTML = `<div class="error">Ошибка загрузки рейтинга: ${result.error || 'Неизвестная ошибка'}</div>`;
                 }
+            } catch (error) {
+                console.error('Error loading rating:', error);
+                container.innerHTML = `<div class="error">Ошибка загрузки рейтинга: ${error.message}</div>`;
             }
-        } else {
-            container.innerHTML = `<div class="error">Ошибка загрузки рейтинга: ${result.error || 'Неизвестная ошибка'}</div>`;
-        }
-    } catch (error) {
-        console.error('Error loading rating:', error);
-        container.innerHTML = `<div class="error">Ошибка загрузки рейтинга: ${error.message}</div>`;
-    }
-},
+        },
         
         async renderAllReports(container) {
-    container.innerHTML = '<div class="loader">Загрузка отчетов...</div>';
-    
-    try {
-        let token = sessionStorage.getItem('auth_token');
-        if (!token && window.Auth && window.Auth.token) {
-            token = window.Auth.token;
-        }
-        
-        if (!token) {
-            container.innerHTML = '<div class="error">Ошибка авторизации</div>';
-            return;
-        }
-        
-        const response = await fetch('https://rfjmdevsnvirrxonhsny.supabase.co/functions/v1/lawyer-reports?all=true', {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        const result = await response.json();
-        
-        if (result.success && result.reports) {
-            const reports = result.reports;
+            container.innerHTML = '<div class="loader">Загрузка отчетов...</div>';
             
-            container.innerHTML = `
-                <div class="all-reports-container">
-                    <div class="reports-header">
-                        <h3>📊 Все отчеты адвокатов</h3>
-                        <p class="reports-count">Всего отчетов: ${reports.length}</p>
-                    </div>
-                    
-                    <div class="admin-filters">
-                        <div class="filter-group">
-                            <input type="text" id="filter-lawyer" placeholder="🔍 Поиск по имени адвоката..." class="filter-input">
-                        </div>
-                        <div class="filter-group">
-                            <input type="text" id="filter-static-id" placeholder="🆔 Поиск по Static ID..." class="filter-input">
-                        </div>
-                        <div class="filter-group">
-                            <input type="date" id="filter-date" class="filter-input">
-                        </div>
-                        <button id="reset-filters" class="btn-secondary">🔄 Сбросить фильтры</button>
-                    </div>
-                    
-                    <div id="reports-list-container" class="reports-list">
-                        ${reports.length === 0 ? 
-                            '<div class="empty-state">📭 Нет отчетов</div>' : 
-                            reports.map(report => `
-                                <div class="report-card" 
-                                     data-name="${this.escapeHtml(report.lawyer_name).toLowerCase()}"
-                                     data-static-id="${this.escapeHtml(report.lawyer_static_id).toLowerCase()}"
-                                     data-date="${new Date(report.created_at).toISOString().split('T')[0]}">
-                                    <div class="report-header">
-                                        <div class="report-lawyer-info">
-                                            <div class="lawyer-avatar-small">
-                                                ${report.avatar_url ? 
-                                                    `<img src="${report.avatar_url}" alt="${this.escapeHtml(report.lawyer_name)}" onerror="this.style.display='none'">` : 
-                                                    '<span>👨‍💼</span>'
-                                                }
-                                            </div>
-                                            <div class="report-lawyer-details">
-                                                <span class="report-lawyer-name">${this.escapeHtml(report.lawyer_name)}</span>
-                                                <span class="report-lawyer-id">Static ID: ${this.escapeHtml(report.lawyer_static_id)}</span>
-                                            </div>
-                                        </div>
-                                        <div class="report-meta">
-                                            <span class="report-date">📅 ${new Date(report.created_at).toLocaleString('ru-RU')}</span>
-                                            <span class="report-result ${report.call_result === 'Отпустили' ? 'result-released' : 'result-jailed'}">
-                                                ${report.call_result === 'Отпустили' ? '✅ Отпустили' : '🔒 Посадили'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div class="report-body">
-                                        <div class="report-articles">
-                                            <strong>📜 Статьи закона:</strong>
-                                            <p>${this.escapeHtml(report.articles)}</p>
-                                        </div>
-                                        <div class="report-meta-info">
-                                            <span class="meta-badge ${report.had_jurist ? 'jurist-yes' : 'jurist-no'}">
-                                                ${report.had_jurist ? '👨‍⚖️ С юристом' : '👤 Без юриста'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            `).join('')
-                        }
-                    </div>
-                </div>
-            `;
-            
-            // Добавляем обработчики фильтров
-            const filterLawyer = document.getElementById('filter-lawyer');
-            const filterStaticId = document.getElementById('filter-static-id');
-            const filterDate = document.getElementById('filter-date');
-            const resetBtn = document.getElementById('reset-filters');
-            
-            const filterReportsFn = () => {
-                const lawyerFilter = filterLawyer?.value.toLowerCase() || '';
-                const staticIdFilter = filterStaticId?.value.toLowerCase() || '';
-                const dateFilter = filterDate?.value || '';
-                
-                const reportCards = document.querySelectorAll('#reports-list-container .report-card');
-                let visibleCount = 0;
-                
-                reportCards.forEach(card => {
-                    let show = true;
-                    const lawyerName = card.getAttribute('data-name') || '';
-                    const staticId = card.getAttribute('data-static-id') || '';
-                    const reportDate = card.getAttribute('data-date') || '';
-                    
-                    // Фильтр по имени адвоката
-                    if (lawyerFilter && !lawyerName.includes(lawyerFilter)) {
-                        show = false;
-                    }
-                    
-                    // Фильтр по Static ID
-                    if (show && staticIdFilter && !staticId.includes(staticIdFilter)) {
-                        show = false;
-                    }
-                    
-                    // Фильтр по дате
-                    if (show && dateFilter && reportDate !== dateFilter) {
-                        show = false;
-                    }
-                    
-                    card.style.display = show ? 'block' : 'none';
-                    if (show) visibleCount++;
-                });
-                
-                // Обновляем счетчик видимых отчетов
-                const countElement = document.querySelector('.reports-count');
-                if (countElement) {
-                    const totalReports = reportCards.length;
-                    if (lawyerFilter || staticIdFilter || dateFilter) {
-                        countElement.innerHTML = `Показано: ${visibleCount} из ${totalReports} отчетов`;
-                    } else {
-                        countElement.innerHTML = `Всего отчетов: ${totalReports}`;
-                    }
+            try {
+                let token = sessionStorage.getItem('auth_token');
+                if (!token && window.Auth && window.Auth.token) {
+                    token = window.Auth.token;
                 }
-            };
-            
-            if (filterLawyer) {
-                filterLawyer.addEventListener('input', filterReportsFn);
-            }
-            
-            if (filterStaticId) {
-                filterStaticId.addEventListener('input', filterReportsFn);
-            }
-            
-            if (filterDate) {
-                filterDate.addEventListener('change', filterReportsFn);
-            }
-            
-            if (resetBtn) {
-                resetBtn.addEventListener('click', () => {
-                    if (filterLawyer) filterLawyer.value = '';
-                    if (filterStaticId) filterStaticId.value = '';
-                    if (filterDate) filterDate.value = '';
-                    filterReportsFn();
+                
+                if (!token) {
+                    container.innerHTML = '<div class="error">Ошибка авторизации</div>';
+                    return;
+                }
+                
+                const response = await fetch('https://rfjmdevsnvirrxonhsny.supabase.co/functions/v1/lawyer-reports?all=true', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
                 });
+                
+                const result = await response.json();
+                
+                if (result.success && result.reports) {
+                    const reports = result.reports;
+                    
+                    container.innerHTML = `
+                        <div class="all-reports-container">
+                            <div class="reports-header">
+                                <h3>📊 Все отчеты адвокатов</h3>
+                                <p class="reports-count">Всего отчетов: ${reports.length}</p>
+                            </div>
+                            
+                            <div class="admin-filters">
+                                <div class="filter-group">
+                                    <input type="text" id="filter-lawyer" placeholder="🔍 Поиск по имени адвоката..." class="filter-input">
+                                </div>
+                                <div class="filter-group">
+                                    <input type="text" id="filter-static-id" placeholder="🆔 Поиск по Static ID..." class="filter-input">
+                                </div>
+                                <div class="filter-group">
+                                    <input type="date" id="filter-date" class="filter-input">
+                                </div>
+                                <button id="reset-filters" class="btn-secondary">🔄 Сбросить фильтры</button>
+                            </div>
+                            
+                            <div id="reports-list-container" class="reports-list">
+                                ${reports.length === 0 ? 
+                                    '<div class="empty-state">📭 Нет отчетов</div>' : 
+                                    reports.map(report => `
+                                        <div class="report-card" 
+                                             data-name="${this.escapeHtml(report.lawyer_name).toLowerCase()}"
+                                             data-static-id="${this.escapeHtml(report.lawyer_static_id).toLowerCase()}"
+                                             data-date="${new Date(report.created_at).toISOString().split('T')[0]}">
+                                            <div class="report-header">
+                                                <div class="report-lawyer-info">
+                                                    <div class="lawyer-avatar-small">
+                                                        ${report.avatar_url ? 
+                                                            `<img src="${report.avatar_url}" alt="${this.escapeHtml(report.lawyer_name)}" onerror="this.style.display='none'">` : 
+                                                            '<span>👨‍💼</span>'
+                                                        }
+                                                    </div>
+                                                    <div class="report-lawyer-details">
+                                                        <span class="report-lawyer-name">${this.escapeHtml(report.lawyer_name)}</span>
+                                                        <span class="report-lawyer-id">Static ID: ${this.escapeHtml(report.lawyer_static_id)}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="report-meta">
+                                                    <span class="report-date">📅 ${new Date(report.created_at).toLocaleString('ru-RU')}</span>
+                                                    <span class="report-result ${report.call_result === 'Отпустили' ? 'result-released' : 'result-jailed'}">
+                                                        ${report.call_result === 'Отпустили' ? '✅ Отпустили' : '🔒 Посадили'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="report-body">
+                                                <div class="report-articles">
+                                                    <strong>📜 Статьи закона:</strong>
+                                                    <p>${this.escapeHtml(report.articles)}</p>
+                                                </div>
+                                                <div class="report-meta-info">
+                                                    <span class="meta-badge ${report.had_jurist ? 'jurist-yes' : 'jurist-no'}">
+                                                        ${report.had_jurist ? '👨‍⚖️ С юристом' : '👤 Без юриста'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `).join('')
+                                }
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Добавляем обработчики фильтров
+                    const filterLawyer = document.getElementById('filter-lawyer');
+                    const filterStaticId = document.getElementById('filter-static-id');
+                    const filterDate = document.getElementById('filter-date');
+                    const resetBtn = document.getElementById('reset-filters');
+                    
+                    const filterReportsFn = () => {
+                        const lawyerFilter = filterLawyer?.value.toLowerCase() || '';
+                        const staticIdFilter = filterStaticId?.value.toLowerCase() || '';
+                        const dateFilter = filterDate?.value || '';
+                        
+                        const reportCards = document.querySelectorAll('#reports-list-container .report-card');
+                        let visibleCount = 0;
+                        
+                        reportCards.forEach(card => {
+                            let show = true;
+                            const lawyerName = card.getAttribute('data-name') || '';
+                            const staticId = card.getAttribute('data-static-id') || '';
+                            const reportDate = card.getAttribute('data-date') || '';
+                            
+                            // Фильтр по имени адвоката
+                            if (lawyerFilter && !lawyerName.includes(lawyerFilter)) {
+                                show = false;
+                            }
+                            
+                            // Фильтр по Static ID
+                            if (show && staticIdFilter && !staticId.includes(staticIdFilter)) {
+                                show = false;
+                            }
+                            
+                            // Фильтр по дате
+                            if (show && dateFilter && reportDate !== dateFilter) {
+                                show = false;
+                            }
+                            
+                            card.style.display = show ? 'block' : 'none';
+                            if (show) visibleCount++;
+                        });
+                        
+                        // Обновляем счетчик видимых отчетов
+                        const countElement = document.querySelector('.reports-count');
+                        if (countElement) {
+                            const totalReports = reportCards.length;
+                            if (lawyerFilter || staticIdFilter || dateFilter) {
+                                countElement.innerHTML = `Показано: ${visibleCount} из ${totalReports} отчетов`;
+                            } else {
+                                countElement.innerHTML = `Всего отчетов: ${totalReports}`;
+                            }
+                        }
+                    };
+                    
+                    if (filterLawyer) {
+                        filterLawyer.addEventListener('input', filterReportsFn);
+                    }
+                    
+                    if (filterStaticId) {
+                        filterStaticId.addEventListener('input', filterReportsFn);
+                    }
+                    
+                    if (filterDate) {
+                        filterDate.addEventListener('change', filterReportsFn);
+                    }
+                    
+                    if (resetBtn) {
+                        resetBtn.addEventListener('click', () => {
+                            if (filterLawyer) filterLawyer.value = '';
+                            if (filterStaticId) filterStaticId.value = '';
+                            if (filterDate) filterDate.value = '';
+                            filterReportsFn();
+                        });
+                    }
+                } else {
+                    container.innerHTML = `<div class="error">❌ Ошибка загрузки отчетов: ${result.error || 'Неизвестная ошибка'}</div>`;
+                }
+            } catch (error) {
+                console.error('Error loading reports:', error);
+                container.innerHTML = `<div class="error">❌ Ошибка загрузки отчетов: ${error.message}</div>`;
             }
-        } else {
-            container.innerHTML = `<div class="error">❌ Ошибка загрузки отчетов: ${result.error || 'Неизвестная ошибка'}</div>`;
-        }
-    } catch (error) {
-        console.error('Error loading reports:', error);
-        container.innerHTML = `<div class="error">❌ Ошибка загрузки отчетов: ${error.message}</div>`;
-    }
-},
+        },
         
         filterReports() {
             const filterLawyer = document.getElementById('filter-lawyer')?.value.toLowerCase() || '';
@@ -1177,38 +1224,74 @@
                     color: var(--color-gray-light);
                 }
                 
+                /* Исправление для таблицы рейтинга - фиксированная ширина и no-wrap */
                 .rating-table-modern {
                     background: var(--color-darker);
                     border-radius: 15px;
-                    overflow: hidden;
+                    overflow-x: auto;
+                    overflow-y: visible;
                 }
                 
                 .table-header {
                     display: grid;
-                    grid-template-columns: 60px 1fr 120px 80px 80px 80px 80px 80px;
+                    grid-template-columns: 60px minmax(180px, 1fr) 120px 80px 80px 80px 80px 80px;
                     background: var(--color-gray);
                     padding: 15px;
                     font-weight: bold;
                     color: var(--color-accent);
+                    gap: 8px;
+                    min-width: 800px;
                 }
                 
                 .table-row {
                     display: grid;
-                    grid-template-columns: 60px 1fr 120px 80px 80px 80px 80px 80px;
+                    grid-template-columns: 60px minmax(180px, 1fr) 120px 80px 80px 80px 80px 80px;
                     padding: 12px 15px;
                     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
                     transition: all 0.3s ease;
                     align-items: center;
+                    gap: 8px;
+                    min-width: 800px;
                 }
                 
-                .table-row:hover {
-                    background: rgba(212, 175, 55, 0.1);
+                /* Фикс для содержимого колонок - запрещаем перенос */
+                .table-header > div,
+                .table-row > div {
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
                 }
                 
+                /* Колонка с именем адвоката может быть чуть шире */
                 .col-lawyer {
                     display: flex;
                     align-items: center;
                     gap: 10px;
+                    min-width: 160px;
+                }
+                
+                .col-lawyer strong {
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+                
+                .col-id {
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+                
+                .col-calls, .col-released, .col-jailed, .col-jurist, .col-score {
+                    text-align: center;
+                    white-space: nowrap;
+                }
+                
+                .col-rank {
+                    text-align: center;
+                    font-weight: bold;
+                    font-size: 18px;
+                    white-space: nowrap;
                 }
                 
                 .lawyer-avatar-small {
@@ -1220,6 +1303,7 @@
                     align-items: center;
                     justify-content: center;
                     overflow: hidden;
+                    flex-shrink: 0;
                 }
                 
                 .lawyer-avatar-small img {
@@ -1228,30 +1312,29 @@
                     object-fit: cover;
                 }
                 
-                .col-rank {
-                    font-weight: bold;
-                    font-size: 18px;
-                }
-                
                 .col-released {
                     color: #4caf50;
                     font-weight: bold;
+                    text-align: center;
                 }
                 
                 .col-jailed {
                     color: #f44336;
                     font-weight: bold;
+                    text-align: center;
                 }
                 
                 .col-jurist {
                     color: #ff9800;
                     font-weight: bold;
+                    text-align: center;
                 }
                 
                 .col-score {
                     color: var(--color-accent);
                     font-weight: bold;
                     font-size: 18px;
+                    text-align: center;
                 }
                 
                 .empty-state-modern {
@@ -1274,19 +1357,90 @@
                     color: var(--color-gray-light);
                 }
                 
+                /* Стили для photo-upload-area с поддержкой вставки */
+                .photo-upload-area {
+                    border: 2px dashed var(--color-gray);
+                    border-radius: 12px;
+                    padding: 20px;
+                    text-align: center;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    background: var(--color-darker);
+                }
+                
+                .photo-upload-area:hover {
+                    border-color: var(--color-accent);
+                    background: rgba(212, 175, 55, 0.05);
+                }
+                
+                .upload-placeholder {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 8px;
+                }
+                
+                .upload-icon {
+                    font-size: 32px;
+                }
+                
+                .upload-placeholder span {
+                    font-size: 14px;
+                    color: var(--color-light);
+                }
+                
+                .upload-placeholder small {
+                    font-size: 12px;
+                    color: var(--color-gray-light);
+                }
+                
+                .photo-preview {
+                    position: relative;
+                    display: flex;
+                    justify-content: center;
+                }
+                
+                .photo-preview img {
+                    max-width: 200px;
+                    max-height: 150px;
+                    border-radius: 8px;
+                    object-fit: cover;
+                }
+                
+                .remove-photo {
+                    position: absolute;
+                    top: -10px;
+                    right: -10px;
+                    background: #f44336;
+                    color: white;
+                    border: none;
+                    border-radius: 50%;
+                    width: 24px;
+                    height: 24px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                
                 @media (max-width: 1200px) {
                     .table-header,
                     .table-row {
-                        grid-template-columns: 50px 1fr 100px 70px 70px 70px 70px 70px;
+                        grid-template-columns: 50px minmax(150px, 1fr) 100px 70px 70px 70px 70px 70px;
                         font-size: 12px;
+                        gap: 6px;
+                        min-width: 720px;
                     }
                 }
                 
                 @media (max-width: 900px) {
                     .table-header,
                     .table-row {
-                        grid-template-columns: 40px 1fr 90px 60px 60px 60px 60px 60px;
+                        grid-template-columns: 40px minmax(130px, 1fr) 90px 60px 60px 60px 60px 60px;
                         font-size: 11px;
+                        gap: 5px;
+                        min-width: 650px;
                     }
                     
                     .top-card {
@@ -1333,13 +1487,6 @@
                     .top-stats {
                         font-size: 10px;
                         gap: 6px;
-                    }
-                    
-                    .table-header,
-                    .table-row {
-                        grid-template-columns: 35px 1fr 80px 50px 50px 50px 50px 50px;
-                        font-size: 10px;
-                        padding: 10px;
                     }
                     
                     .week-nav-btn {
