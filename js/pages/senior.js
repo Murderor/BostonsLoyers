@@ -7,7 +7,6 @@ window.Pages.Senior = {
     isProcessing: false,
     
     async render() {
-        console.log('Senior page render started');
         
         if (!window.Auth || !window.Auth.currentUser || !window.Auth.currentUser.id) {
             Utils.showNotification('Необходимо войти в систему', 'error');
@@ -60,7 +59,6 @@ window.Pages.Senior = {
             await this.loadAppeals();
         }
         
-        console.log('Senior page rendered successfully');
     },
     
     switchTab(tab) {
@@ -244,11 +242,6 @@ window.Pages.Senior = {
             const discordThreadId = discordThreadIdInput.value.trim();
             const adminComment = adminCommentInput.value;
             
-            console.log('=== MODAL DATA ===');
-            console.log('Discord Thread ID from input:', discordThreadId);
-            console.log('Admin comment:', adminComment);
-            console.log('Action:', action);
-            console.log('==================');
             
             if (!discordThreadId) {
                 Utils.showNotification('Предупреждение: Thread ID не указан, уведомление в Discord не будет отправлено', 'info');
@@ -281,7 +274,6 @@ window.Pages.Senior = {
     
     async processAppeal(appealId, action, discordThreadId = null, adminComment = '') {
         if (this.isProcessing) {
-            console.log('Already processing, skipping...');
             return;
         }
         
@@ -295,12 +287,6 @@ window.Pages.Senior = {
             
             const status = action === 'approve' ? 'approved' : 'rejected';
             
-            console.log('=== PROCESSING APPEAL ===');
-            console.log('appealId:', appealId);
-            console.log('status:', status);
-            console.log('adminComment:', adminComment);
-            console.log('discordThreadId:', discordThreadId);
-            console.log('========================');
             
             Utils.showNotification('Обработка обращения...', 'info');
             
@@ -313,7 +299,6 @@ window.Pages.Senior = {
                 discordThreadId
             );
             
-            console.log('Response from server:', response);
             
             if (response.notificationSent) {
                 Utils.showNotification(`Обращение ${action === 'approve' ? 'одобрено' : 'отклонено'}! Уведомление отправлено в Discord`, 'success');
@@ -373,7 +358,14 @@ window.Pages.Senior = {
                             <textarea id="examComment" rows="3" placeholder="Введите комментарий к экзамену..." style="width: 100%; padding: 0.5rem; border-radius: 8px; background: rgba(0,0,0,0.3); color: white;"></textarea>
                         </div>
                         
-                        <div style="display: flex; gap: 1rem;">
+                        <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(255,100,100,0.1); border-radius: 8px; border-left: 3px solid #ff6464;">
+                            <p style="color: #ffaa64; margin-bottom: 0; font-size: 0.85rem;">
+                                ⚠️ <strong>Внимание:</strong> При сдаче экзамена уровень пользователя НЕ повышается автоматически. 
+                                Повышение уровня осуществляется отдельно через другие процедуры.
+                            </p>
+                        </div>
+                        
+                        <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
                             <button class="btn-success" onclick="window.Pages.Senior.submitExamResult()">
                                 ✅ Сохранить результат
                             </button>
@@ -453,107 +445,128 @@ window.Pages.Senior = {
     },
     
     async submitExamResult() {
-        const examForm = document.getElementById('examForm');
-        const userId = examForm?.dataset.userId;
-        const userName = examForm?.dataset.userName;
-        const userStaticId = examForm?.dataset.userStaticId;
-        const userDiscordId = examForm?.dataset.userDiscordId;
-        const examResult = document.getElementById('examResult')?.value;
-        const examComment = document.getElementById('examComment')?.value;
-        
-        if (!userId) {
-            Utils.showNotification('Пользователь не выбран', 'error');
-            return;
+    const examForm = document.getElementById('examForm');
+    const userId = examForm?.dataset.userId;
+    const userName = examForm?.dataset.userName;
+    const userStaticId = examForm?.dataset.userStaticId;
+    const userDiscordId = examForm?.dataset.userDiscordId;
+    const examResult = document.getElementById('examResult')?.value;
+    const examComment = document.getElementById('examComment')?.value;
+    
+    if (!userId) {
+        Utils.showNotification('Пользователь не выбран', 'error');
+        return;
+    }
+    
+    // Валидация обязательных полей
+    if (!userName || !userStaticId) {
+        Utils.showNotification('Ошибка: данные пользователя неполные', 'error');
+        console.error('Missing user data:', { userName, userStaticId, userDiscordId });
+        return;
+    }
+    
+    try {
+        const token = sessionStorage.getItem('auth_token');
+        if (!token) {
+            throw new Error('Не найден токен авторизации');
         }
         
-        try {
-            const token = sessionStorage.getItem('auth_token');
-            if (!token) {
-                throw new Error('Не найден токен авторизации');
-            }
-            
-            const currentUser = window.Auth.currentUser;
-            const examinerName = currentUser.character_name;
-            const examinerDiscordId = currentUser.discord_id;
-            
-            Utils.showNotification('Сохранение результата...', 'info');
-            
-            let newRole = null;
-            let resultText = '';
-            
-            if (examResult === 'passed') {
-                const currentRole = parseInt(examForm.dataset.currentRole);
-                newRole = currentRole + 1;
-                
-                if (newRole <= 8) {
-                    await window.API.updateUserRole(token, parseInt(userId), newRole);
-                    resultText = `✅ СДАЛ!`;
-                    Utils.showNotification(`✅ Пользователь повышен до уровня ${newRole}`, 'success');
-                } else {
-                    resultText = `✅ СДАЛ!`;
-                    Utils.showNotification('Достигнут максимальный уровень', 'info');
-                }
-            } else {
-                resultText = '❌ НЕ СДАЛ';
-                Utils.showNotification('❌ Результат экзамена: НЕ СДАЛ', 'info');
-            }
-            
-            // Отправляем уведомление в Discord
-            await this.sendExamResultNotification({
-                candidateName: userName,
-                candidateStaticId: userStaticId,
-                candidateDiscordId: userDiscordId,
-                examinerName: examinerName,
-                examinerDiscordId: examinerDiscordId,
-                result: examResult,
-                resultText: resultText,
-                comment: examComment,
-                newRole: newRole
-            });
-            
-            Utils.showNotification('Результат экзамена сохранен! Уведомление отправлено в Discord', 'success');
-            
-            this.resetExamForm();
-            document.getElementById('searchUser').value = '';
-            document.getElementById('userSearchResult').innerHTML = '';
-            
-        } catch (error) {
-            console.error('Error submitting exam result:', error);
-            Utils.showNotification('Ошибка сохранения: ' + error.message, 'error');
+        const currentUser = window.Auth.currentUser;
+        if (!currentUser || !currentUser.character_name) {
+            throw new Error('Данные текущего пользователя не найдены');
         }
-    },
+        
+        const examinerName = currentUser.character_name;
+        const examinerDiscordId = currentUser.discord_id || '';
+        
+        Utils.showNotification('Сохранение результата...', 'info');
+        
+        let resultText = examResult === 'passed' ? '✅ СДАЛ!' : '❌ НЕ СДАЛ';
+        
+        // Формируем данные для отправки
+        const notificationData = {
+            candidateName: userName,
+            candidateStaticId: userStaticId,
+            candidateDiscordId: userDiscordId || '',
+            examinerName: examinerName,
+            examinerDiscordId: examinerDiscordId,
+            result: examResult,
+            resultText: resultText,
+            comment: examComment || ''
+        };
+        
+        
+        // Проверяем, что все обязательные поля заполнены
+        const requiredFields = ['candidateName', 'candidateStaticId', 'examinerName', 'result', 'resultText'];
+        const missingFields = requiredFields.filter(field => !notificationData[field]);
+        
+        if (missingFields.length > 0) {
+            console.error('Missing required fields:', missingFields);
+            throw new Error(`Отсутствуют обязательные поля: ${missingFields.join(', ')}`);
+        }
+        
+        // Показываем уведомление о результате без повышения
+        if (examResult === 'passed') {
+            Utils.showNotification('✅ Результат экзамена: СДАЛ (уровень не изменен)', 'success');
+        } else {
+            Utils.showNotification('❌ Результат экзамена: НЕ СДАЛ', 'info');
+        }
+        
+        // Отправляем уведомление в Discord
+        await this.sendExamResultNotification(notificationData);
+        
+        Utils.showNotification('Результат экзамена сохранен! Уведомление отправлено в Discord', 'success');
+        
+        this.resetExamForm();
+        const searchInput = document.getElementById('searchUser');
+        if (searchInput) searchInput.value = '';
+        const resultContainer = document.getElementById('userSearchResult');
+        if (resultContainer) resultContainer.innerHTML = '';
+        
+    } catch (error) {
+        console.error('Error submitting exam result:', error);
+        Utils.showNotification('Ошибка сохранения: ' + error.message, 'error');
+    }
+},
     
     async sendExamResultNotification(data) {
-        try {
-            const token = sessionStorage.getItem('auth_token');
-            if (!token) {
-                throw new Error('Не найден токен авторизации');
-            }
-            
-            const response = await fetch('https://rfjmdevsnvirrxonhsny.supabase.co/functions/v1/send-exam-result', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(data)
-            });
-            
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('Failed to send exam result notification:', errorText);
-                throw new Error('Ошибка отправки уведомления');
-            }
-            
-            const result = await response.json();
-            console.log('Exam result notification sent:', result);
-            return result;
-            
-        } catch (error) {
-            console.error('Error sending exam result notification:', error);
-            throw error;
+    try {
+        const token = sessionStorage.getItem('auth_token');
+        if (!token) {
+            throw new Error('Не найден токен авторизации');
         }
-    },
+        
+        
+        const response = await fetch('https://rfjmdevsnvirrxonhsny.supabase.co/functions/v1/send-exam-result', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const responseText = await response.text();
+        
+        if (!response.ok) {
+            let errorMessage = 'Ошибка отправки уведомления';
+            try {
+                const errorData = JSON.parse(responseText);
+                errorMessage = errorData.error || errorMessage;
+            } catch (e) {
+                errorMessage = responseText || errorMessage;
+            }
+            throw new Error(errorMessage);
+        }
+        
+        const result = JSON.parse(responseText);
+        return result;
+        
+    } catch (error) {
+        console.error('Error sending exam result notification:', error);
+        throw error;
+    }
+},
     
     resetExamForm() {
         const examForm = document.getElementById('examForm');

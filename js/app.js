@@ -169,7 +169,7 @@
                             window.hidePreloader();
                             return;
                         }
-                        if (window.Auth.currentUser.role_level < 6) {
+                        if (window.Auth.currentUser.role_level < 5) {
                             Utils.showNotification('Доступ запрещен', 'error');
                             await this.navigateTo('home');
                             window.hidePreloader();

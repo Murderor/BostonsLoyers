@@ -1,6 +1,7 @@
 // js/auth.js
 (function() {
     if (!window.API) {
+        console.error('API not loaded');
     }
     
     window.Auth = {
@@ -20,6 +21,8 @@
                     if (result.valid && result.user) {
                         this.token = savedToken;
                         this.currentUser = result.user;
+                        // Убеждаемся, что role_level - число
+                        this.currentUser.role_level = Number(this.currentUser.role_level) || 1;
                         this.updateUI();
                         
                         window.dispatchEvent(new CustomEvent('userDataUpdated', { 
@@ -32,6 +35,7 @@
                         return false;
                     }
                 } catch (error) {
+                    console.error('Token verification error:', error);
                     this.logout();
                     return false;
                 }
@@ -48,6 +52,7 @@
                 
                 if (result.valid && result.user) {
                     this.currentUser = result.user;
+                    this.currentUser.role_level = Number(this.currentUser.role_level) || 1;
                     sessionStorage.setItem('auth_token', this.token);
                     this.updateUI();
                     
@@ -61,6 +66,7 @@
                     return false;
                 }
             } catch (error) {
+                console.error('Refresh user data error:', error);
                 return false;
             }
         },
@@ -156,6 +162,7 @@
                 }
                 
                 this.currentUser = verifyResult.user;
+                this.currentUser.role_level = Number(this.currentUser.role_level) || 1;
                 
                 this.closeModal();
                 this.updateUI();
@@ -275,7 +282,11 @@
             
             if (!userInfo || !mainNav) return;
             
+
+            
             if (this.currentUser && this.currentUser.id) {
+                const roleLevel = Number(this.currentUser.role_level) || 1;
+                
                 let avatarHtml = '';
                 if (this.currentUser.avatar_url) {
                     avatarHtml = `<img src="${Utils.escapeHtml(this.currentUser.avatar_url)}" 
@@ -293,7 +304,7 @@
                         <div class="user-details">
                             <span class="user-name">${Utils.escapeHtml(this.currentUser.character_name || 'Пользователь')}</span>
                             <div style="display: flex; gap: 5px; flex-wrap: wrap;">
-                                <span class="role-badge role-${this.currentUser.role_level || 1}">${Utils.getRoleName(this.currentUser.role_level || 1)}</span>
+                                <span class="role-badge role-${roleLevel}">${Utils.getRoleName(roleLevel)}</span>
                                 ${this.currentUser.discord_id ? '<span class="discord-badge">🎮 Discord</span>' : ''}
                             </div>
                         </div>
@@ -312,7 +323,7 @@
                                <a href="#" data-page="profile">Профиль</a>
                                <a href="#" data-page="lawyers">О нас</a>`;
                 
-                if (this.currentUser.role_level >= 4) {
+                if (roleLevel >= 4) {
                     navLinks += `<a href="#" data-page="lawyer-reports">📋 Отчеты</a>`;
                 }
                 
@@ -320,14 +331,15 @@
                     navLinks += `<a href="#" data-page="appeals">📝 Обращения</a>`;
                 }
                 
-                if (this.currentUser.role_level >= 5) {
+                if (roleLevel >= 5) {
                     navLinks += `<a href="#" data-page="senior">👥 Старший состав</a>`;
                 }
                 
-                if (this.currentUser.role_level >= 6) {
+                if (roleLevel >= 5) {
                     navLinks += `<a href="#" data-page="admin">⚙️ Управление</a>`;
                 }
                 
+                console.log('Generated nav links:', navLinks);
                 mainNav.innerHTML = navLinks;
                 
                 document.querySelectorAll('[data-page]').forEach(link => {
@@ -369,7 +381,8 @@
 
         checkAccess(requiredRole) {
             if (!this.currentUser || !this.currentUser.id) return false;
-            return (this.currentUser.role_level || 1) >= requiredRole;
+            const userRole = Number(this.currentUser.role_level) || 1;
+            return userRole >= requiredRole;
         },
         
         getDiscordId() {
@@ -381,15 +394,18 @@
         },
         
         hasSeniorAccess() {
-            return this.currentUser && this.currentUser.role_level >= 5;
+            const roleLevel = Number(this.currentUser?.role_level) || 1;
+            return roleLevel >= 5;
         },
         
         hasAdminAccess() {
-            return this.currentUser && this.currentUser.role_level >= 6;
+            const roleLevel = Number(this.currentUser?.role_level) || 1;
+            return roleLevel >= 5;  // Исправлено: теперь 5+ имеют доступ
         },
         
         hasLawyerReportsAccess() {
-            return this.currentUser && this.currentUser.role_level >= 4;
+            const roleLevel = Number(this.currentUser?.role_level) || 1;
+            return roleLevel >= 4;
         }
     };
 })();

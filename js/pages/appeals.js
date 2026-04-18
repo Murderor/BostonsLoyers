@@ -510,72 +510,73 @@ window.Pages.Appeals = {
     },
     
     async submitLawyerPromotion() {
-        const call1File = document.getElementById('call1-file')?.files[0];
-        const call2File = document.getElementById('call2-file')?.files[0];
-        const call3File = document.getElementById('call3-file')?.files[0];
-        const examMessageLink = document.getElementById('exam-message-link')?.value;
+    const call1File = document.getElementById('call1-file')?.files[0];
+    const call2File = document.getElementById('call2-file')?.files[0];
+    const call3File = document.getElementById('call3-file')?.files[0];
+    const examMessageLink = document.getElementById('exam-message-link')?.value;
+    
+    if (!call1File) {
+        Utils.showNotification('Прикрепите скриншот вызова #1', 'error');
+        return;
+    }
+    if (!call2File) {
+        Utils.showNotification('Прикрепите скриншот вызова #2', 'error');
+        return;
+    }
+    if (!call3File) {
+        Utils.showNotification('Прикрепите скриншот вызова #3', 'error');
+        return;
+    }
+    
+    if (!AppealsSecurity.validateFile(call1File) ||
+        !AppealsSecurity.validateFile(call2File) ||
+        !AppealsSecurity.validateFile(call3File)) {
+        Utils.showNotification('Файлы должны быть изображениями до 10MB', 'error');
+        return;
+    }
+    
+    if (!examMessageLink) {
+        Utils.showNotification('Введите ссылку на сообщение о прохождении экзамена', 'error');
+        return;
+    }
+    
+    if (!AppealsSecurity.validateDiscordLink(examMessageLink)) {
+        Utils.showNotification('Введите корректную ссылку на сообщение Discord', 'error');
+        return;
+    }
+    
+    const comment = document.getElementById('promotion-comment')?.value || '';
+    const sanitizedComment = AppealsSecurity.sanitizeString(comment, 500);
+    // НЕ ЭКРАНИРУЕМ ССЫЛКУ - отправляем как есть
+    const cleanLink = examMessageLink.trim(); // только обрезаем пробелы
+    
+    try {
+        Utils.showNotification('Отправка обращения...', 'info');
         
-        if (!call1File) {
-            Utils.showNotification('Прикрепите скриншот вызова #1', 'error');
-            return;
-        }
-        if (!call2File) {
-            Utils.showNotification('Прикрепите скриншот вызова #2', 'error');
-            return;
-        }
-        if (!call3File) {
-            Utils.showNotification('Прикрепите скриншот вызова #3', 'error');
-            return;
-        }
+        const formData = new FormData();
+        formData.append('appealType', 'lawyer_promotion');
+        formData.append('comment', sanitizedComment);
+        formData.append('examMessageLink', cleanLink); // отправляем чистую ссылку
+        formData.append('call1', call1File);
+        formData.append('call2', call2File);
+        formData.append('call3', call3File);
         
-        if (!AppealsSecurity.validateFile(call1File) ||
-            !AppealsSecurity.validateFile(call2File) ||
-            !AppealsSecurity.validateFile(call3File)) {
-            Utils.showNotification('Файлы должны быть изображениями до 10MB', 'error');
-            return;
-        }
+        const response = await API.createAppealWithFiles(window.Auth.token, formData);
         
-        if (!examMessageLink) {
-            Utils.showNotification('Введите ссылку на сообщение о прохождении экзамена', 'error');
-            return;
+        if (response && response.success) {
+            Utils.showNotification('Обращение успешно отправлено!', 'success');
+            const form = document.getElementById('appeal-form');
+            if (form) form.reset();
+            const lawyerPromotionFields = document.getElementById('lawyer-promotion-fields');
+            if (lawyerPromotionFields) lawyerPromotionFields.style.display = 'none';
+            this.switchToListAfterDelay();
+        } else {
+            throw new Error(response?.error || 'Неизвестная ошибка');
         }
-        
-        if (!AppealsSecurity.validateDiscordLink(examMessageLink)) {
-            Utils.showNotification('Введите корректную ссылку на сообщение Discord', 'error');
-            return;
-        }
-        
-        const comment = document.getElementById('promotion-comment')?.value || '';
-        const sanitizedComment = AppealsSecurity.sanitizeString(comment, 500);
-        const sanitizedLink = AppealsSecurity.sanitizeString(examMessageLink, 500);
-        
-        try {
-            Utils.showNotification('Отправка обращения...', 'info');
-            
-            const formData = new FormData();
-            formData.append('appealType', 'lawyer_promotion');
-            formData.append('comment', sanitizedComment);
-            formData.append('examMessageLink', sanitizedLink);
-            formData.append('call1', call1File);
-            formData.append('call2', call2File);
-            formData.append('call3', call3File);
-            
-            const response = await API.createAppealWithFiles(window.Auth.token, formData);
-            
-            if (response && response.success) {
-                Utils.showNotification('Обращение успешно отправлено!', 'success');
-                const form = document.getElementById('appeal-form');
-                if (form) form.reset();
-                const lawyerPromotionFields = document.getElementById('lawyer-promotion-fields');
-                if (lawyerPromotionFields) lawyerPromotionFields.style.display = 'none';
-                this.switchToListAfterDelay();
-            } else {
-                throw new Error(response?.error || 'Неизвестная ошибка');
-            }
-        } catch (error) {
-            Utils.showNotification(error.message || 'Ошибка при отправке обращения', 'error');
-        }
-    },
+    } catch (error) {
+        Utils.showNotification(error.message || 'Ошибка при отправке обращения', 'error');
+    }
+},
     
     setupFileUpload(fieldName) {
         const dropzone = document.getElementById(`${fieldName}-dropzone`);
@@ -700,95 +701,98 @@ window.Pages.Appeals = {
     },
     
     createAppealCard(appeal) {
-        const card = document.createElement('div');
-        card.className = `appeal-card appeal-status-${AppealsSecurity.escapeHtml(appeal.status || 'pending')}`;
-        
-        let statusText = '';
-        let statusClass = '';
-        
-        switch(appeal.status) {
-            case 'pending':
-                statusText = 'На рассмотрении';
-                statusClass = 'status-pending';
-                break;
-            case 'approved':
-                statusText = 'Одобрено';
-                statusClass = 'status-approved';
-                break;
-            case 'rejected':
-                statusText = 'Отклонено';
-                statusClass = 'status-rejected';
-                break;
-            default:
-                statusText = AppealsSecurity.escapeHtml(appeal.status || 'pending');
-                statusClass = 'status-pending';
-        }
-        
-        const appealDate = new Date(appeal.created_at).toLocaleString('ru-RU');
-        
-        let appealTypeName = '';
-        if (appeal.appeal_type === 'oral_exam') appealTypeName = '📝 Запрос на устный экзамен';
-        else if (appeal.appeal_type === 'accreditation') appealTypeName = '⚖️ Запрос на аккредитацию юриста';
-        else if (appeal.appeal_type === 'lawyer_promotion') appealTypeName = '⬆️ Запрос на повышение до адвоката';
-        else appealTypeName = AppealsSecurity.escapeHtml(appeal.appeal_type || 'unknown');
-        
-        const safeAppealTypeName = AppealsSecurity.escapeHtml(appealTypeName);
-        const safeAppealDate = AppealsSecurity.escapeHtml(appealDate);
-        const safeStatusText = AppealsSecurity.escapeHtml(statusText);
-        
-        card.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 0.5rem;">
-                <div>
-                    <h3 style="margin-bottom: 0.5rem;">${safeAppealTypeName}</h3>
-                    <p style="font-size: 0.85rem; color: #aaa;">Создано: ${safeAppealDate}</p>
-                    <p style="font-size: 0.85rem; color: #aaa;">Номер обращения: #${appeal.id}</p>
-                </div>
-                <div>
-                    <span class="status-badge ${statusClass}">${safeStatusText}</span>
-                </div>
+    const card = document.createElement('div');
+    card.className = `appeal-card appeal-status-${AppealsSecurity.escapeHtml(appeal.status || 'pending')}`;
+    
+    let statusText = '';
+    let statusClass = '';
+    
+    switch(appeal.status) {
+        case 'pending':
+            statusText = 'На рассмотрении';
+            statusClass = 'status-pending';
+            break;
+        case 'approved':
+            statusText = 'Одобрено';
+            statusClass = 'status-approved';
+            break;
+        case 'rejected':
+            statusText = 'Отклонено';
+            statusClass = 'status-rejected';
+            break;
+        default:
+            statusText = AppealsSecurity.escapeHtml(appeal.status || 'pending');
+            statusClass = 'status-pending';
+    }
+    
+    const appealDate = new Date(appeal.created_at).toLocaleString('ru-RU');
+    
+    let appealTypeName = '';
+    if (appeal.appeal_type === 'oral_exam') appealTypeName = '📝 Запрос на устный экзамен';
+    else if (appeal.appeal_type === 'accreditation') appealTypeName = '⚖️ Запрос на аккредитацию юриста';
+    else if (appeal.appeal_type === 'lawyer_promotion') appealTypeName = '⬆️ Запрос на повышение до адвоката';
+    else appealTypeName = AppealsSecurity.escapeHtml(appeal.appeal_type || 'unknown');
+    
+    const safeAppealTypeName = AppealsSecurity.escapeHtml(appealTypeName);
+    const safeAppealDate = AppealsSecurity.escapeHtml(appealDate);
+    const safeStatusText = AppealsSecurity.escapeHtml(statusText);
+    
+    card.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 0.5rem;">
+            <div>
+                <h3 style="margin-bottom: 0.5rem;">${safeAppealTypeName}</h3>
+                <p style="font-size: 0.85rem; color: #aaa;">Создано: ${safeAppealDate}</p>
+                <p style="font-size: 0.85rem; color: #aaa;">Номер обращения: #${appeal.id}</p>
             </div>
-        `;
+            <div>
+                <span class="status-badge ${statusClass}">${safeStatusText}</span>
+            </div>
+        </div>
+    `;
+    
+    // Исправленная часть - отображение ссылки
+    if (appeal.details && appeal.details.exam_message_link) {
+        const linkDiv = document.createElement('div');
+        linkDiv.style.marginTop = '0.75rem';
+        linkDiv.style.paddingTop = '0.75rem';
+        linkDiv.style.borderTop = '1px solid rgba(255,255,255,0.1)';
         
-        if (appeal.details && appeal.details.exam_message_link) {
-            const linkDiv = document.createElement('div');
-            linkDiv.style.marginTop = '0.75rem';
-            linkDiv.style.paddingTop = '0.75rem';
-            linkDiv.style.borderTop = '1px solid rgba(255,255,255,0.1)';
-            
-            const link = document.createElement('a');
-            link.href = AppealsSecurity.escapeHtml(appeal.details.exam_message_link);
-            link.target = '_blank';
-            link.style.color = '#ffd700';
-            link.textContent = 'Ссылка на результат экзамена';
-            
-            linkDiv.innerHTML = '🔗 ';
-            linkDiv.appendChild(link);
-            card.appendChild(linkDiv);
-        }
+        const link = document.createElement('a');
+        // НЕ экранируем href - используем оригинальную ссылку
+        link.href = appeal.details.exam_message_link;
+        link.target = '_blank';
+        link.style.color = '#ffd700';
+        link.style.textDecoration = 'none';
+        link.style.wordBreak = 'break-all';
+        link.textContent = '🔗 Ссылка на результат экзамена';
         
-        const comment = appeal.details?.comment || appeal.details?.additional_info;
-        if (comment) {
-            const commentDiv = document.createElement('div');
-            commentDiv.style.marginTop = '0.75rem';
-            commentDiv.style.padding = '0.75rem';
-            commentDiv.style.background = 'rgba(0,0,0,0.2)';
-            commentDiv.style.borderRadius = '8px';
-            commentDiv.innerHTML = `💬 ${AppealsSecurity.escapeHtml(comment)}`;
-            card.appendChild(commentDiv);
-        }
-        
-        if (appeal.admin_comment) {
-            const adminDiv = document.createElement('div');
-            adminDiv.style.marginTop = '0.75rem';
-            adminDiv.style.padding = '0.75rem';
-            adminDiv.style.background = 'rgba(0,0,0,0.3)';
-            adminDiv.style.borderRadius = '8px';
-            adminDiv.innerHTML = `<strong>📌 Комментарий администрации:</strong><p style="margin-top: 0.25rem;">${AppealsSecurity.escapeHtml(appeal.admin_comment)}</p>`;
-            card.appendChild(adminDiv);
-        }
-        
-        return card;
-    },
+        linkDiv.appendChild(link);
+        card.appendChild(linkDiv);
+    }
+    
+    const comment = appeal.details?.comment || appeal.details?.additional_info;
+    if (comment) {
+        const commentDiv = document.createElement('div');
+        commentDiv.style.marginTop = '0.75rem';
+        commentDiv.style.padding = '0.75rem';
+        commentDiv.style.background = 'rgba(0,0,0,0.2)';
+        commentDiv.style.borderRadius = '8px';
+        commentDiv.innerHTML = `💬 ${AppealsSecurity.escapeHtml(comment)}`;
+        card.appendChild(commentDiv);
+    }
+    
+    if (appeal.admin_comment) {
+        const adminDiv = document.createElement('div');
+        adminDiv.style.marginTop = '0.75rem';
+        adminDiv.style.padding = '0.75rem';
+        adminDiv.style.background = 'rgba(0,0,0,0.3)';
+        adminDiv.style.borderRadius = '8px';
+        adminDiv.innerHTML = `<strong>📌 Комментарий администрации:</strong><p style="margin-top: 0.25rem;">${AppealsSecurity.escapeHtml(appeal.admin_comment)}</p>`;
+        card.appendChild(adminDiv);
+    }
+    
+    return card;
+},
     
     switchToListAfterDelay() {
         setTimeout(() => {
