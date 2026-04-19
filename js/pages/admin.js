@@ -5,6 +5,9 @@ window.Pages = window.Pages || {};
 window.Pages.Admin = {
     usersCache: null,
     isLoading: false,
+    currentSort: { column: 'id', direction: 'asc' },
+    searchTerm: '',
+    filteredUsers: null,
     
     async render() {
         
@@ -24,7 +27,6 @@ window.Pages.Admin = {
             window.Router.navigateTo('home');
             return;
         }
-        
         
         const container = document.getElementById('page-content');
         if (!container) {
@@ -54,7 +56,6 @@ window.Pages.Admin = {
                 throw new Error('Список пользователей не получен');
             }
             
-            
             // Нормализуем данные пользователей
             users = users.map(user => ({
                 ...user,
@@ -67,8 +68,11 @@ window.Pages.Admin = {
             }));
             
             this.usersCache = users;
+            this.filteredUsers = [...users];
+            this.currentSort = { column: 'id', direction: 'asc' };
+            this.searchTerm = '';
             
-            this.renderUsersTable(container, users);
+            this.renderFullPage(container);
             
         } catch (error) {
             console.error('Error loading users:', error);
@@ -76,11 +80,10 @@ window.Pages.Admin = {
         }
     },
     
-    renderUsersTable(container, users) {
+    // Отрисовка всей страницы (только при первом рендере)
+    renderFullPage(container) {
         const currentUserRole = Number(window.Auth.currentUser.role_level);
-        const currentUserId = parseInt(window.Auth.currentUser.id);
         
-        // Используем Utils.escapeHtml вместо SafeHtml
         const escapeHtml = (str) => {
             if (!str) return '';
             return String(str).replace(/[&<>]/g, function(m) {
@@ -94,41 +97,231 @@ window.Pages.Admin = {
         container.innerHTML = `
             <div class="card">
                 <h2>⚙️ Управление пользователями</h2>
-                <p>Всего пользователей: ${escapeHtml(String(users.length))}</p>
+                <p>Всего пользователей: ${escapeHtml(String(this.usersCache.length))}</p>
                 <p>Ваш уровень доступа: ${currentUserRole} (${Utils.getRoleName(currentUserRole)})</p>
+                
+                <!-- Панель поиска и фильтров -->
+                <div style="margin: 20px 0; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                    <div style="flex: 1; min-width: 200px;">
+                        <input 
+                            type="text" 
+                            id="user-search-input" 
+                            placeholder="🔍 Поиск по имени, Static ID, роли, ID..." 
+                            value="${escapeHtml(this.searchTerm)}"
+                            style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #2a2a2a; color: white;"
+                        >
+                    </div>
+                    <button id="reset-filters-btn" style="padding: 10px 20px; background: #ff9800; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                        🗑️ Сбросить фильтры
+                    </button>
+                    <div style="font-size: 14px; color: #888;" id="users-count-display">
+                        Найдено: ${this.filteredUsers.length} пользователей
+                    </div>
+                </div>
+                
                 <div style="overflow-x: auto; margin-top: 20px;">
                     <table style="width: 100%; border-collapse: collapse;">
                         <thead>
                             <tr style="border-bottom: 2px solid rgba(255,255,255,0.2);">
-                                <th style="text-align: left; padding: 12px;">ID</th>
-                                <th style="text-align: left; padding: 12px;">Имя персонажа</th>
-                                <th style="text-align: left; padding: 12px;">Static ID</th>
-                                <th style="text-align: left; padding: 12px;">Discord</th>
-                                <th style="text-align: left; padding: 12px;">Роль</th>
+                                <th style="text-align: left; padding: 12px; cursor: pointer;" data-sort="id" id="sort-id">
+                                    ID <span id="sort-icon-id">↕️</span>
+                                </th>
+                                <th style="text-align: left; padding: 12px; cursor: pointer;" data-sort="name" id="sort-name">
+                                    Имя персонажа <span id="sort-icon-name">↕️</span>
+                                </th>
+                                <th style="text-align: left; padding: 12px; cursor: pointer;" data-sort="static_id" id="sort-static_id">
+                                    Static ID <span id="sort-icon-static_id">↕️</span>
+                                </th>
+                                <th style="text-align: left; padding: 12px; cursor: pointer;" data-sort="discord" id="sort-discord">
+                                    Discord <span id="sort-icon-discord">↕️</span>
+                                </th>
+                                <th style="text-align: left; padding: 12px; cursor: pointer;" data-sort="role" id="sort-role">
+                                    Роль <span id="sort-icon-role">↕️</span>
+                                </th>
                                 <th style="text-align: left; padding: 12px;">Действия</th>
                             </tr>
                         </thead>
                         <tbody id="users-table-body"></tbody>
-                    </table>
+                    8vao
                 </div>
             </div>
         `;
         
-        const tbody = document.getElementById('users-table-body');
-        if (!tbody) return;
+        // Обновляем иконки сортировки
+        this.updateSortIcons();
         
-        users.forEach(user => {
+        // Добавляем обработчики сортировки
+        document.querySelectorAll('[data-sort]').forEach(th => {
+            th.addEventListener('click', () => {
+                const column = th.getAttribute('data-sort');
+                this.setSortColumn(column);
+            });
+        });
+        
+        // Добавляем обработчик поиска
+        const searchInput = document.getElementById('user-search-input');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                this.searchTerm = e.target.value;
+                this.filterUsers();
+                this.updateTableBody(); // Только обновляем тело таблицы, не перерисовывая всю страницу
+            });
+        }
+        
+        // Добавляем обработчик сброса
+        const resetBtn = document.getElementById('reset-filters-btn');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
+                this.searchTerm = '';
+                this.currentSort = { column: 'id', direction: 'asc' };
+                this.filteredUsers = [...this.usersCache];
+                this.sortUsers();
+                
+                const searchInput = document.getElementById('user-search-input');
+                if (searchInput) searchInput.value = '';
+                
+                this.updateSortIcons();
+                this.updateTableBody();
+                this.updateUsersCount();
+            });
+        }
+        
+        // ВАЖНО: Отрисовываем тело таблицы после того, как все обработчики привязаны
+        this.updateTableBody();
+    },
+    
+    // Обновление только тела таблицы (без перерисовки всей страницы)
+    updateTableBody() {
+        const tbody = document.getElementById('users-table-body');
+        if (!tbody) {
+            console.warn('Table body not found');
+            return;
+        }
+        
+        const currentUserRole = Number(window.Auth.currentUser.role_level);
+        const currentUserId = parseInt(window.Auth.currentUser.id);
+        
+        // Очищаем тело таблицы
+        tbody.innerHTML = '';
+        
+        if (!this.filteredUsers || this.filteredUsers.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 40px; color: #888;">
+                        🔍 Ничего не найдено. Попробуйте изменить поисковый запрос.
+                    </td>
+                </tr>
+            `;
+            this.updateUsersCount();
+            return;
+        }
+        
+        this.filteredUsers.forEach(user => {
             const row = this.createUserRow(user, currentUserRole, currentUserId);
             tbody.appendChild(row);
         });
         
         this.attachEventHandlers();
+        this.updateUsersCount();
+    },
+    
+    // Обновление счетчика пользователей
+    updateUsersCount() {
+        const countDisplay = document.getElementById('users-count-display');
+        if (countDisplay) {
+            countDisplay.textContent = `Найдено: ${this.filteredUsers ? this.filteredUsers.length : 0} пользователей`;
+        }
+    },
+    
+    // Обновление иконок сортировки
+    updateSortIcons() {
+        const columns = ['id', 'name', 'static_id', 'discord', 'role'];
+        columns.forEach(col => {
+            const iconSpan = document.getElementById(`sort-icon-${col}`);
+            if (iconSpan) {
+                if (this.currentSort.column !== col) {
+                    iconSpan.textContent = '↕️';
+                } else {
+                    iconSpan.textContent = this.currentSort.direction === 'asc' ? '↑' : '↓';
+                }
+            }
+        });
+    },
+    
+    // Фильтрация пользователей
+    filterUsers() {
+        if (!this.searchTerm.trim()) {
+            this.filteredUsers = [...this.usersCache];
+        } else {
+            const searchLower = this.searchTerm.toLowerCase();
+            this.filteredUsers = this.usersCache.filter(user => {
+                return user.character_name?.toLowerCase().includes(searchLower) ||
+                       user.static_id?.toLowerCase().includes(searchLower) ||
+                       user.id?.toString().includes(searchLower) ||
+                       Utils.getRoleName(user.role_level).toLowerCase().includes(searchLower) ||
+                       (user.discord_id ? 'привязан' : 'не привязан').includes(searchLower);
+            });
+        }
+        this.sortUsers();
+    },
+    
+    // Сортировка пользователей
+    sortUsers() {
+        const { column, direction } = this.currentSort;
+        const multiplier = direction === 'asc' ? 1 : -1;
+        
+        if (!this.filteredUsers) return;
+        
+        this.filteredUsers.sort((a, b) => {
+            let valA, valB;
+            
+            switch(column) {
+                case 'id':
+                    valA = a.id;
+                    valB = b.id;
+                    break;
+                case 'name':
+                    valA = (a.character_name || '').toLowerCase();
+                    valB = (b.character_name || '').toLowerCase();
+                    break;
+                case 'static_id':
+                    valA = (a.static_id || '').toLowerCase();
+                    valB = (b.static_id || '').toLowerCase();
+                    break;
+                case 'discord':
+                    valA = a.discord_id ? 1 : 0;
+                    valB = b.discord_id ? 1 : 0;
+                    break;
+                case 'role':
+                    valA = a.role_level;
+                    valB = b.role_level;
+                    break;
+                default:
+                    valA = a.id;
+                    valB = b.id;
+            }
+            
+            if (valA < valB) return -1 * multiplier;
+            if (valA > valB) return 1 * multiplier;
+            return 0;
+        });
+    },
+    
+    // Изменение сортировки
+    setSortColumn(column) {
+        if (this.currentSort.column === column) {
+            this.currentSort.direction = this.currentSort.direction === 'asc' ? 'desc' : 'asc';
+        } else {
+            this.currentSort.column = column;
+            this.currentSort.direction = 'asc';
+        }
+        
+        this.sortUsers();
+        this.updateSortIcons();
+        this.updateTableBody(); // Только обновляем тело таблицы
     },
     
     createUserRow(user, currentUserRole, currentUserId) {
-        // Права редактирования:
-        // - Уровень 8 может редактировать всех
-        // - Уровни 5-7 могут редактировать только пользователей с уровнем меньше своего
         const canEdit = currentUserRole === 8 || 
                        (currentUserRole >= 5 && user.role_level < currentUserRole);
         
@@ -149,7 +342,7 @@ window.Pages.Admin = {
         nameInput.type = 'text';
         nameInput.className = 'user-name-input';
         nameInput.setAttribute('data-user-id', user.id);
-        nameInput.value = user.character_name;
+        nameInput.value = user.character_name || '';
         nameInput.style.width = '150px';
         nameInput.style.padding = '6px';
         nameInput.style.borderRadius = '4px';
@@ -163,7 +356,7 @@ window.Pages.Admin = {
         // Static ID
         const tdStaticId = document.createElement('td');
         tdStaticId.style.padding = '12px';
-        tdStaticId.textContent = user.static_id;
+        tdStaticId.textContent = user.static_id || '-';
         tr.appendChild(tdStaticId);
         
         // Discord
@@ -241,7 +434,7 @@ window.Pages.Admin = {
             id: user.id,
             nameInput,
             roleSelect,
-            originalName: user.character_name,
+            originalName: user.character_name || '',
             originalRole: user.role_level
         };
         
@@ -273,21 +466,18 @@ window.Pages.Admin = {
         const newRole = parseInt(roleSelect.value);
         const currentUserRole = Number(window.Auth.currentUser.role_level);
         
-        // Валидация
         if (isNaN(newRole) || newRole < 1 || newRole > 8) {
             Utils.showNotification('Недопустимое значение роли', 'error');
             roleSelect.value = tr.userData.originalRole;
             return;
         }
         
-        // Проверка прав: нельзя назначить роль выше или равную своей (для уровней 5-7)
         if (currentUserRole < 8 && newRole >= currentUserRole) {
             Utils.showNotification(`Вы не можете назначить роль ${Utils.getRoleName(newRole)} (${newRole}), так как ваша роль ${Utils.getRoleName(currentUserRole)} (${currentUserRole})`, 'error');
             roleSelect.value = tr.userData.originalRole;
             return;
         }
         
-        // Предупреждение при понижении своей роли
         if (userId === parseInt(window.Auth.currentUser.id) && newRole < currentUserRole) {
             const confirmed = confirm(`⚠️ ВНИМАНИЕ!\n\nВы понижаете свою роль с ${Utils.getRoleName(currentUserRole)} (${currentUserRole}) до ${Utils.getRoleName(newRole)} (${newRole}).\n\nВы можете потерять доступ к админ-панели. Продолжить?`);
             if (!confirmed) {
@@ -305,18 +495,19 @@ window.Pages.Admin = {
             
             Utils.showNotification(`Роль пользователя изменена на ${Utils.getRoleName(newRole)}!`, 'success');
             
-            // Обновляем кэш
             if (this.usersCache) {
                 const userIndex = this.usersCache.findIndex(u => u.id === userId);
                 if (userIndex !== -1) {
                     this.usersCache[userIndex].role_level = newRole;
                 }
+                const filteredIndex = this.filteredUsers.findIndex(u => u.id === userId);
+                if (filteredIndex !== -1) {
+                    this.filteredUsers[filteredIndex].role_level = newRole;
+                }
             }
             
-            // Обновляем сохраненное значение
             tr.userData.originalRole = newRole;
             
-            // Если изменили свою роль, обновляем данные и перезагружаем страницу
             if (userId === parseInt(window.Auth.currentUser.id)) {
                 await window.Auth.refreshUserData();
                 Utils.showNotification('Ваша роль обновлена! Страница будет перезагружена.', 'success');
@@ -346,14 +537,12 @@ window.Pages.Admin = {
         const newName = nameInput.value.trim();
         const oldName = tr.userData.originalName;
         
-        // Валидация
         if (!newName) {
             Utils.showNotification('Имя не может быть пустым', 'error');
             nameInput.value = oldName;
             return;
         }
         
-        // Простая валидация имени (буквы, цифры, пробелы)
         if (!/^[a-zA-Zа-яА-ЯёЁ0-9\s\-']+$/.test(newName)) {
             Utils.showNotification('Имя содержит недопустимые символы (только буквы, цифры, пробелы, дефис, апостроф)', 'error');
             nameInput.value = oldName;
@@ -374,23 +563,23 @@ window.Pages.Admin = {
             
             Utils.showNotification('Имя пользователя обновлено!', 'success');
             
-            // Обновляем кэш
             if (this.usersCache) {
                 const userIndex = this.usersCache.findIndex(u => u.id === userId);
                 if (userIndex !== -1) {
                     this.usersCache[userIndex].character_name = newName;
                 }
+                const filteredIndex = this.filteredUsers.findIndex(u => u.id === userId);
+                if (filteredIndex !== -1) {
+                    this.filteredUsers[filteredIndex].character_name = newName;
+                }
             }
             
-            // Обновляем сохраненное значение
             tr.userData.originalName = newName;
             
-            // Если изменили свое имя, обновляем данные пользователя
             if (userId === parseInt(window.Auth.currentUser.id)) {
                 await window.Auth.refreshUserData();
                 Utils.showNotification('Ваше имя обновлено!', 'success');
                 
-                // Обновляем отображение в шапке
                 const userNameSpan = document.querySelector('.user-name');
                 if (userNameSpan) {
                     userNameSpan.textContent = newName;
@@ -434,6 +623,9 @@ window.Pages.Admin = {
     
     clearCache() {
         this.usersCache = null;
+        this.filteredUsers = null;
         this.isLoading = false;
+        this.searchTerm = '';
+        this.currentSort = { column: 'id', direction: 'asc' };
     }
 };
