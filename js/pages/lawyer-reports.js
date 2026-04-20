@@ -470,117 +470,134 @@
         },
 
         // ====================== РЕЙТИНГ НЕДЕЛИ (ОБНОВЛЕННЫЙ СТИЛЬ) ======================
-        async renderRating(container) {
-            if (this.isLoadingRating) return;
-            this.isLoadingRating = true;
+        // ====================== РЕЙТИНГ НЕДЕЛИ (ИСПРАВЛЕННЫЙ) ======================
+async renderRating(container) {
+    if (this.isLoadingRating) return;
+    this.isLoadingRating = true;
 
-            container.innerHTML = '<div class="loader">Загрузка рейтинга...</div>';
+    container.innerHTML = '<div class="loader">Загрузка рейтинга...</div>';
 
-            try {
-                let token = sessionStorage.getItem('auth_token') || window.Auth?.token;
-                if (!token) throw new Error('Нет токена');
+    try {
+        let token = sessionStorage.getItem('auth_token') || window.Auth?.token;
+        if (!token) throw new Error('Нет токена');
 
-                const response = await fetch(`https://rfjmdevsnvirrxonhsny.supabase.co/functions/v1/lawyer-reports?rating=true&offset=${this.currentWeekOffset}`, {
-                    method: 'GET',
-                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
-                });
+        const response = await fetch(`https://rfjmdevsnvirrxonhsny.supabase.co/functions/v1/lawyer-reports?rating=true&offset=${this.currentWeekOffset}`, {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+        });
 
-                const result = await response.json();
+        const result = await response.json();
 
-                if (!result.success || !result.rating) {
-                    container.innerHTML = `<div class="error">Ошибка: ${result.error || 'Нет данных'}</div>`;
-                    return;
-                }
+        if (!result.success || !result.rating) {
+            container.innerHTML = `<div class="error">Ошибка: ${result.error || 'Нет данных'}</div>`;
+            return;
+        }
 
-                const rating = result.rating;
-                const weekStart = new Date(result.week_start).toLocaleDateString('ru-RU');
-                const weekEnd = new Date(result.week_end).toLocaleDateString('ru-RU');
+        const rating = result.rating;
+        const weekStart = new Date(result.week_start).toLocaleDateString('ru-RU');
+        const weekEnd = new Date(result.week_end).toLocaleDateString('ru-RU');
 
-                container.innerHTML = `
-                    <div class="rating-container-modern">
-                        <div class="rating-header-modern">
-                            <div class="rating-title-section">
-                                <div class="rating-icon">🏆</div>
-                                <div><h2>Рейтинг адвокатов</h2><p class="rating-subtitle">Недельная статистика</p></div>
-                            </div>
-                            <div class="week-navigation">
-                                <button class="week-nav-btn prev-week" id="prev-week-btn">← Предыдущая неделя</button>
-                                <div class="week-info">
-                                    <span class="week-date">${weekStart} - ${weekEnd}</span>
-                                    <span class="week-badge ${this.currentWeekOffset === 0 ? 'current-week' : 'other-week'}">
-                                        ${this.currentWeekOffset === 0 ? 'Текущая неделя' : `${Math.abs(this.currentWeekOffset)} недели назад`}
-                                    </span>
-                                </div>
-                                <button class="week-nav-btn next-week" id="next-week-btn" ${this.currentWeekOffset === 0 ? 'disabled' : ''}>Следующая неделя →</button>
-                            </div>
-                        </div>
-
-                        <div class="rating-rules-modern">
-                            <div class="rule-item"><span class="rule-icon">✅</span><span>Освободил</span><span class="rule-points">+1</span></div>
-                            <div class="rule-item"><span class="rule-icon">🔒</span><span>Посадил</span><span class="rule-points">+0.5</span></div>
-                            <div class="rule-item"><span class="rule-icon">👨‍⚖️</span><span>С юристом</span><span class="rule-points">+0.5</span></div>
-                        </div>
-
-                        ${rating.length === 0 ? `<div class="empty-state-modern">Нет данных за период</div>` : `
-                            <div class="rating-list-modern">
-                                <div class="top-three">
-                                    ${rating.slice(0,3).map((lawyer,i) => `
-                                        <div class="top-card ${i===0?'first':i===1?'second':'third'}">
-                                            <div class="top-rank">${i===0?'🥇':i===1?'🥈':'🥉'}</div>
-                                            <div class="top-avatar">
-                                                ${lawyer.avatar_url ? `<img src="${lawyer.avatar_url}" alt="avatar" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="top-avatar-placeholder" style="display:none">👤</div>` : `<div class="top-avatar-placeholder">👤</div>`}
-                                            </div>
-                                            <div class="top-name">${this.escapeHtml(lawyer.lawyer_name)}</div>
-                                            <div class="top-score">${lawyer.score.toFixed(1)}</div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                                ${rating.length > 3 ? `
-                                    <div class="rating-table-modern">
-                                        <div class="table-header">
-                                            <div class="col-rank">#</div><div class="col-lawyer">Адвокат</div><div class="col-id">Static ID</div>
-                                            <div class="col-calls">Вызовы</div><div class="col-released">Освободил</div><div class="col-jailed">Посадил</div>
-                                            <div class="col-jurist">С юристом</div><div class="col-score">Баллы</div>
-                                        </div>
-                                        ${rating.slice(3).map((lawyer,idx) => `
-                                            <div class="table-row">
-                                                <div class="col-rank">${idx+4}</div>
-                                                <div class="col-lawyer"><strong>${this.escapeHtml(lawyer.lawyer_name)}</strong></div>
-                                                <div class="col-id">${this.escapeHtml(lawyer.lawyer_static_id)}</div>
-                                                <div class="col-calls">${lawyer.total_calls}</div>
-                                                <div class="col-released">${lawyer.released_count}</div>
-                                                <div class="col-jailed">${lawyer.jailed_count}</div>
-                                                <div class="col-jurist">${lawyer.with_jurist_count}</div>
-                                                <div class="col-score">${lawyer.score.toFixed(1)}</div>
-                                            </div>
-                                        `).join('')}
-                                    </div>
-                                ` : ''}
-                            </div>
-                        `}
+        container.innerHTML = `
+            <div class="rating-container-modern">
+                <div class="rating-header-modern">
+                    <div class="rating-title-section">
+                        <div class="rating-icon">🏆</div>
+                        <div><h2>Рейтинг адвокатов</h2><p class="rating-subtitle">Недельная статистика</p></div>
                     </div>
-                `;
+                    <div class="week-navigation">
+                        <button class="week-nav-btn prev-week" id="prev-week-btn">← Предыдущая неделя</button>
+                        <div class="week-info">
+                            <span class="week-date">${weekStart} - ${weekEnd}</span>
+                            <span class="week-badge ${this.currentWeekOffset === 0 ? 'current-week' : 'other-week'}">
+                                ${this.currentWeekOffset === 0 ? 'Текущая неделя' : `${Math.abs(this.currentWeekOffset)} ${this.getWeekDeclension(Math.abs(this.currentWeekOffset))} назад`}
+                            </span>
+                        </div>
+                        <button class="week-nav-btn next-week" id="next-week-btn" ${this.currentWeekOffset === 0 ? 'disabled' : ''}>Следующая неделя →</button>
+                    </div>
+                </div>
 
-                // Обработчики навигации
-                document.getElementById('prev-week-btn')?.addEventListener('click', async () => {
+                <div class="rating-rules-modern">
+                    <div class="rule-item"><span class="rule-icon">✅</span><span>Освободил</span><span class="rule-points">+1</span></div>
+                    <div class="rule-item"><span class="rule-icon">🔒</span><span>Посадил</span><span class="rule-points">+0.5</span></div>
+                    <div class="rule-item"><span class="rule-icon">👨‍⚖️</span><span>С юристом</span><span class="rule-points">+0.5</span></div>
+                </div>
+
+                ${rating.length === 0 ? `<div class="empty-state-modern">Нет данных за период</div>` : `
+                    <div class="rating-list-modern">
+                        <div class="top-three">
+                            ${rating.slice(0,3).map((lawyer,i) => `
+                                <div class="top-card ${i===0?'first':i===1?'second':'third'}">
+                                    <div class="top-rank">${i===0?'🥇':i===1?'🥈':'🥉'}</div>
+                                    <div class="top-avatar">
+                                        ${lawyer.avatar_url ? `<img src="${lawyer.avatar_url}" alt="avatar" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="top-avatar-placeholder" style="display:none">👤</div>` : `<div class="top-avatar-placeholder">👤</div>`}
+                                    </div>
+                                    <div class="top-name">${this.escapeHtml(lawyer.lawyer_name)}</div>
+                                    <div class="top-score">${lawyer.score.toFixed(1)}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        ${rating.length > 3 ? `
+                            <div class="rating-table-modern">
+                                <div class="table-header">
+                                    <div class="col-rank">#</div><div class="col-lawyer">Адвокат</div><div class="col-id">Static ID</div>
+                                    <div class="col-calls">Вызовы</div><div class="col-released">Освободил</div><div class="col-jailed">Посадил</div>
+                                    <div class="col-jurist">С юристом</div><div class="col-score">Баллы</div>
+                                </div>
+                                ${rating.slice(3).map((lawyer,idx) => `
+                                    <div class="table-row">
+                                        <div class="col-rank">${idx+4}</div>
+                                        <div class="col-lawyer"><strong>${this.escapeHtml(lawyer.lawyer_name)}</strong></div>
+                                        <div class="col-id">${this.escapeHtml(lawyer.lawyer_static_id)}</div>
+                                        <div class="col-calls">${lawyer.total_calls}</div>
+                                        <div class="col-released">${lawyer.released_count}</div>
+                                        <div class="col-jailed">${lawyer.jailed_count}</div>
+                                        <div class="col-jurist">${lawyer.with_jurist_count}</div>
+                                        <div class="col-score">${lawyer.score.toFixed(1)}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `}
+            </div>
+        `;
+
+        // ИСПРАВЛЕННЫЕ обработчики навигации
+        const prevBtn = document.getElementById('prev-week-btn');
+        const nextBtn = document.getElementById('next-week-btn');
+        
+        if (prevBtn) {
+            prevBtn.addEventListener('click', async () => {
+                // Предыдущая неделя - увеличиваем offset (идём в прошлое)
+                this.currentWeekOffset++;
+                await this.renderRating(container);
+            });
+        }
+
+        if (nextBtn) {
+            nextBtn.addEventListener('click', async () => {
+                // Следующая неделя - уменьшаем offset (возвращаемся к текущей)
+                if (this.currentWeekOffset > 0) {
                     this.currentWeekOffset--;
                     await this.renderRating(container);
-                });
+                }
+            });
+        }
 
-                document.getElementById('next-week-btn')?.addEventListener('click', async () => {
-                    if (this.currentWeekOffset < 0) {
-                        this.currentWeekOffset++;
-                        await this.renderRating(container);
-                    }
-                });
+    } catch (error) {
+        console.error(error);
+        container.innerHTML = `<div class="error">Ошибка загрузки рейтинга: ${error.message}</div>`;
+    } finally {
+        this.isLoadingRating = false;
+    }
+},
 
-            } catch (error) {
-                console.error(error);
-                container.innerHTML = `<div class="error">Ошибка загрузки рейтинга: ${error.message}</div>`;
-            } finally {
-                this.isLoadingRating = false;
-            }
-        },
+// Вспомогательный метод для склонения слова "неделя"
+getWeekDeclension(number) {
+    if (number === 1) return 'неделю';
+    if (number >= 2 && number <= 4) return 'недели';
+    return 'недель';
+},
 
         // ====================== ВСЕ ОТЧЕТЫ ======================
         async renderAllReports(container) {
