@@ -1,4 +1,4 @@
-// js/api.js
+// js/api.js (обновленная версия)
 (function() {
     const SUPABASE_URL = 'https://rfjmdevsnvirrxonhsny.supabase.co';
     const EDGE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1`;
@@ -9,9 +9,10 @@
             return `${EDGE_FUNCTION_URL}/${cleanEndpoint}`;
         },
 
-        // Новая функция: fetch с повторными попытками и таймаутом
-        async _fetchWithRetry(url, options, maxRetries = 3, timeoutMs = 30000) {
+        async _fetchWithRetry(url, options, maxRetries = 3, timeoutMs = 60000) {
             let lastError;
+            let delay = 1000; // начальная задержка 1 секунда
+            
             for (let attempt = 0; attempt < maxRetries; attempt++) {
                 try {
                     const controller = new AbortController();
@@ -23,23 +24,31 @@
                     });
                     clearTimeout(timeoutId);
                     
-                    // При серверных ошибках (5xx) пробуем ещё раз
-                    if (!response.ok && attempt < maxRetries - 1 && response.status >= 500) {
-                        await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+                    // При 503 (сервис недоступен) пробуем ещё раз
+                    if (response.status === 503 && attempt < maxRetries - 1) {
+                        console.warn(`Attempt ${attempt + 1}: Service unavailable (503), retrying in ${delay}ms...`);
+                        await new Promise(r => setTimeout(r, delay));
+                        delay *= 2; // exponential backoff
                         continue;
                     }
+                    
+                    // При 5xx ошибках пробуем ещё раз
+                    if (response.status >= 500 && response.status < 600 && attempt < maxRetries - 1) {
+                        console.warn(`Attempt ${attempt + 1}: Server error ${response.status}, retrying in ${delay}ms...`);
+                        await new Promise(r => setTimeout(r, delay));
+                        delay *= 2;
+                        continue;
+                    }
+                    
                     return response;
                 } catch (error) {
                     lastError = error;
-                    if (error.name === 'AbortError') {
-                        console.warn(`Attempt ${attempt + 1}: timeout`);
-                    } else if (error.message === 'Failed to fetch' || error.message.includes('ERR_CONNECTION_RESET')) {
-                        console.warn(`Attempt ${attempt + 1}: network error`);
-                    } else {
-                        throw error;
+                    console.warn(`Attempt ${attempt + 1} failed:`, error.message);
+                    
+                    if (attempt < maxRetries - 1) {
+                        await new Promise(r => setTimeout(r, delay));
+                        delay *= 2;
                     }
-                    if (attempt === maxRetries - 1) throw lastError;
-                    await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
                 }
             }
             throw lastError;
@@ -64,6 +73,7 @@
                 }
                 return data;
             } catch (error) {
+                console.error(`Request failed for ${endpoint}:`, error);
                 throw error;
             }
         },
@@ -160,7 +170,7 @@
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: formData
-            }, 3, 45000);
+            }, 3, 90000); // 90 секунд таймаут для файлов
             
             let data;
             const contentType = response.headers.get('content-type');
@@ -296,7 +306,6 @@
             });
         },
 
-        // Улучшенная отправка отчёта с файлами (с retry)
         async sendLawyerReportWithFiles(token, formData) {
             if (!token) throw new Error('Токен не предоставлен');
             const url = this._buildUrl('send-lawyer-report');
@@ -304,7 +313,8 @@
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: formData
-            }, 3, 45000);
+            }, 3, 90000); // 90 секунд таймаут
+            
             let data;
             const contentType = response.headers.get('content-type');
             if (contentType && contentType.includes('application/json')) {
