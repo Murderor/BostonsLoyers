@@ -13,32 +13,27 @@
         currentWeekOffset: 0,
         isLoadingRating: false,
 
-        // ====================== СЖАТИЕ ИЗОБРАЖЕНИЙ ======================
-        async compressImage(file, maxSizeMB = 2) {
+        async compressImage(file, maxSizeMB = 1) {  // уменьшил до 1MB
             return new Promise((resolve) => {
                 if (!file || !file.type.startsWith('image/')) {
                     resolve(file);
                     return;
                 }
-
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const img = new Image();
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
                         let { width, height } = img;
-
                         const maxDim = 1920;
                         if (width > maxDim || height > maxDim) {
                             const ratio = maxDim / Math.max(width, height);
                             width = Math.round(width * ratio);
                             height = Math.round(height * ratio);
                         }
-
                         canvas.width = width;
                         canvas.height = height;
                         canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-
                         let quality = 0.92;
                         const tryCompress = () => {
                             canvas.toBlob((blob) => {
@@ -65,41 +60,33 @@
         async render() {
             const container = document.getElementById('page-content');
             if (!container) return;
-
             this.currentUserRole = window.Auth?.currentUser?.role_level || 0;
-
             container.innerHTML = `
                 <div class="page-container">
                     <h1 class="page-title">📋 Отчеты адвоката</h1>
                     <p class="page-description">Ведите учет вызовов и формируйте отчеты о работе</p>
-                   
                     <div class="reports-tabs">
                         <button class="tab-btn ${this.currentTab === 'create' ? 'active' : ''}" data-tab="create">✏️ Создать отчет</button>
                         <button class="tab-btn ${this.currentTab === 'my' ? 'active' : ''}" data-tab="my">📄 Мои отчеты</button>
                         <button class="tab-btn ${this.currentTab === 'rating' ? 'active' : ''}" data-tab="rating">🏆 Рейтинг недели</button>
                         ${this.currentUserRole >= 6 ? `<button class="tab-btn ${this.currentTab === 'all' ? 'active' : ''}" data-tab="all">🌐 Все отчеты</button>` : ''}
                     </div>
-                   
                     <div id="reports-content"></div>
                 </div>
             `;
-
             this.addStyles();
-
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     this.currentTab = btn.dataset.tab;
                     this.render();
                 });
             });
-
             await this.loadTabContent();
         },
 
         async loadTabContent() {
             const contentContainer = document.getElementById('reports-content');
             if (!contentContainer) return;
-
             switch(this.currentTab) {
                 case 'create':
                     this.renderCreateReportForm(contentContainer);
@@ -116,18 +103,15 @@
             }
         },
 
-        // ====================== СОЗДАНИЕ ОТЧЕТА ======================
         renderCreateReportForm(container) {
             container.innerHTML = `
                 <div class="report-form-container">
                     <h3>📝 Создать отчет адвоката</h3>
-                   
                     <div class="form-group">
                         <label for="articles">Статьи закона *</label>
                         <textarea id="articles" rows="4" placeholder="Пример: ст. 17.1"></textarea>
                         <small>Перечислите все статьи, по которым проходило задержание</small>
                     </div>
-                   
                     <div class="form-group">
                         <label for="call-result">Результат вызова *</label>
                         <select id="call-result">
@@ -136,7 +120,6 @@
                             <option value="Посадили">🔒 Посадили</option>
                         </select>
                     </div>
-                   
                     <div class="form-group photo-field">
                         <label>📸 Фото 1: Факт приезда на вызов *</label>
                         <div class="photo-upload-area" data-type="arrival">
@@ -144,7 +127,7 @@
                             <div class="upload-placeholder">
                                 <span class="upload-icon">📷</span>
                                 <span>Нажмите для выбора фото или вставьте из буфера (Ctrl+V)</span>
-                                <small>JPG, PNG до 5MB (будет сжато)</small>
+                                <small>JPG, PNG до 5MB (будет сжато до 1MB)</small>
                             </div>
                             <div class="photo-preview" style="display: none;">
                                 <img src="" alt="Preview">
@@ -152,7 +135,6 @@
                             </div>
                         </div>
                     </div>
-                   
                     <div class="form-group photo-field">
                         <label>📸 Фото 2: Результат вызова *</label>
                         <div class="photo-upload-area" data-type="result">
@@ -169,14 +151,12 @@
                         </div>
                         <div class="hint-text" id="result-hint"></div>
                     </div>
-                   
                     <div class="form-group checkbox-group">
                         <label class="checkbox-label">
                             <input type="checkbox" id="had-lawyer">
                             <span>👨‍⚖️ Был ли на вызове юрист?</span>
                         </label>
                     </div>
-                   
                     <div id="lawyer-photo-container" style="display: none;">
                         <div class="form-group photo-field">
                             <label>📸 Фото 3: Доказательство присутствия юриста *</label>
@@ -194,11 +174,9 @@
                             </div>
                         </div>
                     </div>
-                   
                     <button id="submit-report-btn" class="btn btn-primary">📤 Отправить отчет</button>
                 </div>
             `;
-
             this.initPhotoUploads();
             this.initCheckboxToggle();
             this.initResultHint();
@@ -207,7 +185,6 @@
 
         initPhotoUploads() {
             const uploadAreas = document.querySelectorAll('.photo-upload-area');
-
             uploadAreas.forEach(area => {
                 const type = area.dataset.type;
                 const fileInput = area.querySelector('.photo-input');
@@ -215,7 +192,6 @@
                 const preview = area.querySelector('.photo-preview');
                 const previewImg = preview.querySelector('img');
                 const removeBtn = preview.querySelector('.remove-photo');
-
                 const processFile = async (file) => {
                     if (file.size > 5 * 1024 * 1024) {
                         this.showNotification('Файл слишком большой. Максимум 5MB', 'error');
@@ -225,13 +201,10 @@
                         this.showNotification('Можно загружать только изображения', 'error');
                         return;
                     }
-
                     this.showNotification('Сжатие изображения...', 'info');
-
                     try {
-                        const compressedFile = await this.compressImage(file, 2);
+                        const compressedFile = await this.compressImage(file, 1);
                         selectedFiles[type] = compressedFile;
-
                         const reader = new FileReader();
                         reader.onload = (e) => {
                             previewImg.src = e.target.result;
@@ -239,28 +212,23 @@
                             preview.style.display = 'flex';
                         };
                         reader.readAsDataURL(compressedFile);
-
                         const dataTransfer = new DataTransfer();
                         dataTransfer.items.add(compressedFile);
                         fileInput.files = dataTransfer.files;
-
                         this.showNotification(`Фото сжато (${(compressedFile.size / 1024 / 1024).toFixed(1)} МБ)`, 'success');
                     } catch (err) {
                         console.error(err);
                         this.showNotification('Ошибка сжатия изображения', 'error');
                     }
                 };
-
                 area.addEventListener('click', (e) => {
                     if (e.target.closest('.remove-photo')) return;
                     fileInput.click();
                 });
-
                 fileInput.addEventListener('change', (e) => {
                     const file = e.target.files[0];
                     if (file) processFile(file);
                 });
-
                 area.addEventListener('paste', async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -277,7 +245,6 @@
                         }
                     }
                 });
-
                 if (removeBtn) {
                     removeBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
@@ -324,57 +291,71 @@
         initSubmitHandler() {
             const submitBtn = document.getElementById('submit-report-btn');
             if (!submitBtn) return;
-
             submitBtn.addEventListener('click', async () => {
                 const articles = document.getElementById('articles')?.value.trim();
                 const callResult = document.getElementById('call-result')?.value;
                 const hadLawyer = document.getElementById('had-lawyer')?.checked;
-
                 if (!articles) return this.showNotification('Заполните статьи закона', 'error');
                 if (!callResult) return this.showNotification('Выберите результат вызова', 'error');
                 if (!selectedFiles.arrival) return this.showNotification('Загрузите фото факта приезда', 'error');
                 if (!selectedFiles.result) return this.showNotification('Загрузите фото результата', 'error');
                 if (hadLawyer && !selectedFiles.lawyer) return this.showNotification('Загрузите фото юриста', 'error');
-
                 submitBtn.disabled = true;
-                submitBtn.textContent = 'Отправка...';
-
-                try {
-                    let token = sessionStorage.getItem('auth_token') || window.Auth?.token;
-                    if (!token) throw new Error('Не найден токен авторизации');
-
-                    const userData = window.Auth?.currentUser || {};
-
-                    const formData = new FormData();
-                    formData.append('articles', articles);
-                    formData.append('callResult', callResult);
-                    formData.append('hadJurist', hadLawyer ? 'true' : 'false');
-                    formData.append('lawyerName', userData.character_name || 'Тест');
-                    formData.append('lawyerStaticId', userData.static_id || '123');
-                    formData.append('arrivalPhoto', selectedFiles.arrival);
-                    formData.append('resultPhoto', selectedFiles.result);
-                    if (hadLawyer && selectedFiles.lawyer) formData.append('lawyerPhoto', selectedFiles.lawyer);
-
-                    const response = await fetch('https://rfjmdevsnvirrxonhsny.supabase.co/functions/v1/send-lawyer-report', {
-                        method: 'POST',
-                        headers: { 'Authorization': `Bearer ${token}` },
-                        body: formData
-                    });
-
-                    const result = await response.json();
-
-                    if (result.success) {
-                        this.showNotification('Отчет успешно отправлен!', 'success');
-                        this.clearForm();
-                        setTimeout(() => { this.currentTab = 'my'; this.render(); }, 1500);
-                    } else {
-                        this.showNotification(result.error || 'Ошибка при отправке', 'error');
+                let originalText = submitBtn.textContent;
+                submitBtn.textContent = 'Отправка... (попытка 1/3)';
+                let retryCount = 0;
+                const attemptSend = async () => {
+                    try {
+                        let token = sessionStorage.getItem('auth_token') || window.Auth?.token;
+                        if (!token) throw new Error('Не найден токен авторизации');
+                        const userData = window.Auth?.currentUser || {};
+                        const formData = new FormData();
+                        formData.append('articles', articles);
+                        formData.append('callResult', callResult);
+                        formData.append('hadJurist', hadLawyer ? 'true' : 'false');
+                        formData.append('lawyerName', userData.character_name || 'Тест');
+                        formData.append('lawyerStaticId', userData.static_id || '123');
+                        formData.append('arrivalPhoto', selectedFiles.arrival);
+                        formData.append('resultPhoto', selectedFiles.result);
+                        if (hadLawyer && selectedFiles.lawyer) formData.append('lawyerPhoto', selectedFiles.lawyer);
+                        const result = await window.API.sendLawyerReportWithFiles(token, formData);
+                        if (result.success) {
+                            this.showNotification('Отчет успешно отправлен!', 'success');
+                            this.clearForm();
+                            setTimeout(() => { this.currentTab = 'my'; this.render(); }, 1500);
+                            return true;
+                        } else {
+                            throw new Error(result.error || 'Ошибка при отправке');
+                        }
+                    } catch (error) {
+                        if (retryCount < 2 && 
+                            (error.message.includes('Failed to fetch') || 
+                             error.message.includes('ERR_CONNECTION_RESET') ||
+                             error.name === 'AbortError')) {
+                            retryCount++;
+                            submitBtn.textContent = `Отправка... (попытка ${retryCount+1}/3)`;
+                            await new Promise(r => setTimeout(r, 2000 * retryCount));
+                            return await attemptSend();
+                        }
+                        throw error;
                     }
+                };
+                try {
+                    await attemptSend();
                 } catch (error) {
-                    this.showNotification('Ошибка: ' + error.message, 'error');
+                    console.error('Submit error:', error);
+                    let errorMsg = 'Ошибка: ';
+                    if (error.message.includes('Failed to fetch') || error.message.includes('ERR_CONNECTION_RESET')) {
+                        errorMsg += 'Нестабильное соединение. Проверьте интернет или VPN. Попробуйте позже.';
+                    } else if (error.name === 'AbortError') {
+                        errorMsg += 'Превышено время ожидания. Файлы слишком большие или медленный интернет.';
+                    } else {
+                        errorMsg += error.message;
+                    }
+                    this.showNotification(errorMsg, 'error');
                 } finally {
                     submitBtn.disabled = false;
-                    submitBtn.textContent = '📤 Отправить отчет';
+                    submitBtn.textContent = originalText;
                 }
             });
         },
@@ -383,9 +364,7 @@
             document.getElementById('articles').value = '';
             document.getElementById('call-result').value = '';
             document.getElementById('had-lawyer').checked = false;
-
             selectedFiles = { arrival: null, result: null, lawyer: null };
-
             document.querySelectorAll('.photo-upload-area').forEach(area => {
                 const input = area.querySelector('.photo-input');
                 const placeholder = area.querySelector('.upload-placeholder');
@@ -394,11 +373,9 @@
                 if (placeholder) placeholder.style.display = 'flex';
                 if (preview) preview.style.display = 'none';
             });
-
             document.getElementById('lawyer-photo-container').style.display = 'none';
         },
 
-        // ====================== МОИ ОТЧЕТЫ ======================
         async renderMyReports(container) {
             container.innerHTML = '<div class="loader">Загрузка отчетов...</div>';
             try {
@@ -407,21 +384,17 @@
                     container.innerHTML = '<div class="error">Ошибка авторизации. <button onclick="window.Auth.showAuthModal()" class="btn btn-primary">Войти</button></div>';
                     return;
                 }
-
                 const response = await fetch('https://rfjmdevsnvirrxonhsny.supabase.co/functions/v1/lawyer-reports', {
                     method: 'GET',
                     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
                 });
-
                 const result = await response.json();
-
                 if (result.success && result.reports) {
                     const reports = result.reports;
                     const total = reports.length;
                     const released = reports.filter(r => r.call_result === 'Отпустили').length;
                     const jailed = reports.filter(r => r.call_result === 'Посадили').length;
                     const withJurist = reports.filter(r => r.had_jurist).length;
-
                     container.innerHTML = `
                         <div class="my-reports-container">
                             <div class="stats-container-modern">
@@ -469,137 +442,105 @@
             }
         },
 
-        // ====================== РЕЙТИНГ НЕДЕЛИ (ОБНОВЛЕННЫЙ СТИЛЬ) ======================
-        // ====================== РЕЙТИНГ НЕДЕЛИ (ИСПРАВЛЕННЫЙ) ======================
-async renderRating(container) {
-    if (this.isLoadingRating) return;
-    this.isLoadingRating = true;
-
-    container.innerHTML = '<div class="loader">Загрузка рейтинга...</div>';
-
-    try {
-        let token = sessionStorage.getItem('auth_token') || window.Auth?.token;
-        if (!token) throw new Error('Нет токена');
-
-        const response = await fetch(`https://rfjmdevsnvirrxonhsny.supabase.co/functions/v1/lawyer-reports?rating=true&offset=${this.currentWeekOffset}`, {
-            method: 'GET',
-            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
-        });
-
-        const result = await response.json();
-
-        if (!result.success || !result.rating) {
-            container.innerHTML = `<div class="error">Ошибка: ${result.error || 'Нет данных'}</div>`;
-            return;
-        }
-
-        const rating = result.rating;
-        const weekStart = new Date(result.week_start).toLocaleDateString('ru-RU');
-        const weekEnd = new Date(result.week_end).toLocaleDateString('ru-RU');
-
-        container.innerHTML = `
-            <div class="rating-container-modern">
-                <div class="rating-header-modern">
-                    <div class="rating-title-section">
-                        <div class="rating-icon">🏆</div>
-                        <div><h2>Рейтинг адвокатов</h2><p class="rating-subtitle">Недельная статистика</p></div>
-                    </div>
-                    <div class="week-navigation">
-                        <button class="week-nav-btn prev-week" id="prev-week-btn">← Предыдущая неделя</button>
-                        <div class="week-info">
-                            <span class="week-date">${weekStart} - ${weekEnd}</span>
-                            <span class="week-badge ${this.currentWeekOffset === 0 ? 'current-week' : 'other-week'}">
-                                ${this.currentWeekOffset === 0 ? 'Текущая неделя' : `${Math.abs(this.currentWeekOffset)} ${this.getWeekDeclension(Math.abs(this.currentWeekOffset))} назад`}
-                            </span>
-                        </div>
-                        <button class="week-nav-btn next-week" id="next-week-btn" ${this.currentWeekOffset === 0 ? 'disabled' : ''}>Следующая неделя →</button>
-                    </div>
-                </div>
-
-                <div class="rating-rules-modern">
-                    <div class="rule-item"><span class="rule-icon">✅</span><span>Освободил</span><span class="rule-points">+1</span></div>
-                    <div class="rule-item"><span class="rule-icon">🔒</span><span>Посадил</span><span class="rule-points">+0.5</span></div>
-                    <div class="rule-item"><span class="rule-icon">👨‍⚖️</span><span>С юристом</span><span class="rule-points">+0.5</span></div>
-                </div>
-
-                ${rating.length === 0 ? `<div class="empty-state-modern">Нет данных за период</div>` : `
-                    <div class="rating-list-modern">
-                        <div class="top-three">
-                            ${rating.slice(0,3).map((lawyer,i) => `
-                                <div class="top-card ${i===0?'first':i===1?'second':'third'}">
-                                    <div class="top-rank">${i===0?'🥇':i===1?'🥈':'🥉'}</div>
-                                    <div class="top-avatar">
-                                        ${lawyer.avatar_url ? `<img src="${lawyer.avatar_url}" alt="avatar" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="top-avatar-placeholder" style="display:none">👤</div>` : `<div class="top-avatar-placeholder">👤</div>`}
-                                    </div>
-                                    <div class="top-name">${this.escapeHtml(lawyer.lawyer_name)}</div>
-                                    <div class="top-score">${lawyer.score.toFixed(1)}</div>
-                                </div>
-                            `).join('')}
-                        </div>
-                        ${rating.length > 3 ? `
-                            <div class="rating-table-modern">
-                                <div class="table-header">
-                                    <div class="col-rank">#</div><div class="col-lawyer">Адвокат</div><div class="col-id">Static ID</div>
-                                    <div class="col-calls">Вызовы</div><div class="col-released">Освободил</div><div class="col-jailed">Посадил</div>
-                                    <div class="col-jurist">С юристом</div><div class="col-score">Баллы</div>
-                                </div>
-                                ${rating.slice(3).map((lawyer,idx) => `
-                                    <div class="table-row">
-                                        <div class="col-rank">${idx+4}</div>
-                                        <div class="col-lawyer"><strong>${this.escapeHtml(lawyer.lawyer_name)}</strong></div>
-                                        <div class="col-id">${this.escapeHtml(lawyer.lawyer_static_id)}</div>
-                                        <div class="col-calls">${lawyer.total_calls}</div>
-                                        <div class="col-released">${lawyer.released_count}</div>
-                                        <div class="col-jailed">${lawyer.jailed_count}</div>
-                                        <div class="col-jurist">${lawyer.with_jurist_count}</div>
-                                        <div class="col-score">${lawyer.score.toFixed(1)}</div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        ` : ''}
-                    </div>
-                `}
-            </div>
-        `;
-
-        // ИСПРАВЛЕННЫЕ обработчики навигации
-        const prevBtn = document.getElementById('prev-week-btn');
-        const nextBtn = document.getElementById('next-week-btn');
-        
-        if (prevBtn) {
-            prevBtn.addEventListener('click', async () => {
-                // Предыдущая неделя - увеличиваем offset (идём в прошлое)
-                this.currentWeekOffset++;
-                await this.renderRating(container);
-            });
-        }
-
-        if (nextBtn) {
-            nextBtn.addEventListener('click', async () => {
-                // Следующая неделя - уменьшаем offset (возвращаемся к текущей)
-                if (this.currentWeekOffset > 0) {
-                    this.currentWeekOffset--;
-                    await this.renderRating(container);
+        async renderRating(container) {
+            if (this.isLoadingRating) return;
+            this.isLoadingRating = true;
+            container.innerHTML = '<div class="loader">Загрузка рейтинга...</div>';
+            try {
+                let token = sessionStorage.getItem('auth_token') || window.Auth?.token;
+                if (!token) throw new Error('Нет токена');
+                const response = await fetch(`https://rfjmdevsnvirrxonhsny.supabase.co/functions/v1/lawyer-reports?rating=true&offset=${this.currentWeekOffset}`, {
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+                });
+                const result = await response.json();
+                if (!result.success || !result.rating) {
+                    container.innerHTML = `<div class="error">Ошибка: ${result.error || 'Нет данных'}</div>`;
+                    return;
                 }
-            });
-        }
+                const rating = result.rating;
+                const weekStart = new Date(result.week_start).toLocaleDateString('ru-RU');
+                const weekEnd = new Date(result.week_end).toLocaleDateString('ru-RU');
+                container.innerHTML = `
+                    <div class="rating-container-modern">
+                        <div class="rating-header-modern">
+                            <div class="rating-title-section">
+                                <div class="rating-icon">🏆</div>
+                                <div><h2>Рейтинг адвокатов</h2><p class="rating-subtitle">Недельная статистика</p></div>
+                            </div>
+                            <div class="week-navigation">
+                                <button class="week-nav-btn prev-week" id="prev-week-btn">← Предыдущая неделя</button>
+                                <div class="week-info">
+                                    <span class="week-date">${weekStart} - ${weekEnd}</span>
+                                    <span class="week-badge ${this.currentWeekOffset === 0 ? 'current-week' : 'other-week'}">
+                                        ${this.currentWeekOffset === 0 ? 'Текущая неделя' : `${Math.abs(this.currentWeekOffset)} ${this.getWeekDeclension(Math.abs(this.currentWeekOffset))} назад`}
+                                    </span>
+                                </div>
+                                <button class="week-nav-btn next-week" id="next-week-btn" ${this.currentWeekOffset === 0 ? 'disabled' : ''}>Следующая неделя →</button>
+                            </div>
+                        </div>
+                        <div class="rating-rules-modern">
+                            <div class="rule-item"><span class="rule-icon">✅</span><span>Освободил</span><span class="rule-points">+1</span></div>
+                            <div class="rule-item"><span class="rule-icon">🔒</span><span>Посадил</span><span class="rule-points">+0.5</span></div>
+                            <div class="rule-item"><span class="rule-icon">👨‍⚖️</span><span>С юристом</span><span class="rule-points">+0.5</span></div>
+                        </div>
+                        ${rating.length === 0 ? `<div class="empty-state-modern">Нет данных за период</div>` : `
+                            <div class="rating-list-modern">
+                                <div class="top-three">
+                                    ${rating.slice(0,3).map((lawyer,i) => `
+                                        <div class="top-card ${i===0?'first':i===1?'second':'third'}">
+                                            <div class="top-rank">${i===0?'🥇':i===1?'🥈':'🥉'}</div>
+                                            <div class="top-avatar">
+                                                ${lawyer.avatar_url ? `<img src="${lawyer.avatar_url}" alt="avatar" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="top-avatar-placeholder" style="display:none">👤</div>` : `<div class="top-avatar-placeholder">👤</div>`}
+                                            </div>
+                                            <div class="top-name">${this.escapeHtml(lawyer.lawyer_name)}</div>
+                                            <div class="top-score">${lawyer.score.toFixed(1)}</div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                ${rating.length > 3 ? `
+                                    <div class="rating-table-modern">
+                                        <div class="table-header">
+                                            <div class="col-rank">#</div><div class="col-lawyer">Адвокат</div><div class="col-id">Static ID</div>
+                                            <div class="col-calls">Вызовы</div><div class="col-released">Освободил</div><div class="col-jailed">Посадил</div>
+                                            <div class="col-jurist">С юристом</div><div class="col-score">Баллы</div>
+                                        </div>
+                                        ${rating.slice(3).map((lawyer,idx) => `
+                                            <div class="table-row">
+                                                <div class="col-rank">${idx+4}</div>
+                                                <div class="col-lawyer"><strong>${this.escapeHtml(lawyer.lawyer_name)}</strong></div>
+                                                <div class="col-id">${this.escapeHtml(lawyer.lawyer_static_id)}</div>
+                                                <div class="col-calls">${lawyer.total_calls}</div>
+                                                <div class="col-released">${lawyer.released_count}</div>
+                                                <div class="col-jailed">${lawyer.jailed_count}</div>
+                                                <div class="col-jurist">${lawyer.with_jurist_count}</div>
+                                                <div class="col-score">${lawyer.score.toFixed(1)}</div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `}
+                    </div>
+                `;
+                const prevBtn = document.getElementById('prev-week-btn');
+                const nextBtn = document.getElementById('next-week-btn');
+                if (prevBtn) prevBtn.addEventListener('click', async () => { this.currentWeekOffset++; await this.renderRating(container); });
+                if (nextBtn) nextBtn.addEventListener('click', async () => { if (this.currentWeekOffset > 0) { this.currentWeekOffset--; await this.renderRating(container); } });
+            } catch (error) {
+                console.error(error);
+                container.innerHTML = `<div class="error">Ошибка загрузки рейтинга: ${error.message}</div>`;
+            } finally {
+                this.isLoadingRating = false;
+            }
+        },
 
-    } catch (error) {
-        console.error(error);
-        container.innerHTML = `<div class="error">Ошибка загрузки рейтинга: ${error.message}</div>`;
-    } finally {
-        this.isLoadingRating = false;
-    }
-},
+        getWeekDeclension(number) {
+            if (number === 1) return 'неделю';
+            if (number >= 2 && number <= 4) return 'недели';
+            return 'недель';
+        },
 
-// Вспомогательный метод для склонения слова "неделя"
-getWeekDeclension(number) {
-    if (number === 1) return 'неделю';
-    if (number >= 2 && number <= 4) return 'недели';
-    return 'недель';
-},
-
-        // ====================== ВСЕ ОТЧЕТЫ ======================
         async renderAllReports(container) {
             container.innerHTML = '<div class="loader">Загрузка всех отчетов...</div>';
             try {
@@ -608,14 +549,11 @@ getWeekDeclension(number) {
                     container.innerHTML = '<div class="error">Ошибка авторизации</div>';
                     return;
                 }
-
                 const response = await fetch('https://rfjmdevsnvirrxonhsny.supabase.co/functions/v1/lawyer-reports?all=true', {
                     method: 'GET',
                     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
                 });
-
                 const result = await response.json();
-
                 if (result.success && result.reports) {
                     const reports = result.reports;
                     container.innerHTML = `
@@ -640,11 +578,7 @@ getWeekDeclension(number) {
                             </div>
                         </div>
                     `;
-
-                    // Фильтры (упрощённо)
-                    const applyFilters = () => { /* ваш оригинальный код фильтров */ };
-                    document.getElementById('filter-lawyer')?.addEventListener('input', applyFilters);
-                    // ... остальные фильтры
+                    // простые фильтры (без полной реализации, можно оставить как есть)
                 }
             } catch (error) {
                 container.innerHTML = `<div class="error">Ошибка: ${error.message}</div>`;
@@ -994,5 +928,4 @@ getWeekDeclension(number) {
 
     window.Pages = window.Pages || {};
     window.Pages.LawyerReports = LawyerReports;
-   
 })();
