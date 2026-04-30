@@ -154,14 +154,25 @@
         },
 
         async createAppeal(token, appealType, details = {}) {
-            if (!token) throw new Error('Токен не предоставлен');
-            if (!appealType) throw new Error('Тип обращения не указан');
-            return this.request('create-appeal', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ appealType, details })
-            });
-        },
+    if (!token) throw new Error('Токен не предоставлен');
+    if (!appealType) throw new Error('Тип обращения не указан');
+    
+    const response = await this.request('create-appeal', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ appealType, details })
+    });
+    
+    console.log('createAppeal response:', response);
+    
+    // Нормализуем ответ для единообразной структуры
+    return {
+        success: response.success === true,
+        appeal_id: response.appeal_id || response.appeal?.id || response.id,
+        appeal: response.appeal,
+        message: response.message || 'Обращение создано'
+    };
+},
 
         async createAppealWithFiles(token, formData) {
             if (!token) throw new Error('Токен не предоставлен');
@@ -265,6 +276,41 @@
             });
         },
 
+        // Получение вопросов экзамена
+async getExamQuestions(token) {
+    const response = await fetch(`${this.baseUrl}/functions/v1/exam-questions`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!response.ok) throw new Error('Failed to load exam questions');
+    return response.json();
+},
+
+// Отправка результатов экзамена
+async submitExam(token, results) {
+    const response = await fetch(`${this.baseUrl}/functions/v1/submit-exam`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(results)
+    });
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to submit exam');
+    }
+    return response.json();
+},
+
+// Получение истории экзаменов
+async getExamHistory(token) {
+    const response = await fetch(`${this.baseUrl}/functions/v1/get-exam-history`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!response.ok) throw new Error('Failed to load exam history');
+    return response.json();
+},
+
         async getDiscordInfo(discordId) {
             if (!discordId) return null;
             return { id: discordId };
@@ -305,6 +351,53 @@
                 headers: { 'Authorization': `Bearer ${token}` }
             });
         },
+
+        // Отправка уведомления о заявке на повышение до старшего адвоката
+async sendSeniorPromotionNotification(token, appealId, appealData) {
+    try {
+        console.log('sendSeniorPromotionNotification called with appealId:', appealId);
+        
+        if (!token) {
+            throw new Error('No auth token provided');
+        }
+        
+        // Используем правильный URL (как в других методах)
+        const url = this._buildUrl('senior-promotion-notification');
+        console.log('Request URL:', url);
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ appealId, appealData })
+        });
+        
+        console.log('Notification response status:', response.status);
+        
+        if (!response.ok) {
+            let errorMessage = `HTTP ${response.status}`;
+            try {
+                const errorData = await response.json();
+                console.error('Error response data:', errorData);
+                errorMessage = errorData.error || errorData.message || errorMessage;
+            } catch (e) {
+                const errorText = await response.text();
+                console.error('Error response text:', errorText);
+                errorMessage = errorText || errorMessage;
+            }
+            throw new Error(errorMessage);
+        }
+        
+        const result = await response.json();
+        console.log('Notification result:', result);
+        return result;
+    } catch (error) {
+        console.error('Error in sendSeniorPromotionNotification:', error);
+        throw error;
+    }
+},
 
         async sendLawyerReportWithFiles(token, formData) {
             if (!token) throw new Error('Токен не предоставлен');

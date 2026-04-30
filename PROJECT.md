@@ -1,4 +1,4 @@
-Вот обновленный `PROJECT.md` с добавленной информацией о Discord OAuth через попап и решением проблемы с привязкой:
+Вот обновленный `PROJECT.md` с добавленной информацией о повышении до старшего адвоката:
 
 ```markdown
 # Проект: Сайт адвокатуры для GTA 5 RP
@@ -27,7 +27,7 @@
 │       ├── home.js       # Главная страница
 │       ├── profile.js    # Профиль пользователя
 │       ├── lawyers.js    # Список юристов
-│       ├── appeals.js    # Обращения (требует Discord)
+│       ├── appeals.js    # Обращения + Письменный экзамен + Повышение до старшего адвоката
 │       ├── senior.js     # Старший состав (роль 5+)
 │       ├── admin.js      # Админ-панель (роль 6+)
 │       └── lawyer-reports.js  # Отчеты адвоката (роль 4+) + Рейтинг
@@ -41,13 +41,17 @@
         ├── update-name/
         ├── profile/
         ├── discord/                  # OAuth + отвязка Discord
-        ├── create-appeal/            # С поддержкой файлов
+        ├── create-appeal/            # С поддержкой файлов + все типы обращений
         ├── get-appeals/
         ├── update-appeal-status/
         ├── oral-exam-notification/
         ├── send-exam-result/         # Уведомление о результате экзамена
         ├── lawyer-reports/           # CRUD для отчетов + Рейтинг
-        └── send-lawyer-report/       # Отправка отчета в Discord с фото
+        ├── send-lawyer-report/       # Отправка отчета в Discord с фото
+        ├── exam-questions/           # Получение вопросов для письменного экзамена
+        ├── submit-exam/              # Отправка результатов письменного экзамена
+        ├── get-exam-history/         # История попыток экзамена
+        └── senior-promotion-notification/  # Уведомление о заявке на повышение до старшего адвоката
 ```
 
 ## Визуальное оформление
@@ -68,19 +72,6 @@
 - **Название**: Коллегия государственных адвокатов
 - **Подзаголовок**: Majestic RP | Boston (курсив, золотой цвет)
 - **Герб**: `assets/logo.png` (отображается рядом с названием и в прелоадере)
-
-### Прелоадер
-- Большой вращающийся герб с анимацией
-- Пульсирующее кольцо вокруг герба
-- Анимированный текст с золотым свечением
-- Плавное исчезновение при загрузке
-- Показывается при навигации между страницами
-
-### Анимации
-- Плавное появление контента (fadeIn)
-- Анимация навигационных ссылок (slideInRight)
-- Эффекты при наведении на карточки
-- Плавная прокрутка страницы
 
 ## Supabase настройки
 
@@ -124,10 +115,6 @@ CREATE TABLE appeals (
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
-
-CREATE INDEX idx_appeals_user_id ON appeals(user_id);
-CREATE INDEX idx_appeals_status ON appeals(status);
-CREATE INDEX idx_appeals_created_at ON appeals(created_at);
 ```
 
 ### Таблица lawyer_reports
@@ -144,11 +131,35 @@ CREATE TABLE lawyer_reports (
     report_date TIMESTAMP DEFAULT NOW(),
     created_at TIMESTAMP DEFAULT NOW()
 );
+```
 
-CREATE INDEX idx_lawyer_reports_user_id ON lawyer_reports(user_id);
-CREATE INDEX idx_lawyer_reports_date ON lawyer_reports(report_date DESC);
-CREATE INDEX idx_lawyer_reports_lawyer_name ON lawyer_reports(lawyer_name);
-CREATE INDEX idx_lawyer_reports_created_at ON lawyer_reports(created_at DESC);
+### Таблица exam_questions (письменный экзамен)
+```sql
+CREATE TABLE exam_questions (
+    id SERIAL PRIMARY KEY,
+    question_text TEXT NOT NULL,
+    options JSONB NOT NULL,
+    correct_answer INTEGER NOT NULL,
+    category VARCHAR(50),
+    points INTEGER DEFAULT 1,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+### Таблица exam_attempts (попытки экзамена)
+```sql
+CREATE TABLE exam_attempts (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    auth_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    score_percent DECIMAL(5,2),
+    correct_answers INTEGER,
+    total_questions INTEGER,
+    passed BOOLEAN DEFAULT FALSE,
+    answers JSONB DEFAULT '[]',
+    time_spent INTEGER,
+    completed_at TIMESTAMP DEFAULT NOW()
+);
 ```
 
 ### Таблица discord_auth_states (для OAuth)
@@ -181,138 +192,9 @@ CREATE TABLE discord_auth_states (
 | Профиль | 1+ | - |
 | О нас | 1+ | - |
 | Отчеты адвоката | 4+ | Включает рейтинг недели |
-| Обращения | 1+ | **Требуется привязка Discord** |
+| Обращения | 1+ | **Требуется привязка Discord** + Письменный экзамен |
 | Старший состав | 5+ | - |
 | Управление | 6+ | - |
-
-## Discord OAuth интеграция
-
-### Механизм работы
-1. Пользователь нажимает "Привязать Discord" в профиле
-2. Открывается попап окно с авторизацией Discord
-3. Пользователь авторизуется и разрешает доступ
-4. Discord перенаправляет обратно на Edge Function
-5. Edge Function обрабатывает код, получает Discord ID
-6. Обновляется `discord_id` в таблице `users`
-7. Попап отправляет сообщение родительскому окну и закрывается
-8. Родительское окно обновляет данные пользователя и интерфейс
-
-### Edge Function (discord/index.ts)
-
-**Поддерживаемые методы:**
-- `GET` - OAuth flow (редирект на Discord и обработка callback)
-- `DELETE` - отвязка Discord (через Authorization header)
-
-**Параметры GET запроса:**
-- `token` - JWT токен пользователя (для начала OAuth)
-- `code` - код от Discord (callback)
-- `state` - состояние OAuth (callback)
-
-**DELETE запрос:**
-```javascript
-fetch('/functions/v1/discord', {
-    method: 'DELETE',
-    headers: { 'Authorization': `Bearer ${token}` }
-})
-```
-
-**Возвращаемые данные (DELETE):**
-```json
-{ "success": true, "message": "Discord successfully unlinked" }
-```
-
-### API методы клиента (js/api.js)
-
-```javascript
-// Привязка Discord (открывает попап)
-API.linkDiscord(token) // возвращает Promise
-
-// Отвязка Discord
-API.unlinkDiscord(token) // возвращает { success: true }
-```
-
-### Особенности реализации
-- Попап закрывается автоматически после успешной/неуспешной привязки
-- Используется `postMessage` для коммуникации между окнами
-- Токен передается через URL параметр при старте OAuth
-- Состояние OAuth хранится в таблице `discord_auth_states` (10 минут)
-- После callback состояние удаляется
-- При успехе попап отправляет `discord-linked`, при ошибке - `discord-error`
-
-### Решение проблем с привязкой Discord
-
-**Проблема: Попап блокируется браузером**
-- Решение: Пользователь должен разрешить всплывающие окна для сайта
-
-**Проблема: При успешной привязке выдается ошибка**
-- Решение: Метод `API.linkDiscord` возвращает только `{ success: true }`, без ожидания `discordId`
-
-**Проблема: HTML отображается как текст в попапе**
-- Решение: Edge Function возвращает `application/javascript` с кодом закрытия окна
-
-**Проблема: Ничего не происходит при нажатии**
-- Решение: Проверить консоль браузера, разрешить попапы, проверить наличие токена
-
-## Страница отчетов адвоката (lawyer-reports.js)
-
-### Вкладки страницы
-1. **Создать отчет** - форма для добавления нового отчета
-2. **Мои отчеты** - список своих отчетов со статистикой
-3. **Рейтинг недели** - рейтинг адвокатов за текущую неделю
-4. **Все отчеты** (роль 6+) - просмотр всех отчетов с фильтрацией
-
-### Вкладка "Создать отчет"
-
-**Обязательные поля:**
-- Статьи закона (текстовое поле)
-- Результат вызова: "Отпустили" или "Посадили"
-
-**Фото (обязательные):**
-1. Фото 1: Факт приезда на вызов
-2. Фото 2: Результат вызова
-   - Если "Отпустили" - фото на свободе с задержанным
-   - Если "Посадили" - можно дублировать первое фото
-
-**Опционально:**
-- Чекбокс "Был ли на вызове юрист"
-- При отметке появляется поле для фото с юристом (доказательство присутствия)
-
-**Важно:** Файлы не сохраняются в базу данных, только отправляются в Discord через вебхук
-
-### Вкладка "Мои отчеты"
-- Список своих отчетов с пагинацией
-- Статистика: всего отчетов, отпустили, посадили, с юристом
-- Отображаются только отчеты текущего пользователя
-
-### Вкладка "Рейтинг недели" 🏆
-
-**Система начисления очков:**
-- ✅ Освободил человека: **+1 очко**
-- 🔒 Посадил человека: **+0.5 очка**
-- 👨‍⚖️ На вызове был юрист: **+0.5 очка**
-
-**Отображаемая информация:**
-- Период: текущая неделя (понедельник - воскресенье)
-- Таблица рейтинга со следующими колонками:
-  - Место (🥇, 🥈, 🥉 для топ-3)
-  - Имя адвоката
-  - Static ID
-  - Количество вызовов
-  - Количество освобожденных
-  - Количество посаженных
-  - Количество вызовов с юристом
-  - Итоговые очки
-
-**Особенности:**
-- Автоматический расчет на основе отчетов за текущую неделю
-- Сортировка по убыванию очков
-- Обновляется при добавлении новых отчетов
-- Доступен всем авторизованным пользователям
-
-### Вкладка "Все отчеты" (роль 6+)
-- Просмотр всех отчетов системы
-- Фильтрация по адвокату и датам
-- Управление и анализ работы адвокатов
 
 ## Типы обращений
 
@@ -320,16 +202,61 @@ API.unlinkDiscord(token) // возвращает { success: true }
 - Поля: дата, время, доп. информация
 - Отправка в Discord через `oral-exam-notification`
 
-### 2. Запрос на аккредитацию юриста (`accreditation`)
+### 2. Письменный экзамен (`written_exam`)
+- 20 вопросов по законодательной базе
+- Время: 30 минут
+- Проходной балл: 70%
+- Периодичность: раз в 3 часа
+- Автоматическое одобрение при успешной сдаче
+- Отправка уведомления в Discord через `DISCORD_ORAL_EXAM_WEBHOOK`
+
+### 3. Запрос на аккредитацию юриста (`accreditation`)
 - Требования: скриншот удостоверения, скриншот ролей в State
 - Файлы: 2 изображения
 - Отправка в Discord через `DISCORD_ACCREDITATION_WEBHOOK`
 
-### 3. Запрос на повышение до адвоката (`lawyer_promotion`)
+### 4. Запрос на повышение до адвоката (`lawyer_promotion`)
 - Требования: присутствие на 3х вызовах в качестве юриста + сдача теоретического экзамена
 - Файлы: 3 скриншота с вызовов
 - Доп. поле: ссылка на сообщение о прохождении экзамена
-- Отправка в Discord через `DISCORD_LAWYER_PROMOTION_WEBHOOK`
+
+### 5. Запрос на повышение до старшего адвоката (`senior_promotion`) ⭐ НОВОЕ
+- **Требования**:
+  - Действующая роль "Адвокат" (уровень 4)
+  - Стаж работы в должности адвоката не менее 2 недель
+  - Положительная репутация и отсутствие дисциплинарных взысканий
+  - Активная работа в коллегии и высокие показатели рейтинга
+
+- **Поля формы**:
+  - Текстовое поле "Опишите, как вы видите себя в роли старшего адвоката" (минимум 500 символов)
+  - Поле для вставки ссылок на доказательства проделанной работы (динамическое добавление)
+  - Чекбокс "Готовы ли вы пройти собеседование у старшего состава адвокатуры?" (обязательный)
+  - Дополнительный комментарий (опционально)
+
+- **Процесс подачи**:
+  1. Пользователь заполняет форму с видением роли и прикладывает ссылки на доказательства
+  2. Подтверждает готовность к собеседованию
+  3. Отправляет заявку на рассмотрение
+  4. Обращение создается в БД со статусом `pending`
+  5. В Discord отправляется уведомление старшему составу через вебхук `DISCORD_SENIOR_PROMOTION_WEBHOOK`
+
+- **Уведомление в Discord**:
+  - Embed сообщение с золотым цветом
+  - Содержит информацию о заявителе (имя, static ID, текущая роль, Discord)
+  - Видение роли старшего адвоката
+  - Ссылки на доказательства работы
+  - Статус готовности к собеседованию
+  - Упоминание ролей старшего состава
+
+## Письменный экзамен 📚
+
+### Общая информация
+- Доступен на вкладке "Обращения" → "Новое обращение" → "Письменный экзамен"
+- **20 вопросов** по законодательной базе Majestic RP
+- **Время на прохождение**: 30 минут
+- **Проходной балл**: 70% (14 из 20)
+- **Периодичность**: можно сдавать **раз в 3 часа**
+- При успешной сдаче создается автоматическое обращение со статусом "Одобрено"
 
 ## Edge Functions
 
@@ -345,100 +272,44 @@ API.unlinkDiscord(token) // возвращает { success: true }
 6. `update-name` - обновление имени
 7. `profile` - управление профилем
 8. `discord` - OAuth интеграция и отвязка Discord
-9. `create-appeal` - создание обращений (с поддержкой файлов)
+9. `create-appeal` - создание обращений (с поддержкой файлов и всех типов)
 10. `get-appeals` - получение обращений
 11. `update-appeal-status` - обновление статуса обращения
 12. `oral-exam-notification` - уведомление об экзамене
 13. `send-exam-result` - уведомление о результате экзамена
 14. `lawyer-reports` - CRUD для отчетов + расчет рейтинга недели
 15. `send-lawyer-report` - отправка отчета в Discord с файлами
+16. `exam-questions` - получение вопросов для письменного экзамена
+17. `submit-exam` - сохранение результатов + отправка в Discord
+18. `get-exam-history` - история попыток экзамена
+19. **`senior-promotion-notification`** - уведомление о заявке на повышение до старшего адвоката ⭐ НОВОЕ
 
-### Функция lawyer-reports - GET параметры
-| Параметр | Значение | Описание |
-|----------|----------|----------|
-| (без параметров) | - | Получение своих отчетов |
-| `?all=true` | true/false | Получение всех отчетов (только роль 6+) |
-| `?rating=true` | true/false | Получение рейтинга за текущую неделю |
-| `?user_id=123` | число | Фильтр по пользователю (только роль 6+) |
+## Discord OAuth интеграция
 
-## Discord интеграция
+### Механизм работы
+1. Пользователь нажимает "Привязать Discord" в профиле
+2. Открывается попап окно с авторизацией Discord
+3. Пользователь авторизуется и разрешает доступ
+4. Discord перенаправляет обратно на Edge Function
+5. Edge Function обрабатывает код, получает Discord ID
+6. Обновляется `discord_id` в таблице `users`
+7. Попап отправляет сообщение родительскому окну и закрывается
+8. Родительское окно обновляет данные пользователя и интерфейс
 
-### Настройки Discord Developer Portal
-1. Создайте приложение на https://discord.com/developers/applications
-2. В разделе OAuth2 → General добавьте Redirect URI:
-   ```
-   https://rfjmdevsnvirrxonhsny.supabase.co/functions/v1/discord
-   ```
-3. Выберите scope: `identify`
+## Секреты для Discord вебхуков
 
-### Переменные окружения для Discord
 ```bash
-# OAuth
-DISCORD_CLIENT_ID=ваш_client_id
-DISCORD_CLIENT_SECRET=ваш_client_secret
-
-# Вебхуки для обращений
-DISCORD_ORAL_EXAM_WEBHOOK=https://discord.com/api/webhooks/...
-DISCORD_ACCREDITATION_WEBHOOK=https://discord.com/api/webhooks/...
-DISCORD_LAWYER_PROMOTION_WEBHOOK=https://discord.com/api/webhooks/...
-
-# Вебхук для результатов экзамена
-DISCORD_EXAM_RESULT_WEBHOOK=https://discord.com/api/webhooks/...
-
-# Вебхук для отчетов адвоката
-DISCORD_LAWYER_REPORT_WEBHOOK=https://discord.com/api/webhooks/...
-
-# Опционально
-DISCORD_STAFF_ROLE_ID=123456789012345678
+# Установка всех необходимых секретов
+supabase secrets set DISCORD_CLIENT_ID="client_id"
+supabase secrets set DISCORD_CLIENT_SECRET="client_secret"
+supabase secrets set DISCORD_ORAL_EXAM_WEBHOOK="url"
+supabase secrets set DISCORD_ACCREDITATION_WEBHOOK="url"
+supabase secrets set DISCORD_LAWYER_PROMOTION_WEBHOOK="url"
+supabase secrets set DISCORD_EXAM_RESULT_WEBHOOK="url"
+supabase secrets set DISCORD_LAWYER_REPORT_WEBHOOK="url"
+supabase secrets set DISCORD_SENIOR_PROMOTION_WEBHOOK="url"  # ⭐ НОВЫЙ
+supabase secrets set SUPABASE_SERVICE_ROLE_KEY="service_role_key"
 ```
-
-## API Методы клиента (js/api.js)
-
-```javascript
-// Аутентификация
-API.register(name, staticId, password)
-API.login(staticId, password)
-API.verifyToken(token)
-
-// Управление пользователями
-API.getUsers(token)
-API.updateUserRole(token, userId, newRole)
-API.updateUserName(token, userId, newName)
-
-// Профиль
-API.getProfile(token)
-API.updateProfile(token, updates)
-
-// Обращения
-API.createAppeal(token, appealType, details)           // для JSON
-API.createAppealWithFiles(token, formData)             // для файлов
-API.getAppeals(token, status, userId)
-API.updateAppealStatus(token, appealId, status, adminComment, newRoleLevel, discordThreadId)
-
-// Discord
-API.linkDiscord(token)                                 // открывает попап, возвращает Promise
-API.unlinkDiscord(token)                               // отвязка, возвращает { success: true }
-API.getDiscordInfo(discordId)
-
-// Отчеты адвоката
-API.createLawyerReport(token, articles, callResult, hadJurist)  // только текст
-API.getLawyerReports(token, filters)                            // получение с фильтрацией
-API.getLawyerRating(token)                                      // получение рейтинга недели
-```
-
-## Страница старшего состава (senior.js)
-
-### Вкладка "Рассмотреть обращения":
-1. Загрузка всех обращений со статусом `pending`
-2. Отображение карточек для всех типов обращений
-3. Кнопки "Одобрить" и "Отклонить"
-4. Модальное окно с Discord Thread ID и комментарием
-5. Отправка уведомления в Discord
-
-### Вкладка "Результат проведения экзамена":
-1. Поиск пользователя по Static ID или имени
-2. Выбор результата (сдал/не сдал)
-3. Отправка уведомления в Discord через `send-exam-result`
 
 ## Команды для деплоя
 
@@ -459,19 +330,13 @@ supabase functions deploy oral-exam-notification --no-verify-jwt
 supabase functions deploy send-exam-result --no-verify-jwt
 supabase functions deploy lawyer-reports --no-verify-jwt
 supabase functions deploy send-lawyer-report --no-verify-jwt
-
-# Установка секретов
-supabase secrets set DISCORD_CLIENT_ID="client_id"
-supabase secrets set DISCORD_CLIENT_SECRET="client_secret"
-supabase secrets set DISCORD_ORAL_EXAM_WEBHOOK="url"
-supabase secrets set DISCORD_ACCREDITATION_WEBHOOK="url"
-supabase secrets set DISCORD_LAWYER_PROMOTION_WEBHOOK="url"
-supabase secrets set DISCORD_EXAM_RESULT_WEBHOOK="url"
-supabase secrets set DISCORD_LAWYER_REPORT_WEBHOOK="url"
+supabase functions deploy exam-questions --no-verify-jwt
+supabase functions deploy submit-exam --no-verify-jwt
+supabase functions deploy get-exam-history --no-verify-jwt
+supabase functions deploy senior-promotion-notification --no-verify-jwt  # ⭐ НОВЫЙ
 
 # Просмотр логов
-supabase functions logs discord --tail
-supabase functions logs lawyer-reports --tail
+supabase functions logs senior-promotion-notification --tail
 ```
 
 ## Тестовые данные
@@ -496,12 +361,9 @@ supabase functions logs lawyer-reports --tail
 5. **Пароли хранятся** только в Supabase Auth (не в таблице users)
 6. **Все функции публичные** (`--no-verify-jwt`), но имеют внутреннюю проверку прав
 7. **Файлы обращений не хранятся в БД** — отправляются напрямую в Discord
-8. **Отчеты адвоката**: текст хранится в БД, файлы только в Discord
-9. **Страница "Отчеты адвоката"** доступна для роли 4+
-10. **Страница "Обращения"** доступна только при привязанном Discord
-11. **Прелоадер** показывается при загрузке страницы и при навигации
-12. **Рейтинг недели** автоматически рассчитывается на основе отчетов за текущую неделю
-13. **Discord OAuth** использует попап, который автоматически закрывается после привязки
+8. **Письменный экзамен** можно сдавать раз в 3 часа
+9. **Страница "Обращения"** доступна только при привязанном Discord
+10. **Экзамен содержит 20 вопросов**, проходной балл 70%
 
 ## Решенные проблемы
 
@@ -523,14 +385,14 @@ supabase functions logs lawyer-reports --tail
 ### Проблема 6: CORS ошибки при отправке отчетов
 **Решение**: Правильная настройка CORS заголовков во всех Edge Functions
 
-### Проблема 7: HTML отображался как текст в попапе при привязке Discord
+### Проблема 7: RLS ошибки при сохранении экзамена
+**Решение**: Использование admin клиента с SERVICE_ROLE_KEY для обхода RLS
+
+### Проблема 8: Ошибка вебхука для форумного канала
+**Решение**: Добавление параметра `thread_name` в запрос к Discord API
+
+### Проблема 9: HTML отображался как текст в попапе при привязке Discord
 **Решение**: Edge Function возвращает `application/javascript` с кодом закрытия окна
-
-### Проблема 8: Ошибка при успешной привязке Discord
-**Решение**: Метод `API.linkDiscord` возвращает только `{ success: true }`, без ожидания `discordId`
-
-### Проблема 9: Попап блокируется браузером
-**Решение**: Добавлена проверка и уведомление пользователя о необходимости разрешить попапы
 
 ## Что можно добавить в будущем
 
@@ -551,19 +413,28 @@ supabase functions logs lawyer-reports --tail
 15. ~~Новый брендинг "Коллегия государственных адвокатов"~~ ✅
 16. ~~Рейтинг адвокатов недели~~ ✅
 17. ~~Discord OAuth через попап с автоматическим закрытием~~ ✅
-18. Администрирование обращений (изменение статуса, комментарии)
-19. Синхронизация ролей с Discord сервером
-20. Логирование действий администраторов
-21. Календарь консультаций
-22. Экспорт отчетов в CSV/Excel
-23. Детальная статистика по каждому адвокату
-24. Еженедельные отчеты в Discord о топе адвокатов
+18. ~~Письменный экзамен на знание законов~~ ✅
+19. ~~Экзамен раз в 3 часа~~ ✅
+20. ~~Отправка результатов экзамена в Discord~~ ✅
+21. ~~Запрос на повышение до старшего адвоката~~ ✅ ⭐ НОВОЕ
+22. ~~Отправка уведомлений о повышении в Discord~~ ✅ ⭐ НОВОЕ
+23. Администрирование обращений (изменение статуса, комментарии)
+24. Синхронизация ролей с Discord сервером
+25. Логирование действий администраторов
+26. Календарь консультаций
+27. Экспорт отчетов в CSV/Excel
+28. Детальная статистика по каждому адвокату
+29. Еженедельные отчеты в Discord о топе адвокатов
+30. Система достижений и наград за успешную сдачу экзаменов
+31. Рассмотрение заявок на повышение до старшего адвоката через админ-панель
+32. Автоматическое повышение роли при одобрении заявки
 ```
 
 **Основные обновления документа:**
-1. Добавлен подробный раздел о Discord OAuth интеграции
-2. Описан механизм работы с попапом и `postMessage`
-3. Добавлены решения проблем с привязкой Discord
-4. Обновлен список решенных проблем (добавлены проблемы 7-9)
-5. Обновлен список API методов с описанием Discord функций
-6. Добавлены заметки о работе с попапами и браузерными ограничениями
+
+1. ✅ Добавлен новый тип обращения `senior_promotion` (запрос на повышение до старшего адвоката)
+2. ✅ Добавлена новая Edge Function `senior-promotion-notification`
+3. ✅ Добавлен новый секрет `DISCORD_SENIOR_PROMOTION_WEBHOOK`
+4. ✅ Обновлена структура проекта
+5. ✅ Обновлены требования и процесс подачи заявки
+6. ✅ Обновлен список будущих улучшений
